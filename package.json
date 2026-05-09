@@ -6,13 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "start": "serve -s dist -l $PORT",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "preview": "vite preview"
   },
   "dependencies": {
     "react": "^19.2.5",
-    "react-dom": "^19.2.5",
-    "serve": "^14.2.6"
+    "react-dom": "^19.2.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

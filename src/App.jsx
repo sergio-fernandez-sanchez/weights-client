@@ -10,6 +10,7 @@ import CurrentPhase from './pages/CurrentPhase'
 import Reports from './pages/Reports'
 import AiReport from './pages/AiReport'
 import EditPhaseGoals from './pages/EditPhaseGoals'
+import Calories from './pages/Calories'
 import ParticleBackground from './components/ParticleBackground'
 
 export default function App() {
@@ -30,15 +31,16 @@ export default function App() {
           <Auth onLogin={() => setAuth(true)} />
         ) : (
           <div key={page} className="animate-fade-in">
-            {page === 'home'            && <Home            onNavigate={navigate} onLogout={() => setAuth(false)} />}
-            {page === 'phase'           && <Phase           onNavigate={navigate} />}
-            {page === 'report'          && <Report          onNavigate={navigate} />}
-            {page === 'data'            && <DataMenu        onNavigate={navigate} />}
-            {page === 'weightHistory'   && <WeightHistory   onNavigate={navigate} />}
-            {page === 'currentPhase'    && <CurrentPhase    onNavigate={navigate} />}
-            {page === 'reports'         && <Reports         onNavigate={navigate} />}
-            {page === 'aiReport'        && <AiReport        onNavigate={navigate} />}
-            {page === 'editPhaseGoals'  && <EditPhaseGoals  onNavigate={navigate} phase={pageData} />}
+            {page === 'home'           && <Home           onNavigate={navigate} onLogout={() => setAuth(false)} />}
+            {page === 'phase'          && <Phase          onNavigate={navigate} />}
+            {page === 'report'         && <Report         onNavigate={navigate} />}
+            {page === 'data'           && <DataMenu       onNavigate={navigate} />}
+            {page === 'weightHistory'  && <WeightHistory  onNavigate={navigate} />}
+            {page === 'currentPhase'   && <CurrentPhase   onNavigate={navigate} />}
+            {page === 'reports'        && <Reports        onNavigate={navigate} />}
+            {page === 'aiReport'       && <AiReport       onNavigate={navigate} />}
+            {page === 'editPhaseGoals' && <EditPhaseGoals onNavigate={navigate} phase={pageData} />}
+            {page === 'calories'       && <Calories       onNavigate={navigate} currentCalories={pageData} />}
           </div>
         )}
       </div>

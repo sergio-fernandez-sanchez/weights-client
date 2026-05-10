@@ -100,6 +100,23 @@ async function patchPhaseGoals(weight_goal, date_goal) {
   })
 }
 
+// ── Calories endpoints ────────────────────────────────────────────────────────
+
+async function getCalories() {
+  return request('/calories')
+}
+
+async function getActiveCalories() {
+  return request('/calories/active')
+}
+
+async function postCalories(calories) {
+  return request('/calories', {
+    method: 'POST',
+    body: JSON.stringify({ calories }),
+  })
+}
+
 // ── Reports endpoints ─────────────────────────────────────────────────────────
 
 async function getReports() {
@@ -142,4 +159,7 @@ export {
   getReports,
   postReport,
   getAiReport,
+  getCalories,
+  getActiveCalories,
+  postCalories,
 }

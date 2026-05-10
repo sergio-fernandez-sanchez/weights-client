@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getLastWeight, postWeight, logout } from '../api/client'
+import { getLastWeight, postWeight, getActiveCalories, logout } from '../api/client'
 import PageWrapper from '../components/PageWrapper'
 import HomeHeader from '../components/HomeHeader'
 import Button from '../components/Button'
@@ -12,8 +12,12 @@ export default function Home({ onNavigate, onLogout }) {
   const [msg, setMsg] = useState('')
   const [loading, setLoading] = useState(false)
   const [todayLogged, setTodayLogged] = useState(false)
+  const [activeCalories, setActiveCalories] = useState(null)
 
-  useEffect(() => { fetchLastWeight() }, [])
+  useEffect(() => {
+    fetchLastWeight()
+    fetchCalories()
+  }, [])
 
   async function fetchLastWeight() {
     try {
@@ -23,6 +27,13 @@ export default function Home({ onNavigate, onLogout }) {
         const today = new Date().toISOString().split('T')[0]
         setTodayLogged(data.date === today)
       }
+    } catch {}
+  }
+
+  async function fetchCalories() {
+    try {
+      const data = await getActiveCalories()
+      if (data) setActiveCalories(data.calories)
     } catch {}
   }
 
@@ -73,6 +84,23 @@ export default function Home({ onNavigate, onLogout }) {
 
       {msg && <p className="text-[#c8f500] font-mono text-sm mb-2">{msg}</p>}
 
+      {/* Botones secundarios bajo el peso */}
+      <div className="flex gap-2 mt-2 mb-2">
+        <button
+          onClick={() => onNavigate('calories', activeCalories)}
+          className="flex-1 h-10 bg-[#141414] border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors"
+        >
+          {activeCalories ? `${activeCalories} kcal` : '// CALORÍAS'}
+        </button>
+        <button
+          onClick={() => onNavigate('gym')}
+          className="flex-1 h-10 bg-[#141414] border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors"
+          disabled
+        >
+          // GYM →
+        </button>
+      </div>
+
       <Separator className="my-6" />
 
       <div className="flex flex-col gap-3">
@@ -85,17 +113,15 @@ export default function Home({ onNavigate, onLogout }) {
             {label}
           </Button>
         ))}
-
-        {/* Generar informe — color sutil diferente */}
-        <button
-          onClick={() => onNavigate('aiReport')}
-          className="h-14 bg-[#141414] border border-[#1f2a00] text-[#6a8000] font-mono text-base text-left px-6 hover:bg-[#1a2200] hover:text-[#c8f500] hover:border-[#c8f500] transition-colors"
-        >
-          // GENERAR INFORME IA →
-        </button>
       </div>
 
       <Separator className="mt-8 mb-4" />
+      <button
+        onClick={() => onNavigate('aiReport')}
+        className="w-full h-14 bg-[#141414] border border-[#1f2a00] text-[#6a8000] font-mono text-base text-left px-6 hover:bg-[#1a2200] hover:text-[#c8f500] hover:border-[#c8f500] transition-colors mb-3"
+      >
+        // GENERAR INFORME IA →
+      </button>
       <Button variant="ghost" onClick={() => { logout(); onLogout() }}>
         // CERRAR SESIÓN
       </Button>

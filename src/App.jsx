@@ -8,6 +8,7 @@ import DataMenu from './pages/DataMenu'
 import WeightHistory from './pages/WeightHistory'
 import CurrentPhase from './pages/CurrentPhase'
 import Reports from './pages/Reports'
+import AiReport from './pages/AiReport'
 
 export default function App() {
   const [auth, setAuth] = useState(isAuthenticated())
@@ -24,6 +25,7 @@ export default function App() {
       {page === 'weightHistory' && <WeightHistory onNavigate={setPage} />}
       {page === 'currentPhase'  && <CurrentPhase  onNavigate={setPage} />}
       {page === 'reports'       && <Reports       onNavigate={setPage} />}
+      {page === 'aiReport'      && <AiReport      onNavigate={setPage} />}
     </div>
   )
 }

@@ -273,7 +273,7 @@ export default function WeightHistory({ onNavigate }) {
   ]
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] px-6 md:px-16 pb-10">
+    <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => onNavigate('data')} />
         <PageHeader title="// EVOLUCIÓN" />

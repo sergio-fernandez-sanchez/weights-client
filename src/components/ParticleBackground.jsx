@@ -2,8 +2,6 @@ import { useEffect, useRef } from 'react'
 
 export default function ParticleBackground() {
   const canvasRef = useRef(null)
-  const particlesRef = useRef([])
-  const burstsRef = useRef([])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -17,9 +15,8 @@ export default function ParticleBackground() {
     resize()
     window.addEventListener('resize', resize)
 
-    // Partículas base más visibles
     const particleCount = window.innerWidth < 600 ? 50 : 90
-    particlesRef.current = Array.from({ length: particleCount }, () => ({
+    const particles = Array.from({ length: particleCount }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
       vx: (Math.random() - 0.5) * 0.3,
@@ -28,37 +25,10 @@ export default function ParticleBackground() {
       opacity: Math.random() * 0.6 + 0.25,
     }))
 
-    // Listener para clicks/taps — crea ráfagas de partículas
-    function handleInteraction(e) {
-      const x = e.touches ? e.touches[0].clientX : e.clientX
-      const y = e.touches ? e.touches[0].clientY : e.clientY
-      
-      for (let i = 0; i < 15; i++) {
-        const angle = (Math.PI * 2 * i) / 15 + (Math.random() * 0.5)
-        const speed = Math.random() * 3 + 1.5
-        burstsRef.current.push({
-          x,
-          y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          size: Math.random() * 2 + 1,
-          life: 1,
-          decay: Math.random() * 0.015 + 0.01,
-        })
-      }
-    }
-
-    window.addEventListener('click', handleInteraction)
-    window.addEventListener('touchstart', handleInteraction)
-
     function animate() {
       ctx.fillStyle = '#0a0a0a'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-      const particles = particlesRef.current
-      const bursts = burstsRef.current
-
-      // Render partículas base
       particles.forEach(p => {
         p.x += p.vx
         p.y += p.vy
@@ -74,7 +44,6 @@ export default function ParticleBackground() {
         ctx.fill()
       })
 
-      // Líneas conectando partículas cercanas — más visibles
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x
@@ -91,40 +60,12 @@ export default function ParticleBackground() {
         }
       }
 
-      // Render bursts (ráfagas de click)
-      for (let i = bursts.length - 1; i >= 0; i--) {
-        const b = bursts[i]
-        b.x += b.vx
-        b.y += b.vy
-        b.vx *= 0.96
-        b.vy *= 0.96
-        b.life -= b.decay
-
-        if (b.life <= 0) {
-          bursts.splice(i, 1)
-          continue
-        }
-
-        ctx.beginPath()
-        ctx.arc(b.x, b.y, b.size * b.life, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(200, 245, 0, ${b.life * 0.9})`
-        ctx.fill()
-
-        // Glow alrededor
-        ctx.beginPath()
-        ctx.arc(b.x, b.y, b.size * b.life * 2.5, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(200, 245, 0, ${b.life * 0.15})`
-        ctx.fill()
-      }
-
       animationId = requestAnimationFrame(animate)
     }
     animate()
 
     return () => {
       window.removeEventListener('resize', resize)
-      window.removeEventListener('click', handleInteraction)
-      window.removeEventListener('touchstart', handleInteraction)
       cancelAnimationFrame(animationId)
     }
   }, [])

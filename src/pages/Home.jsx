@@ -85,6 +85,14 @@ export default function Home({ onNavigate, onLogout }) {
             {label}
           </Button>
         ))}
+
+        {/* Generar informe — color sutil diferente */}
+        <button
+          onClick={() => onNavigate('aiReport')}
+          className="h-14 bg-[#141414] border border-[#1f2a00] text-[#6a8000] font-mono text-base text-left px-6 hover:bg-[#1a2200] hover:text-[#c8f500] hover:border-[#c8f500] transition-colors"
+        >
+          // GENERAR INFORME IA →
+        </button>
       </div>
 
       <Separator className="mt-8 mb-4" />

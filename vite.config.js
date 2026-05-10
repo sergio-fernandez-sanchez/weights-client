@@ -8,6 +8,6 @@ export default defineConfig({
     tailwindcss(),
   ],
   preview: {
-    allowedHosts: ['weights-client-production.up.railway.app'],
+    allowedHosts: ['weights.up.railway.app'],
   },
 })

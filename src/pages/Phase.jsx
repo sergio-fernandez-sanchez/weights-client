@@ -13,18 +13,32 @@ export default function Phase({ onNavigate }) {
   const [phaseType, setPhaseType] = useState('bulk')
   const [weightGoal, setWeightGoal] = useState('')
   const [dateGoal, setDateGoal] = useState('')
+  const [startDateMode, setStartDateMode] = useState('today')
+  const [manualStartDate, setManualStartDate] = useState('')
   const [msg, setMsg] = useState('')
   const [loading, setLoading] = useState(false)
+
+  function parseManualDate(str) {
+    const parts = str.split('/')
+    if (parts.length !== 3) return null
+    const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2]
+    return `${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setLoading(true)
     setMsg('')
     try {
+      const startDate = startDateMode === 'manual' && manualStartDate
+        ? parseManualDate(manualStartDate)
+        : null
+
       await postPhase(
         phaseType,
         weightGoal ? parseFloat(weightGoal.replace(',', '.')) : null,
-        dateGoal || null
+        dateGoal || null,
+        startDate
       )
       setMsg('✓  fase iniciada')
       setTimeout(() => onNavigate('home'), 1400)
@@ -40,12 +54,14 @@ export default function Phase({ onNavigate }) {
       <BackButton onClick={() => onNavigate('home')} />
       <PageHeader title="// NUEVA FASE" />
 
+      {/* Tipo de fase */}
       <div className="flex flex-col gap-1 mb-6">
         <label className="text-[#888888] font-mono text-sm">TIPO DE FASE</label>
         <div className="flex">
           {PHASE_TYPES.map(type => (
             <button
               key={type}
+              type="button"
               onClick={() => setPhaseType(type)}
               className={`flex-1 h-12 font-mono text-sm border transition-colors ${
                 phaseType === type
@@ -60,6 +76,36 @@ export default function Phase({ onNavigate }) {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+        {/* Fecha de inicio */}
+        <div className="flex flex-col gap-2">
+          <label className="text-[#888888] font-mono text-sm">FECHA DE INICIO</label>
+          <div className="flex gap-2">
+            {[['HOY', 'today'], ['MANUAL', 'manual']].map(([label, val]) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => setStartDateMode(val)}
+                className={`flex-1 h-10 font-mono text-xs border transition-colors ${
+                  startDateMode === val
+                    ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]'
+                    : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {startDateMode === 'manual' && (
+            <Input
+              type="text"
+              value={manualStartDate}
+              onChange={e => setManualStartDate(e.target.value)}
+              placeholder="dd/mm/aa"
+            />
+          )}
+        </div>
+
         <Input
           label="OBJETIVO DE PESO (kg)"
           type="number"

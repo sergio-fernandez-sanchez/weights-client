@@ -24,6 +24,8 @@ const FIELDS = [
 ]
 
 export default function Report({ onNavigate }) {
+  const [dateMode, setDateMode] = useState('today') // 'today' | 'manual'
+  const [manualDate, setManualDate] = useState('')
   const [values, setValues] = useState(
     Object.fromEntries(FIELDS.map(([key]) => [key, '']))
   )
@@ -32,6 +34,13 @@ export default function Report({ onNavigate }) {
 
   function handleChange(key, val) {
     setValues(prev => ({ ...prev, [key]: val }))
+  }
+
+  function parseManualDate(str) {
+    const parts = str.split('/')
+    if (parts.length !== 3) return null
+    const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2]
+    return `${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`
   }
 
   async function handleSubmit(e) {
@@ -45,6 +54,9 @@ export default function Report({ onNavigate }) {
           values[key] ? parseFloat(values[key].replace(',', '.')) : null
         ])
       )
+      if (dateMode === 'manual' && manualDate) {
+        data.date = parseManualDate(manualDate)
+      }
       await postReport(data)
       setMsg('✓  informe guardado')
       setTimeout(() => onNavigate('home'), 1400)
@@ -60,10 +72,40 @@ export default function Report({ onNavigate }) {
       <div className="w-full max-w-sm mx-auto">
         <div className="pt-10">
           <BackButton onClick={() => onNavigate('home')} />
-          <PageHeader title="// AÑADIR INFORME" />
+          <PageHeader title="// NUEVO INFORME" />
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+          {/* Selector de fecha */}
+          <div className="flex flex-col gap-2">
+            <label className="text-[#888888] font-mono text-sm">FECHA DEL INFORME</label>
+            <div className="flex gap-2">
+              {[['HOY', 'today'], ['MANUAL', 'manual']].map(([label, val]) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setDateMode(val)}
+                  className={`flex-1 h-10 font-mono text-xs border transition-colors ${
+                    dateMode === val
+                      ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]'
+                      : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {dateMode === 'manual' && (
+              <Input
+                type="text"
+                value={manualDate}
+                onChange={e => setManualDate(e.target.value)}
+                placeholder="dd/mm/aa"
+              />
+            )}
+          </div>
+
           {FIELDS.map(([key, label]) => (
             <Input
               key={key}

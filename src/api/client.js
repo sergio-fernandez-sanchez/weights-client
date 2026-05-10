@@ -86,10 +86,10 @@ async function getActivePhase() {
   return request('/phases/active')
 }
 
-async function postPhase(phase_type, weight_goal, date_goal) {
+async function postPhase(phase_type, weight_goal, date_goal, start_date = null) {
   return request('/phases', {
     method: 'POST',
-    body: JSON.stringify({ phase_type, weight_goal, date_goal }),
+    body: JSON.stringify({ phase_type, weight_goal, date_goal, start_date }),
   })
 }
 

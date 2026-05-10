@@ -79,7 +79,7 @@ export default function Home({ onNavigate, onLogout }) {
         {[
           ['// VER DATOS →', 'data'],
           ['// NUEVA FASE →', 'phase'],
-          ['// AÑADIR INFORME →', 'report'],
+          ['// NUEVO INFORME →', 'report'],
         ].map(([label, page]) => (
           <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>
             {label}

@@ -2,6 +2,8 @@
 
 Mobile-first web interface for the [Weights API](https://github.com/sergio-fernandez-sanchez/weights-api). Built with React and Tailwind CSS, optimized for iPhone Safari.
 
+Live at: [https://weights.up.railway.app](https://weights.up.railway.app)
+
 ---
 
 ## Demo account
@@ -17,11 +19,12 @@ Mobile-first web interface for the [Weights API](https://github.com/sergio-ferna
 
 - **Login / Register** — authentication
 - **Home** — log or update today's weight
-- **Weight History** — table and chart with filters (current phase, all, week, month, year)
+- **Weight History** — weight chart and table with filters (current phase, all, week, month, year) + body composition charts
 - **Current Phase** — active phase metrics, progress bar and weight evolution chart
 - **Reports** — nutritionist body composition reports with delta comparison
 - **New Phase** — start a new training phase
-- **Add Report** — log a new nutritionist measurement
+- **New Report** — log a new nutritionist measurement
+- **AI Report** — generate and download a full `.txt` report ready for AI analysis
 
 ---
 
@@ -31,7 +34,7 @@ Mobile-first web interface for the [Weights API](https://github.com/sergio-ferna
 weights-client/
 ├── src/
 │   ├── api/
-│   │   └── client.js        # API calls and auth token management
+│   │   └── client.js          # API calls and auth token management
 │   ├── components/
 │   │   ├── BackButton.jsx
 │   │   ├── Button.jsx
@@ -41,6 +44,7 @@ weights-client/
 │   │   ├── PageWrapper.jsx
 │   │   └── Separator.jsx
 │   ├── pages/
+│   │   ├── AiReport.jsx
 │   │   ├── Auth.jsx
 │   │   ├── CurrentPhase.jsx
 │   │   ├── DataMenu.jsx

@@ -103,6 +103,46 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
   )
 }
 
+// ── Cálculos semanales ────────────────────────────────────────────────────────
+
+function calcWeeklyStats(phaseWeights) {
+  if (phaseWeights.length < 2) return null
+
+  // Agrupar por semana ISO
+  const byWeek = {}
+  phaseWeights.forEach(w => {
+    const d = parseDate(w.date)
+    const monday = new Date(d)
+    monday.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1))
+    const key = monday.toISOString().split('T')[0]
+    if (!byWeek[key]) byWeek[key] = []
+    byWeek[key].push(parseFloat(w.weight))
+  })
+
+  const weekKeys = Object.keys(byWeek).sort()
+  if (weekKeys.length < 2) return null
+
+  // Media de cada semana
+  const weeklyAvgs = weekKeys.map(k => {
+    const vals = byWeek[k]
+    return vals.reduce((a, b) => a + b, 0) / vals.length
+  })
+
+  // Cambio semana a semana
+  const weeklyChanges = []
+  for (let i = 1; i < weeklyAvgs.length; i++) {
+    weeklyChanges.push(weeklyAvgs[i] - weeklyAvgs[i - 1])
+  }
+
+  const avgChange = weeklyChanges.reduce((a, b) => a + b, 0) / weeklyChanges.length
+
+  // Desviación estándar
+  const variance = weeklyChanges.reduce((acc, v) => acc + Math.pow(v - avgChange, 2), 0) / weeklyChanges.length
+  const stdDev = Math.sqrt(variance)
+
+  return { avgChange, stdDev, weeks: weeklyChanges.length }
+}
+
 export default function CurrentPhase({ onNavigate }) {
   const [phase, setPhase] = useState(null)
   const [weights, setWeights] = useState([])
@@ -155,10 +195,19 @@ export default function CurrentPhase({ onNavigate }) {
   const daysElapsed = Math.floor((today - startDate) / (1000 * 60 * 60 * 24))
   const daysLeft = dateGoal ? Math.ceil((dateGoal - today) / (1000 * 60 * 60 * 24)) : null
   const totalDays = dateGoal ? Math.floor((dateGoal - startDate) / (1000 * 60 * 60 * 24)) : null
+  const totalWeeks = totalDays ? totalDays / 7 : null
   const progress = totalDays && totalDays > 0 ? Math.max(0, Math.min(1, daysElapsed / totalDays)) : null
 
   const diff = currentWeight && weightGoal ? (weightGoal - parseFloat(currentWeight)).toFixed(2) : null
   const gained = currentWeight && startWeight ? (parseFloat(currentWeight) - parseFloat(startWeight)).toFixed(2) : null
+
+  // Objetivo semanal implícito
+  const impliedWeeklyGoal = weightGoal && startWeight && totalWeeks
+    ? ((weightGoal - parseFloat(startWeight)) / totalWeeks)
+    : null
+
+  // Stats semanales
+  const weeklyStats = calcWeeklyStats(phaseWeights)
 
   function gainedColor() {
     if (!gained) return '#c8f500'
@@ -168,12 +217,33 @@ export default function CurrentPhase({ onNavigate }) {
     return '#c8f500'
   }
 
+  function weeklyRateColor(actual, goal) {
+    if (!goal) return '#c8f500'
+    const ratio = actual / goal
+    if (ratio >= 0.7 && ratio <= 1.3) return '#4caf50'
+    if (ratio >= 0.4 && ratio <= 1.6) return '#ff9f00'
+    return '#f44336'
+  }
+
+  function consistencyColor(std) {
+    if (std < 0.3) return '#4caf50'
+    if (std < 0.6) return '#ff9f00'
+    return '#f44336'
+  }
+
+  function consistencyLabel(std) {
+    if (std < 0.3) return 'muy consistente'
+    if (std < 0.6) return 'moderado'
+    return 'irregular'
+  }
+
   return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => onNavigate('data')} />
         <PageHeader title="// FASE ACTUAL" />
 
+        {/* Tipo de fase */}
         <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
           <p className="text-[#888888] font-mono text-xs mb-1">TIPO DE FASE</p>
           <p className="font-mono text-3xl font-bold" style={{ color: phaseColor }}>
@@ -184,6 +254,7 @@ export default function CurrentPhase({ onNavigate }) {
           </p>
         </div>
 
+        {/* Métricas principales */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <MetricCard label="PESO ACTUAL" value={currentWeight ? `${parseFloat(currentWeight).toFixed(2)} kg` : '—'} />
           <MetricCard label="PESO OBJETIVO" value={weightGoal ? `${weightGoal.toFixed(2)} kg` : '—'} />
@@ -202,6 +273,7 @@ export default function CurrentPhase({ onNavigate }) {
           />
         </div>
 
+        {/* Progreso temporal */}
         {progress !== null && (
           <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
             <div className="flex justify-between mb-2">
@@ -214,6 +286,68 @@ export default function CurrentPhase({ onNavigate }) {
           </div>
         )}
 
+        {/* Ritmo semanal */}
+        {weeklyStats && (
+          <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
+            <p className="text-[#888888] font-mono text-xs mb-3">RITMO SEMANAL</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[#888888] font-mono text-xs mb-1">MEDIA SEMANAL</p>
+                <p
+                  className="font-mono text-xl font-bold"
+                  style={{ color: impliedWeeklyGoal
+                    ? weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal))
+                    : '#c8f500'
+                  }}
+                >
+                  {weeklyStats.avgChange > 0 ? '+' : ''}{weeklyStats.avgChange.toFixed(2)} kg
+                </p>
+                {impliedWeeklyGoal && (
+                  <p className="text-[#888888] font-mono text-xs mt-1">
+                    objetivo: {impliedWeeklyGoal > 0 ? '+' : ''}{impliedWeeklyGoal.toFixed(2)} kg
+                  </p>
+                )}
+              </div>
+              <div>
+                <p className="text-[#888888] font-mono text-xs mb-1">CONSISTENCIA</p>
+                <p
+                  className="font-mono text-xl font-bold"
+                  style={{ color: consistencyColor(weeklyStats.stdDev) }}
+                >
+                  σ {weeklyStats.stdDev.toFixed(2)}
+                </p>
+                <p className="font-mono text-xs mt-1" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
+                  {consistencyLabel(weeklyStats.stdDev)}
+                </p>
+              </div>
+            </div>
+
+            {/* Barra de ritmo vs objetivo */}
+            {impliedWeeklyGoal && (
+              <div className="mt-3">
+                <div className="flex justify-between mb-1">
+                  <p className="text-[#888888] font-mono text-xs">RITMO VS OBJETIVO</p>
+                  <p className="font-mono text-xs" style={{
+                    color: weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal))
+                  }}>
+                    {((Math.abs(weeklyStats.avgChange) / Math.abs(impliedWeeklyGoal)) * 100).toFixed(0)}%
+                  </p>
+                </div>
+                <div className="w-full bg-[#333333] h-1.5">
+                  <div
+                    className="h-1.5 transition-all"
+                    style={{
+                      width: `${Math.min(100, (Math.abs(weeklyStats.avgChange) / Math.abs(impliedWeeklyGoal)) * 100)}%`,
+                      backgroundColor: weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal))
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Gráfica */}
         {chartData.length > 1 && (
           <PhaseChart data={chartData} phaseColor={phaseColor} weightGoal={weightGoal} />
         )}

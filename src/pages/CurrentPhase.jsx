@@ -30,28 +30,21 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
 
   if (!data.length) return null
 
-  const W = 320
-  const H = 140
+  const W = 320, H = 140
   const PAD = { top: 10, right: 10, bottom: 16, left: 36 }
   const chartW = W - PAD.left - PAD.right
   const chartH = H - PAD.top - PAD.bottom
 
   const weights = data.map(d => d.weight)
   const allVals = weightGoal ? [...weights, weightGoal] : weights
-  const minW = Math.min(...allVals)
-  const maxW = Math.max(...allVals)
+  const minW = Math.min(...allVals), maxW = Math.max(...allVals)
   const range = maxW - minW || 1
 
-  function xPos(i) {
-    return PAD.left + (i / Math.max(data.length - 1, 1)) * chartW
-  }
-  function yPos(w) {
-    return PAD.top + chartH - ((w - minW) / range) * chartH
-  }
+  function xPos(i) { return PAD.left + (i / Math.max(data.length - 1, 1)) * chartW }
+  function yPos(w) { return PAD.top + chartH - ((w - minW) / range) * chartH }
 
-  const ticks = 3
-  const yTicks = Array.from({ length: ticks + 1 }, (_, i) => {
-    const val = minW + (range * i) / ticks
+  const ticks = Array.from({ length: 4 }, (_, i) => {
+    const val = minW + (range * i) / 3
     return { val, y: yPos(val) }
   })
 
@@ -63,28 +56,17 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
     if (!svg) return
     const rect = svg.getBoundingClientRect()
     const x = e.clientX - rect.left - PAD.left
-    const idx = Math.round((x / chartW) * (data.length - 1))
-    const clamped = Math.max(0, Math.min(data.length - 1, idx))
-    const d = data[clamped]
-    setTooltip({
-      x: xPos(clamped),
-      y: yPos(d.weight),
-      weight: d.weight,
-      date: parseDate(d.date).toLocaleDateString('es-ES'),
-    })
+    const idx = Math.max(0, Math.min(data.length - 1, Math.round((x / chartW) * (data.length - 1))))
+    const d = data[idx]
+    setTooltip({ x: xPos(idx), y: yPos(d.weight), weight: d.weight, date: parseDate(d.date).toLocaleDateString('es-ES') })
   }
 
   return (
     <div className="bg-[#141414] border border-[#333333] p-4 mb-4 relative">
       <p className="text-[#888888] font-mono text-xs mb-3">EVOLUCIÓN EN ESTA FASE</p>
-      <svg
-        ref={svgRef}
-        viewBox={`0 0 ${W} ${H}`}
-        className="w-full"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={() => setTooltip(null)}
-      >
-        {yTicks.map((t, i) => (
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
+        onMouseMove={handleMouseMove} onMouseLeave={() => setTooltip(null)}>
+        {ticks.map((t, i) => (
           <g key={i}>
             <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#1f1f1f" strokeWidth="1" />
             <text x={PAD.left - 4} y={t.y + 4} textAnchor="end" fill="#666" fontSize="9" fontFamily="Courier New">
@@ -92,25 +74,12 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
             </text>
           </g>
         ))}
-
         {goalY && (
-          <line
-            x1={PAD.left} y1={goalY}
-            x2={W - PAD.right} y2={goalY}
-            stroke={phaseColor} strokeWidth="1"
-            strokeDasharray="4,4" strokeOpacity="0.5"
-          />
+          <line x1={PAD.left} y1={goalY} x2={W - PAD.right} y2={goalY}
+            stroke={phaseColor} strokeWidth="1" strokeDasharray="4,4" strokeOpacity="0.5" />
         )}
-
-        <polyline
-          points={points}
-          fill="none"
-          stroke={phaseColor}
-          strokeWidth="2"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-        />
-
+        <polyline points={points} fill="none" stroke={phaseColor} strokeWidth="2"
+          strokeLinejoin="round" strokeLinecap="round" />
         {tooltip && (
           <>
             <line x1={tooltip.x} y1={PAD.top} x2={tooltip.x} y2={H - PAD.bottom}
@@ -119,14 +88,12 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
           </>
         )}
       </svg>
-
       {tooltip && (
         <div className="absolute top-10 right-4 bg-[#0a0a0a] border border-[#333333] px-3 py-2 font-mono text-xs pointer-events-none">
           <p className="text-[#888888]">{tooltip.date}</p>
           <p className="font-bold" style={{ color: phaseColor }}>{tooltip.weight.toFixed(2)} kg</p>
         </div>
       )}
-
       {weightGoal && (
         <p className="text-[#888888] font-mono text-xs mt-1 opacity-60">
           — — objetivo: {parseFloat(weightGoal).toFixed(2)} kg
@@ -154,13 +121,13 @@ export default function CurrentPhase({ onNavigate }) {
   }, [])
 
   if (loading) return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center">
       <p className="text-[#888888] font-mono text-sm">cargando...</p>
     </div>
   )
 
   if (!phase) return (
-    <div className="min-h-screen bg-[#0a0a0a] px-6 pb-10">
+    <div className="min-h-screen px-6 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => onNavigate('data')} />
         <PageHeader title="// FASE ACTUAL" />
@@ -175,11 +142,7 @@ export default function CurrentPhase({ onNavigate }) {
     .filter(w => parseDate(w.date) >= parseDate(phase.start_date))
     .sort((a, b) => parseDate(a.date) - parseDate(b.date))
 
-  const chartData = phaseWeights.map(w => ({
-    date: w.date,
-    weight: parseFloat(w.weight),
-  }))
-
+  const chartData = phaseWeights.map(w => ({ date: w.date, weight: parseFloat(w.weight) }))
   const sortedDesc = [...phaseWeights].sort((a, b) => parseDate(b.date) - parseDate(a.date))
   const currentWeight = sortedDesc[0]?.weight ?? null
   const startWeight = phaseWeights[0]?.weight ?? null
@@ -206,7 +169,7 @@ export default function CurrentPhase({ onNavigate }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] px-6 md:px-16 pb-10">
+    <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => onNavigate('data')} />
         <PageHeader title="// FASE ACTUAL" />
@@ -224,11 +187,7 @@ export default function CurrentPhase({ onNavigate }) {
         <div className="grid grid-cols-2 gap-3 mb-4">
           <MetricCard label="PESO ACTUAL" value={currentWeight ? `${parseFloat(currentWeight).toFixed(2)} kg` : '—'} />
           <MetricCard label="PESO OBJETIVO" value={weightGoal ? `${weightGoal.toFixed(2)} kg` : '—'} />
-          <MetricCard
-            label="DIFERENCIA"
-            value={diff ? `${diff > 0 ? '+' : ''}${diff} kg` : '—'}
-            sub="para el objetivo"
-          />
+          <MetricCard label="DIFERENCIA" value={diff ? `${diff > 0 ? '+' : ''}${diff} kg` : '—'} sub="para el objetivo" />
           <MetricCard
             label="DESDE INICIO"
             value={gained ? `${gained > 0 ? '+' : ''}${gained} kg` : '—'}
@@ -250,10 +209,7 @@ export default function CurrentPhase({ onNavigate }) {
               <p className="text-[#c8f500] font-mono text-xs">{Math.round(progress * 100)}%</p>
             </div>
             <div className="w-full bg-[#333333] h-2">
-              <div
-                className="h-2 transition-all"
-                style={{ width: `${progress * 100}%`, backgroundColor: phaseColor }}
-              />
+              <div className="h-2 transition-all" style={{ width: `${progress * 100}%`, backgroundColor: phaseColor }} />
             </div>
           </div>
         )}
@@ -262,7 +218,15 @@ export default function CurrentPhase({ onNavigate }) {
           <PhaseChart data={chartData} phaseColor={phaseColor} weightGoal={weightGoal} />
         )}
 
-        <Separator className="mt-6 mb-4" />
+        {/* Botón editar objetivos */}
+        <button
+          onClick={() => onNavigate('editPhaseGoals', phase)}
+          className="w-full h-10 bg-transparent border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors mb-4"
+        >
+          // EDITAR OBJETIVOS
+        </button>
+
+        <Separator className="mt-2 mb-4" />
         <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
       </div>
     </div>

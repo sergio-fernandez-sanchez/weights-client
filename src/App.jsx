@@ -9,11 +9,18 @@ import WeightHistory from './pages/WeightHistory'
 import CurrentPhase from './pages/CurrentPhase'
 import Reports from './pages/Reports'
 import AiReport from './pages/AiReport'
+import EditPhaseGoals from './pages/EditPhaseGoals'
 import ParticleBackground from './components/ParticleBackground'
 
 export default function App() {
   const [auth, setAuth] = useState(isAuthenticated())
   const [page, setPage] = useState('home')
+  const [pageData, setPageData] = useState(null)
+
+  function navigate(newPage, data = null) {
+    setPage(newPage)
+    setPageData(data)
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] relative">
@@ -23,14 +30,15 @@ export default function App() {
           <Auth onLogin={() => setAuth(true)} />
         ) : (
           <div key={page} className="animate-fade-in">
-            {page === 'home'          && <Home          onNavigate={setPage} onLogout={() => setAuth(false)} />}
-            {page === 'phase'         && <Phase         onNavigate={setPage} />}
-            {page === 'report'        && <Report        onNavigate={setPage} />}
-            {page === 'data'          && <DataMenu      onNavigate={setPage} />}
-            {page === 'weightHistory' && <WeightHistory onNavigate={setPage} />}
-            {page === 'currentPhase'  && <CurrentPhase  onNavigate={setPage} />}
-            {page === 'reports'       && <Reports       onNavigate={setPage} />}
-            {page === 'aiReport'      && <AiReport      onNavigate={setPage} />}
+            {page === 'home'            && <Home            onNavigate={navigate} onLogout={() => setAuth(false)} />}
+            {page === 'phase'           && <Phase           onNavigate={navigate} />}
+            {page === 'report'          && <Report          onNavigate={navigate} />}
+            {page === 'data'            && <DataMenu        onNavigate={navigate} />}
+            {page === 'weightHistory'   && <WeightHistory   onNavigate={navigate} />}
+            {page === 'currentPhase'    && <CurrentPhase    onNavigate={navigate} />}
+            {page === 'reports'         && <Reports         onNavigate={navigate} />}
+            {page === 'aiReport'        && <AiReport        onNavigate={navigate} />}
+            {page === 'editPhaseGoals'  && <EditPhaseGoals  onNavigate={navigate} phase={pageData} />}
           </div>
         )}
       </div>

@@ -93,6 +93,13 @@ async function postPhase(phase_type, weight_goal, date_goal) {
   })
 }
 
+async function patchPhaseGoals(weight_goal, date_goal) {
+  return request('/phases/active', {
+    method: 'PATCH',
+    body: JSON.stringify({ weight_goal, date_goal }),
+  })
+}
+
 // ── Reports endpoints ─────────────────────────────────────────────────────────
 
 async function getReports() {
@@ -131,6 +138,7 @@ export {
   getPhases,
   getActivePhase,
   postPhase,
+  patchPhaseGoals,
   getReports,
   postReport,
   getAiReport,

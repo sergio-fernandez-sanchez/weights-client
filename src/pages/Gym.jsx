@@ -32,7 +32,7 @@ function calcProgress(allLogs, exerciseTypeId, phaseStartDate) {
     .filter(l => l.exercise_type_id === exerciseTypeId && l.weight)
     .sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
 
-  if (history.length < 2) return { phase: null, total: null }
+  if (history.length < 2) return { phase: null, total: null, noData: true }
 
   const current = history[history.length - 1]
   const first = history[0]
@@ -53,7 +53,27 @@ function calcProgress(allLogs, exerciseTypeId, phaseStartDate) {
     }
   }
 
-  return { phase: phasePct, total: totalPct }
+  return { phase: phasePct, total: totalPct, noData: false }
+}
+
+function ProgressCard({ label, value, noData }) {
+  return (
+    <div className="flex-1 bg-[#0a0a0a] border border-[#1e1e1e] px-3 py-2 relative overflow-hidden">
+      {/* Línea superior de color */}
+      <div
+        className="absolute top-0 left-0 right-0 h-px"
+        style={{ backgroundColor: noData ? '#2a2a2a' : progressColor(value) }}
+      />
+      <p className="text-[#3a3a3a] font-mono text-xs tracking-widest mb-1">{label}</p>
+      {noData ? (
+        <p className="text-[#2a2a2a] font-mono text-xs">sin historial</p>
+      ) : (
+        <p className="font-mono text-base font-bold" style={{ color: progressColor(value) }}>
+          {progressLabel(value)}
+        </p>
+      )}
+    </div>
+  )
 }
 
 export default function Gym({ onNavigate }) {
@@ -171,7 +191,6 @@ export default function Gym({ onNavigate }) {
     </div>
   )
 
-  // ── Lista ─────────────────────────────────────────────────────────────────
   if (mode === 'list') return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
@@ -189,15 +208,10 @@ export default function Gym({ onNavigate }) {
               <div className="flex flex-col gap-px">
                 {catLogs.map(log => {
                   const progress = calcProgress(allLogs, log.exercise_type_id, activePhase?.start_date)
-                  const hasProgress = progress.phase !== null || progress.total !== null
                   return (
                     <div key={log.id} className="flex items-stretch bg-[#141414] border-b border-[#1a1a1a] hover:bg-[#181818] transition-colors group">
-                      {/* Barra lateral */}
                       <div className="w-0.5 flex-shrink-0 bg-[#c8f500] opacity-30 group-hover:opacity-80 transition-opacity" />
-
-                      {/* Contenido */}
                       <div className="flex-1 px-4 py-3 min-w-0">
-                        {/* Fila principal */}
                         <div className="flex items-center justify-between">
                           <div className="min-w-0">
                             <p className="text-[#e8e8e8] font-mono text-sm font-bold tracking-wide truncate uppercase">
@@ -225,27 +239,18 @@ export default function Gym({ onNavigate }) {
                           </div>
                         </div>
 
-                        {/* Mini tarjetas de progreso */}
-                        {hasProgress && (
-                          <div className="flex gap-2 mt-2">
-                            {progress.phase !== null && (
-                              <div className="flex-1 bg-[#0f0f0f] border border-[#222222] px-2 py-1.5">
-                                <p className="text-[#555555] font-mono text-xs leading-none mb-1">FASE</p>
-                                <p className="font-mono text-xs font-bold leading-none" style={{ color: progressColor(progress.phase) }}>
-                                  {progressLabel(progress.phase)}
-                                </p>
-                              </div>
-                            )}
-                            {progress.total !== null && (
-                              <div className="flex-1 bg-[#0f0f0f] border border-[#222222] px-2 py-1.5">
-                                <p className="text-[#555555] font-mono text-xs leading-none mb-1">TOTAL</p>
-                                <p className="font-mono text-xs font-bold leading-none" style={{ color: progressColor(progress.total) }}>
-                                  {progressLabel(progress.total)}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        <div className="flex gap-2 mt-2">
+                          <ProgressCard
+                            label="FASE"
+                            value={progress.phase}
+                            noData={progress.noData || progress.phase === null}
+                          />
+                          <ProgressCard
+                            label="TOTAL"
+                            value={progress.total}
+                            noData={progress.noData}
+                          />
+                        </div>
                       </div>
                     </div>
                   )
@@ -268,13 +273,11 @@ export default function Gym({ onNavigate }) {
     </div>
   )
 
-  // ── Añadir ejercicio ──────────────────────────────────────────────────────
   if (mode === 'add') return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => setMode('list')} />
         <PageHeader title="// AÑADIR EJERCICIO" />
-
         <form onSubmit={handleAdd} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-[#888888] font-mono text-sm">EJERCICIO</label>
@@ -298,36 +301,30 @@ export default function Gym({ onNavigate }) {
               })}
             </select>
           </div>
-
           <Input label="PESO (kg) — opcional" type="number" step="0.5"
             value={weight} onChange={e => setWeight(e.target.value)} placeholder="100" />
           <Input label="REPETICIONES — opcional" type="number"
             value={reps} onChange={e => setReps(e.target.value)} placeholder="5" />
-
           {msg && <p className={`font-mono text-sm ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
           <Button type="submit" disabled={submitting}>{submitting ? '...' : 'AÑADIR'}</Button>
         </form>
-
         <button
           onClick={() => setMode('new-exercise')}
           className="w-full h-10 mt-4 bg-transparent border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors"
         >
           + CREAR EJERCICIO PERSONALIZADO
         </button>
-
         <Separator className="mt-8 mb-4" />
         <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
       </div>
     </div>
   )
 
-  // ── Editar ejercicio ──────────────────────────────────────────────────────
   if (mode === 'edit') return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => setMode('list')} />
         <PageHeader title="// ACTUALIZAR" />
-
         <div className="border-l-2 border-[#c8f500] pl-4 mb-6">
           <p className="text-[#888888] font-mono text-xs mb-1">EJERCICIO</p>
           <p className="text-[#e8e8e8] font-mono text-xl font-bold uppercase">{editingLog?.name}</p>
@@ -338,39 +335,32 @@ export default function Gym({ onNavigate }) {
             </span>
           </p>
         </div>
-
         <form onSubmit={handleEdit} className="flex flex-col gap-4">
           <Input label="NUEVO PESO (kg)" type="number" step="0.5"
             value={weight} onChange={e => setWeight(e.target.value)} placeholder="100" />
           <Input label="NUEVAS REPETICIONES" type="number"
             value={reps} onChange={e => setReps(e.target.value)} placeholder="5" />
-
           {msg && <p className={`font-mono text-sm ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
           <Button type="submit" disabled={submitting}>{submitting ? '...' : 'GUARDAR'}</Button>
         </form>
-
         <Separator className="mt-8 mb-4" />
         <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
       </div>
     </div>
   )
 
-  // ── Nuevo ejercicio personalizado ─────────────────────────────────────────
   if (mode === 'new-exercise') return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => setMode('add')} />
         <PageHeader title="// NUEVO EJERCICIO" />
-
         <form onSubmit={handleNewExercise} className="flex flex-col gap-4">
           <Input label="NOMBRE DEL EJERCICIO" type="text"
             value={newExerciseName} onChange={e => setNewExerciseName(e.target.value)}
             placeholder="Mi ejercicio" required />
-
           {msg && <p className={`font-mono text-sm ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
           <Button type="submit" disabled={submitting}>{submitting ? '...' : 'CREAR EJERCICIO'}</Button>
         </form>
-
         <Separator className="mt-8 mb-4" />
         <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
       </div>

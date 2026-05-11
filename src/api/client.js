@@ -186,6 +186,15 @@ async function getAiReport() {
   return res.text()
 }
 
+async function getRawReport() {
+  const token = getToken()
+  const res = await fetch(`${BASE_URL}/generate-report/raw`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  if (!res.ok) throw new Error('Error generando informe')
+  return res.text()
+}
+
 // ── Exports ───────────────────────────────────────────────────────────────────
 
 export {
@@ -203,6 +212,7 @@ export {
   patchPhaseGoals,
   getReports,
   postReport,
+  getRawReport,
   getAiReport,
   getCalories,
   getActiveCalories,

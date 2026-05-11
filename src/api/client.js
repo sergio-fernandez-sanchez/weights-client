@@ -130,6 +130,43 @@ async function postReport(reportData) {
   })
 }
 
+// ── Gym endpoints ─────────────────────────────────────────────────────────────
+
+async function getExerciseTypes() {
+  return request('/gym/exercise-types')
+}
+
+async function postExerciseType(name, category = 'custom') {
+  return request('/gym/exercise-types', {
+    method: 'POST',
+    body: JSON.stringify({ name, category }),
+  })
+}
+
+async function getActiveGymLogs() {
+  return request('/gym/logs/active')
+}
+
+async function postGymLog(exercise_type_id, weight, reps) {
+  return request('/gym/logs', {
+    method: 'POST',
+    body: JSON.stringify({ exercise_type_id, weight, reps }),
+  })
+}
+
+async function patchGymLog(log_id, exercise_type_id, weight, reps) {
+  return request(`/gym/logs/${log_id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ exercise_type_id, weight, reps }),
+  })
+}
+
+async function deleteGymLog(log_id) {
+  return request(`/gym/logs/${log_id}`, {
+    method: 'DELETE',
+  })
+}
+
 // ── AI Report ─────────────────────────────────────────────────────────────────
 
 async function getAiReport() {
@@ -162,4 +199,10 @@ export {
   getCalories,
   getActiveCalories,
   postCalories,
+  getExerciseTypes,
+  postExerciseType,
+  getActiveGymLogs,
+  postGymLog,
+  patchGymLog,
+  deleteGymLog,
 }

@@ -95,7 +95,6 @@ export default function Home({ onNavigate, onLogout }) {
         <button
           onClick={() => onNavigate('gym')}
           className="flex-1 h-10 bg-[#141414] border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors"
-          disabled
         >
           // GYM →
         </button>

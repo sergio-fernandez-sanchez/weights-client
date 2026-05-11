@@ -11,6 +11,7 @@ import Reports from './pages/Reports'
 import AiReport from './pages/AiReport'
 import EditPhaseGoals from './pages/EditPhaseGoals'
 import Calories from './pages/Calories'
+import Gym from './pages/Gym'
 import ParticleBackground from './components/ParticleBackground'
 
 export default function App() {
@@ -41,6 +42,7 @@ export default function App() {
             {page === 'aiReport'       && <AiReport       onNavigate={navigate} />}
             {page === 'editPhaseGoals' && <EditPhaseGoals onNavigate={navigate} phase={pageData} />}
             {page === 'calories'       && <Calories       onNavigate={navigate} currentCalories={pageData} />}
+            {page === 'gym'            && <Gym            onNavigate={navigate} />}
           </div>
         )}
       </div>

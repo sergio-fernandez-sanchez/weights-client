@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getActivePhase, getWeights } from '../api/client'
+import { getActivePhase, getWeights, getGymLogs } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
@@ -103,12 +103,9 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
   )
 }
 
-// ── Cálculos semanales ────────────────────────────────────────────────────────
-
 function calcWeeklyStats(phaseWeights) {
   if (phaseWeights.length < 2) return null
 
-  // Agrupar por semana ISO
   const byWeek = {}
   phaseWeights.forEach(w => {
     const d = parseDate(w.date)
@@ -122,38 +119,80 @@ function calcWeeklyStats(phaseWeights) {
   const weekKeys = Object.keys(byWeek).sort()
   if (weekKeys.length < 2) return null
 
-  // Media de cada semana
   const weeklyAvgs = weekKeys.map(k => {
     const vals = byWeek[k]
     return vals.reduce((a, b) => a + b, 0) / vals.length
   })
 
-  // Cambio semana a semana
   const weeklyChanges = []
   for (let i = 1; i < weeklyAvgs.length; i++) {
     weeklyChanges.push(weeklyAvgs[i] - weeklyAvgs[i - 1])
   }
 
   const avgChange = weeklyChanges.reduce((a, b) => a + b, 0) / weeklyChanges.length
-
-  // Desviación estándar
   const variance = weeklyChanges.reduce((acc, v) => acc + Math.pow(v - avgChange, 2), 0) / weeklyChanges.length
   const stdDev = Math.sqrt(variance)
 
   return { avgChange, stdDev, weeks: weeklyChanges.length }
 }
 
+// ── Cálculo de fuerza ─────────────────────────────────────────────────────────
+function calcStrengthProgress(gymLogs, phaseStartDate) {
+  if (!gymLogs.length || !phaseStartDate) return null
+
+  const phaseStart = parseDate(phaseStartDate)
+
+  // Agrupar por ejercicio
+  const byExercise = {}
+  gymLogs.forEach(log => {
+    if (!log.weight) return
+    if (!byExercise[log.exercise_type_id]) byExercise[log.exercise_type_id] = []
+    byExercise[log.exercise_type_id].push(log)
+  })
+
+  const changes = []
+  Object.values(byExercise).forEach(logs => {
+    const sorted = logs.sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
+    const current = sorted[sorted.length - 1]
+
+    // Buscar el último registro ANTES del inicio de la fase
+    const beforePhase = sorted.filter(l => parseDate(l.start_date) < phaseStart)
+    const duringPhase = sorted.filter(l => parseDate(l.start_date) >= phaseStart)
+
+    let baseLog = null
+    if (duringPhase.length > 0 && beforePhase.length > 0) {
+      baseLog = beforePhase[beforePhase.length - 1]
+    } else if (duringPhase.length >= 2) {
+      baseLog = duringPhase[0]
+    }
+
+    if (baseLog && current.id !== baseLog.id) {
+      const pct = ((parseFloat(current.weight) - parseFloat(baseLog.weight)) / parseFloat(baseLog.weight)) * 100
+      changes.push({ name: current.name, pct })
+    }
+  })
+
+  if (!changes.length) return null
+
+  const avg = changes.reduce((a, b) => a + b.pct, 0) / changes.length
+  return { avg, exercises: changes }
+}
+
 export default function CurrentPhase({ onNavigate }) {
   const [phase, setPhase] = useState(null)
   const [weights, setWeights] = useState([])
+  const [gymLogs, setGymLogs] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [phaseData, weightData] = await Promise.all([getActivePhase(), getWeights()])
+        const [phaseData, weightData, gymData] = await Promise.all([
+          getActivePhase(), getWeights(), getGymLogs()
+        ])
         setPhase(phaseData)
         setWeights(weightData)
+        setGymLogs(gymData)
       } catch {}
       finally { setLoading(false) }
     }
@@ -201,13 +240,11 @@ export default function CurrentPhase({ onNavigate }) {
   const diff = currentWeight && weightGoal ? (weightGoal - parseFloat(currentWeight)).toFixed(2) : null
   const gained = currentWeight && startWeight ? (parseFloat(currentWeight) - parseFloat(startWeight)).toFixed(2) : null
 
-  // Objetivo semanal implícito
   const impliedWeeklyGoal = weightGoal && startWeight && totalWeeks
-    ? ((weightGoal - parseFloat(startWeight)) / totalWeeks)
-    : null
+    ? ((weightGoal - parseFloat(startWeight)) / totalWeeks) : null
 
-  // Stats semanales
   const weeklyStats = calcWeeklyStats(phaseWeights)
+  const strengthProgress = calcStrengthProgress(gymLogs, phase.start_date)
 
   function gainedColor() {
     if (!gained) return '#c8f500'
@@ -215,6 +252,17 @@ export default function CurrentPhase({ onNavigate }) {
     if (phase.phase_type === 'bulk') return g > 0 ? '#4caf50' : '#f44336'
     if (phase.phase_type === 'cut')  return g < 0 ? '#4caf50' : '#f44336'
     return '#c8f500'
+  }
+
+  function strengthColor(pct) {
+    if (phase.phase_type === 'cut') {
+      if (pct >= -3) return '#4caf50'
+      if (pct >= -8) return '#ff9f00'
+      return '#f44336'
+    }
+    if (pct > 2) return '#4caf50'
+    if (pct >= 0) return '#ff9f00'
+    return '#f44336'
   }
 
   function weeklyRateColor(actual, goal) {
@@ -243,7 +291,6 @@ export default function CurrentPhase({ onNavigate }) {
         <BackButton onClick={() => onNavigate('data')} />
         <PageHeader title="// FASE ACTUAL" />
 
-        {/* Tipo de fase */}
         <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
           <p className="text-[#888888] font-mono text-xs mb-1">TIPO DE FASE</p>
           <p className="font-mono text-3xl font-bold" style={{ color: phaseColor }}>
@@ -254,7 +301,6 @@ export default function CurrentPhase({ onNavigate }) {
           </p>
         </div>
 
-        {/* Métricas principales */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <MetricCard label="PESO ACTUAL" value={currentWeight ? `${parseFloat(currentWeight).toFixed(2)} kg` : '—'} />
           <MetricCard label="PESO OBJETIVO" value={weightGoal ? `${weightGoal.toFixed(2)} kg` : '—'} />
@@ -286,6 +332,33 @@ export default function CurrentPhase({ onNavigate }) {
           </div>
         )}
 
+        {/* Rendimiento en gym */}
+        <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
+          <p className="text-[#888888] font-mono text-xs mb-3">RENDIMIENTO EN GYM</p>
+          {!strengthProgress ? (
+            <p className="text-[#555555] font-mono text-xs">sin datos suficientes</p>
+          ) : (
+            <>
+              <div className="flex items-end gap-3 mb-3">
+                <p className="font-mono text-3xl font-bold" style={{ color: strengthColor(strengthProgress.avg) }}>
+                  {strengthProgress.avg > 0 ? '+' : ''}{strengthProgress.avg.toFixed(1)}%
+                </p>
+                <p className="text-[#888888] font-mono text-xs mb-1">media de fuerza</p>
+              </div>
+              <div className="flex flex-col gap-1">
+                {strengthProgress.exercises.map((ex, i) => (
+                  <div key={i} className="flex justify-between items-center">
+                    <span className="text-[#555555] font-mono text-xs uppercase truncate mr-2">{ex.name}</span>
+                    <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color: strengthColor(ex.pct) }}>
+                      {ex.pct > 0 ? '+' : ''}{ex.pct.toFixed(1)}%
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
         {/* Ritmo semanal */}
         {weeklyStats && (
           <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
@@ -293,13 +366,8 @@ export default function CurrentPhase({ onNavigate }) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-[#888888] font-mono text-xs mb-1">MEDIA SEMANAL</p>
-                <p
-                  className="font-mono text-xl font-bold"
-                  style={{ color: impliedWeeklyGoal
-                    ? weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal))
-                    : '#c8f500'
-                  }}
-                >
+                <p className="font-mono text-xl font-bold"
+                  style={{ color: impliedWeeklyGoal ? weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) : '#c8f500' }}>
                   {weeklyStats.avgChange > 0 ? '+' : ''}{weeklyStats.avgChange.toFixed(2)} kg
                 </p>
                 {impliedWeeklyGoal && (
@@ -310,10 +378,7 @@ export default function CurrentPhase({ onNavigate }) {
               </div>
               <div>
                 <p className="text-[#888888] font-mono text-xs mb-1">CONSISTENCIA</p>
-                <p
-                  className="font-mono text-xl font-bold"
-                  style={{ color: consistencyColor(weeklyStats.stdDev) }}
-                >
+                <p className="font-mono text-xl font-bold" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
                   σ {weeklyStats.stdDev.toFixed(2)}
                 </p>
                 <p className="font-mono text-xs mt-1" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
@@ -321,21 +386,16 @@ export default function CurrentPhase({ onNavigate }) {
                 </p>
               </div>
             </div>
-
-            {/* Barra de ritmo vs objetivo */}
             {impliedWeeklyGoal && (
               <div className="mt-3">
                 <div className="flex justify-between mb-1">
                   <p className="text-[#888888] font-mono text-xs">RITMO VS OBJETIVO</p>
-                  <p className="font-mono text-xs" style={{
-                    color: weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal))
-                  }}>
+                  <p className="font-mono text-xs" style={{ color: weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) }}>
                     {((Math.abs(weeklyStats.avgChange) / Math.abs(impliedWeeklyGoal)) * 100).toFixed(0)}%
                   </p>
                 </div>
                 <div className="w-full bg-[#333333] h-1.5">
-                  <div
-                    className="h-1.5 transition-all"
+                  <div className="h-1.5 transition-all"
                     style={{
                       width: `${Math.min(100, (Math.abs(weeklyStats.avgChange) / Math.abs(impliedWeeklyGoal)) * 100)}%`,
                       backgroundColor: weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal))
@@ -347,12 +407,10 @@ export default function CurrentPhase({ onNavigate }) {
           </div>
         )}
 
-        {/* Gráfica */}
         {chartData.length > 1 && (
           <PhaseChart data={chartData} phaseColor={phaseColor} weightGoal={weightGoal} />
         )}
 
-        {/* Botón editar objetivos */}
         <button
           onClick={() => onNavigate('editPhaseGoals', phase)}
           className="w-full h-10 bg-transparent border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors mb-4"

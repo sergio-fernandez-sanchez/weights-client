@@ -136,6 +136,10 @@ async function getExerciseTypes() {
   return request('/gym/exercise-types')
 }
 
+async function getGymLogs() {
+  return request('/gym/logs')
+}
+
 async function postExerciseType(name, category = 'custom') {
   return request('/gym/exercise-types', {
     method: 'POST',
@@ -202,6 +206,7 @@ export {
   getExerciseTypes,
   postExerciseType,
   getActiveGymLogs,
+  getGymLogs,
   postGymLog,
   patchGymLog,
   deleteGymLog,

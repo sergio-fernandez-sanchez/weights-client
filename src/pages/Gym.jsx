@@ -189,47 +189,63 @@ export default function Gym({ onNavigate }) {
               <div className="flex flex-col gap-px">
                 {catLogs.map(log => {
                   const progress = calcProgress(allLogs, log.exercise_type_id, activePhase?.start_date)
+                  const hasProgress = progress.phase !== null || progress.total !== null
                   return (
-                    <div key={log.id} className="flex items-center bg-[#141414] border-b border-[#1a1a1a] px-4 h-16 hover:bg-[#181818] transition-colors group">
-                      {/* Barra lateral de color */}
-                      <div className="w-0.5 h-8 mr-4 flex-shrink-0 bg-[#c8f500] opacity-40 group-hover:opacity-100 transition-opacity" />
+                    <div key={log.id} className="flex items-stretch bg-[#141414] border-b border-[#1a1a1a] hover:bg-[#181818] transition-colors group">
+                      {/* Barra lateral */}
+                      <div className="w-0.5 flex-shrink-0 bg-[#c8f500] opacity-30 group-hover:opacity-80 transition-opacity" />
 
-                      {/* Nombre y datos */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[#e8e8e8] font-mono text-sm truncate">{log.name}</p>
-                        <div className="flex items-center gap-3 mt-0.5">
-                          <span className="text-[#c8f500] font-mono text-xs font-bold">
-                            {log.weight ? `${log.weight} kg` : '—'}
-                            {log.weight && log.reps ? ` × ${log.reps}` : ''}
-                            {log.reps && !log.weight ? `${log.reps} reps` : ''}
-                          </span>
-                          {progress.phase !== null && (
-                            <span className="font-mono text-xs" style={{ color: progressColor(progress.phase) }}>
-                              {progressLabel(progress.phase)} fase
-                            </span>
-                          )}
-                          {progress.total !== null && (
-                            <span className="font-mono text-xs" style={{ color: progressColor(progress.total) }}>
-                              {progressLabel(progress.total)} total
-                            </span>
-                          )}
+                      {/* Contenido */}
+                      <div className="flex-1 px-4 py-3 min-w-0">
+                        {/* Fila principal */}
+                        <div className="flex items-center justify-between">
+                          <div className="min-w-0">
+                            <p className="text-[#e8e8e8] font-mono text-sm font-bold tracking-wide truncate uppercase">
+                              {log.name}
+                            </p>
+                            <p className="text-[#c8f500] font-mono text-xs mt-0.5">
+                              {log.weight ? `${log.weight} kg` : '—'}
+                              {log.weight && log.reps ? ` × ${log.reps} reps` : ''}
+                              {log.reps && !log.weight ? `${log.reps} reps` : ''}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5 ml-3 flex-shrink-0">
+                            <button
+                              onClick={() => startEdit(log)}
+                              className="px-2 h-6 border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors"
+                            >
+                              EDIT
+                            </button>
+                            <button
+                              onClick={() => handleDelete(log)}
+                              className="w-6 h-6 border border-[#333333] text-[#444444] font-mono text-xs hover:border-[#ff2d2d] hover:text-[#ff2d2d] transition-colors flex items-center justify-center"
+                            >
+                              ✕
+                            </button>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Acciones */}
-                      <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-                        <button
-                          onClick={() => startEdit(log)}
-                          className="px-2 h-7 border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors"
-                        >
-                          EDIT
-                        </button>
-                        <button
-                          onClick={() => handleDelete(log)}
-                          className="w-7 h-7 border border-[#333333] text-[#444444] font-mono text-xs hover:border-[#ff2d2d] hover:text-[#ff2d2d] transition-colors flex items-center justify-center"
-                        >
-                          ✕
-                        </button>
+                        {/* Mini tarjetas de progreso */}
+                        {hasProgress && (
+                          <div className="flex gap-2 mt-2">
+                            {progress.phase !== null && (
+                              <div className="flex-1 bg-[#0f0f0f] border border-[#222222] px-2 py-1.5">
+                                <p className="text-[#555555] font-mono text-xs leading-none mb-1">FASE</p>
+                                <p className="font-mono text-xs font-bold leading-none" style={{ color: progressColor(progress.phase) }}>
+                                  {progressLabel(progress.phase)}
+                                </p>
+                              </div>
+                            )}
+                            {progress.total !== null && (
+                              <div className="flex-1 bg-[#0f0f0f] border border-[#222222] px-2 py-1.5">
+                                <p className="text-[#555555] font-mono text-xs leading-none mb-1">TOTAL</p>
+                                <p className="font-mono text-xs font-bold leading-none" style={{ color: progressColor(progress.total) }}>
+                                  {progressLabel(progress.total)}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )
@@ -314,7 +330,7 @@ export default function Gym({ onNavigate }) {
 
         <div className="border-l-2 border-[#c8f500] pl-4 mb-6">
           <p className="text-[#888888] font-mono text-xs mb-1">EJERCICIO</p>
-          <p className="text-[#e8e8e8] font-mono text-xl font-bold">{editingLog?.name}</p>
+          <p className="text-[#e8e8e8] font-mono text-xl font-bold uppercase">{editingLog?.name}</p>
           <p className="text-[#888888] font-mono text-xs mt-1">
             actual: <span className="text-[#c8f500]">
               {editingLog?.weight ? `${editingLog.weight} kg` : '—'}

@@ -24,12 +24,9 @@ function progressColor(pct) {
 }
 
 function progressLabel(pct) {
-  if (pct > 2) return `+${pct.toFixed(1)}%`
-  if (pct < -2) return `${pct.toFixed(1)}%`
   return `${pct > 0 ? '+' : ''}${pct.toFixed(1)}%`
 }
 
-// Calcula el progreso de un ejercicio dado su historial
 function calcProgress(allLogs, exerciseTypeId, phaseStartDate) {
   const history = allLogs
     .filter(l => l.exercise_type_id === exerciseTypeId && l.weight)
@@ -39,20 +36,15 @@ function calcProgress(allLogs, exerciseTypeId, phaseStartDate) {
 
   const current = history[history.length - 1]
   const first = history[0]
-
-  // Progreso total
   const totalPct = ((current.weight - first.weight) / first.weight) * 100
 
-  // Progreso en fase actual
   let phasePct = null
   if (phaseStartDate) {
     const phaseStart = parseDate(phaseStartDate)
     const phaseHistory = history.filter(l => parseDate(l.start_date) >= phaseStart)
     if (phaseHistory.length >= 2) {
-      const phaseFirst = phaseHistory[0]
-      phasePct = ((current.weight - phaseFirst.weight) / phaseFirst.weight) * 100
+      phasePct = ((current.weight - phaseHistory[0].weight) / phaseHistory[0].weight) * 100
     } else if (phaseHistory.length === 1) {
-      // Solo hay un registro en la fase — comparar con el último antes de la fase
       const beforePhase = history.filter(l => parseDate(l.start_date) < phaseStart)
       if (beforePhase.length > 0) {
         const lastBefore = beforePhase[beforePhase.length - 1]
@@ -191,60 +183,54 @@ export default function Gym({ onNavigate }) {
         ) : (
           Object.entries(grouped).map(([cat, catLogs]) => (
             <div key={cat} className="mb-5">
-              <p className="text-[#888888] font-mono text-xs mb-2 tracking-widest">
-                {CATEGORY_LABELS[cat] || cat.toUpperCase()}
+              <p className="text-[#333333] font-mono text-xs mb-2 tracking-widest">
+                ── {CATEGORY_LABELS[cat] || cat.toUpperCase()}
               </p>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-px">
                 {catLogs.map(log => {
                   const progress = calcProgress(allLogs, log.exercise_type_id, activePhase?.start_date)
                   return (
-                    <div key={log.id} className="bg-[#141414] border border-[#333333] p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <p className="text-[#e8e8e8] font-mono text-base font-bold">{log.name}</p>
-                          <p className="text-[#888888] font-mono text-xs mt-1">
+                    <div key={log.id} className="flex items-center bg-[#141414] border-b border-[#1a1a1a] px-4 h-16 hover:bg-[#181818] transition-colors group">
+                      {/* Barra lateral de color */}
+                      <div className="w-0.5 h-8 mr-4 flex-shrink-0 bg-[#c8f500] opacity-40 group-hover:opacity-100 transition-opacity" />
+
+                      {/* Nombre y datos */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[#e8e8e8] font-mono text-sm truncate">{log.name}</p>
+                        <div className="flex items-center gap-3 mt-0.5">
+                          <span className="text-[#c8f500] font-mono text-xs font-bold">
                             {log.weight ? `${log.weight} kg` : '—'}
-                            {log.weight && log.reps ? '  ×  ' : ''}
-                            {log.reps ? `${log.reps} reps` : ''}
-                            {!log.weight && !log.reps ? 'sin datos' : ''}
-                          </p>
+                            {log.weight && log.reps ? ` × ${log.reps}` : ''}
+                            {log.reps && !log.weight ? `${log.reps} reps` : ''}
+                          </span>
+                          {progress.phase !== null && (
+                            <span className="font-mono text-xs" style={{ color: progressColor(progress.phase) }}>
+                              {progressLabel(progress.phase)} fase
+                            </span>
+                          )}
+                          {progress.total !== null && (
+                            <span className="font-mono text-xs" style={{ color: progressColor(progress.total) }}>
+                              {progressLabel(progress.total)} total
+                            </span>
+                          )}
                         </div>
+                      </div>
+
+                      {/* Acciones */}
+                      <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                        <button
+                          onClick={() => startEdit(log)}
+                          className="px-2 h-7 border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors"
+                        >
+                          EDIT
+                        </button>
                         <button
                           onClick={() => handleDelete(log)}
-                          className="text-[#444444] font-mono text-sm hover:text-[#ff2d2d] transition-colors ml-2 mt-1"
+                          className="w-7 h-7 border border-[#333333] text-[#444444] font-mono text-xs hover:border-[#ff2d2d] hover:text-[#ff2d2d] transition-colors flex items-center justify-center"
                         >
                           ✕
                         </button>
                       </div>
-
-                      {/* Progreso */}
-                      {(progress.phase !== null || progress.total !== null) && (
-                        <div className="flex gap-3 mb-3">
-                          {progress.phase !== null && (
-                            <div className="flex-1 bg-[#0f0f0f] border border-[#222222] p-2">
-                              <p className="text-[#888888] font-mono text-xs mb-0.5">ESTA FASE</p>
-                              <p className="font-mono text-sm font-bold" style={{ color: progressColor(progress.phase) }}>
-                                {progressLabel(progress.phase)}
-                              </p>
-                            </div>
-                          )}
-                          {progress.total !== null && (
-                            <div className="flex-1 bg-[#0f0f0f] border border-[#222222] p-2">
-                              <p className="text-[#888888] font-mono text-xs mb-0.5">TOTAL</p>
-                              <p className="font-mono text-sm font-bold" style={{ color: progressColor(progress.total) }}>
-                                {progressLabel(progress.total)}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      <button
-                        onClick={() => startEdit(log)}
-                        className="w-full h-9 bg-transparent border border-[#c8f500] text-[#c8f500] font-mono text-xs hover:bg-[#c8f500] hover:text-[#0a0a0a] transition-colors tracking-widest"
-                      >
-                        ACTUALIZAR
-                      </button>
                     </div>
                   )
                 })}
@@ -255,12 +241,12 @@ export default function Gym({ onNavigate }) {
 
         <button
           onClick={() => setMode('add')}
-          className="w-full h-12 bg-transparent border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors mb-4"
+          className="w-full h-11 bg-transparent border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors mt-4 mb-4"
         >
           + AÑADIR EJERCICIO
         </button>
 
-        <Separator className="mt-4 mb-4" />
+        <Separator className="mt-2 mb-4" />
         <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
       </div>
     </div>
@@ -303,10 +289,7 @@ export default function Gym({ onNavigate }) {
             value={reps} onChange={e => setReps(e.target.value)} placeholder="5" />
 
           {msg && <p className={`font-mono text-sm ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
-
-          <Button type="submit" disabled={submitting}>
-            {submitting ? '...' : 'AÑADIR'}
-          </Button>
+          <Button type="submit" disabled={submitting}>{submitting ? '...' : 'AÑADIR'}</Button>
         </form>
 
         <button
@@ -329,13 +312,14 @@ export default function Gym({ onNavigate }) {
         <BackButton onClick={() => setMode('list')} />
         <PageHeader title="// ACTUALIZAR" />
 
-        <div className="bg-[#141414] border border-[#333333] p-4 mb-6">
+        <div className="border-l-2 border-[#c8f500] pl-4 mb-6">
           <p className="text-[#888888] font-mono text-xs mb-1">EJERCICIO</p>
-          <p className="text-[#c8f500] font-mono text-xl font-bold">{editingLog?.name}</p>
+          <p className="text-[#e8e8e8] font-mono text-xl font-bold">{editingLog?.name}</p>
           <p className="text-[#888888] font-mono text-xs mt-1">
-            actual: {editingLog?.weight ? `${editingLog.weight} kg` : '—'}
-            {editingLog?.weight && editingLog?.reps ? '  ×  ' : ''}
-            {editingLog?.reps ? `${editingLog.reps} reps` : ''}
+            actual: <span className="text-[#c8f500]">
+              {editingLog?.weight ? `${editingLog.weight} kg` : '—'}
+              {editingLog?.weight && editingLog?.reps ? ` × ${editingLog.reps} reps` : ''}
+            </span>
           </p>
         </div>
 
@@ -346,10 +330,7 @@ export default function Gym({ onNavigate }) {
             value={reps} onChange={e => setReps(e.target.value)} placeholder="5" />
 
           {msg && <p className={`font-mono text-sm ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
-
-          <Button type="submit" disabled={submitting}>
-            {submitting ? '...' : 'GUARDAR'}
-          </Button>
+          <Button type="submit" disabled={submitting}>{submitting ? '...' : 'GUARDAR'}</Button>
         </form>
 
         <Separator className="mt-8 mb-4" />
@@ -371,10 +352,7 @@ export default function Gym({ onNavigate }) {
             placeholder="Mi ejercicio" required />
 
           {msg && <p className={`font-mono text-sm ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
-
-          <Button type="submit" disabled={submitting}>
-            {submitting ? '...' : 'CREAR EJERCICIO'}
-          </Button>
+          <Button type="submit" disabled={submitting}>{submitting ? '...' : 'CREAR EJERCICIO'}</Button>
         </form>
 
         <Separator className="mt-8 mb-4" />

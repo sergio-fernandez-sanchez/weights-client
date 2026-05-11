@@ -166,9 +166,13 @@ async function patchGymLog(log_id, exercise_type_id, weight, reps) {
 }
 
 async function deleteGymLog(log_id) {
-  return request(`/gym/logs/${log_id}`, {
+  const token = getToken()
+  const res = await fetch(`${BASE_URL}/gym/logs/${log_id}`, {
     method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` }
   })
+  if (!res.ok) throw new Error(`Error ${res.status}`)
+  return true
 }
 
 // ── AI Report ─────────────────────────────────────────────────────────────────

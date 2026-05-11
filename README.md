@@ -17,14 +17,17 @@ Live at: [https://weights.up.railway.app](https://weights.up.railway.app)
 
 ## Pages
 
-- **Login / Register** — authentication
-- **Home** — log or update today's weight
-- **Weight History** — weight chart and table with filters (current phase, all, week, month, year) + body composition charts
-- **Current Phase** — active phase metrics, progress bar and weight evolution chart
-- **Reports** — nutritionist body composition reports with delta comparison
-- **New Phase** — start a new training phase
-- **New Report** — log a new nutritionist measurement
-- **AI Report** — generate and download a full `.txt` report ready for AI analysis
+- **Login / Register** — authentication with tab switcher
+- **Home** — log or update today's weight, calorie target button, gym shortcut
+- **Weight History** — weight chart and table with filters (current phase, all, week, month, year) + body composition charts from nutritionist reports
+- **Current Phase** — active phase metrics, temporal progress bar, gym strength progress (volume-based), weekly rhythm and consistency stats, weight evolution chart, edit goals button
+- **Reports** — nutritionist body composition reports with delta comparison, weight and phase context per report date
+- **AI Report** — generate and download two report types: optimized for AI analysis or full raw data
+- **New Phase** — start a new training phase with optional manual start date
+- **New Report** — log a new nutritionist measurement with optional manual date
+- **Calories** — update current daily calorie target
+- **Gym** — track gym performance: list active exercises with progress (phase and total %), add/edit/remove exercises, create custom exercises
+- **Edit Phase Goals** — update weight and date goal of the active phase
 
 ---
 
@@ -34,7 +37,7 @@ Live at: [https://weights.up.railway.app](https://weights.up.railway.app)
 weights-client/
 ├── src/
 │   ├── api/
-│   │   └── client.js          # API calls and auth token management
+│   │   └── client.js              # API calls and auth token management
 │   ├── components/
 │   │   ├── BackButton.jsx
 │   │   ├── Button.jsx
@@ -42,12 +45,16 @@ weights-client/
 │   │   ├── Input.jsx
 │   │   ├── PageHeader.jsx
 │   │   ├── PageWrapper.jsx
+│   │   ├── ParticleBackground.jsx
 │   │   └── Separator.jsx
 │   ├── pages/
 │   │   ├── AiReport.jsx
 │   │   ├── Auth.jsx
+│   │   ├── Calories.jsx
 │   │   ├── CurrentPhase.jsx
 │   │   ├── DataMenu.jsx
+│   │   ├── EditPhaseGoals.jsx
+│   │   ├── Gym.jsx
 │   │   ├── Home.jsx
 │   │   ├── Phase.jsx
 │   │   ├── Report.jsx

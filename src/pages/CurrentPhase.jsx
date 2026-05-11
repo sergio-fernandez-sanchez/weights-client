@@ -14,6 +14,12 @@ function parseDate(dateStr) {
   return new Date(dateStr + 'T00:00:00')
 }
 
+function volume(log) {
+  if (log.weight && log.reps) return parseFloat(log.weight) * parseInt(log.reps)
+  if (log.weight) return parseFloat(log.weight)
+  return null
+}
+
 function MetricCard({ label, value, sub, valueColor = '#c8f500' }) {
   return (
     <div className="bg-[#141414] border border-[#333333] p-4">
@@ -136,13 +142,11 @@ function calcWeeklyStats(phaseWeights) {
   return { avgChange, stdDev, weeks: weeklyChanges.length }
 }
 
-// ── Cálculo de fuerza ─────────────────────────────────────────────────────────
 function calcStrengthProgress(gymLogs, phaseStartDate) {
   if (!gymLogs.length || !phaseStartDate) return null
 
   const phaseStart = parseDate(phaseStartDate)
 
-  // Agrupar por ejercicio
   const byExercise = {}
   gymLogs.forEach(log => {
     if (!log.weight) return
@@ -155,7 +159,6 @@ function calcStrengthProgress(gymLogs, phaseStartDate) {
     const sorted = logs.sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
     const current = sorted[sorted.length - 1]
 
-    // Buscar el último registro ANTES del inicio de la fase
     const beforePhase = sorted.filter(l => parseDate(l.start_date) < phaseStart)
     const duringPhase = sorted.filter(l => parseDate(l.start_date) >= phaseStart)
 
@@ -167,7 +170,10 @@ function calcStrengthProgress(gymLogs, phaseStartDate) {
     }
 
     if (baseLog && current.id !== baseLog.id) {
-      const pct = ((parseFloat(current.weight) - parseFloat(baseLog.weight)) / parseFloat(baseLog.weight)) * 100
+      const volBase    = volume(baseLog)
+      const volCurrent = volume(current)
+      if (!volBase || !volCurrent) return
+      const pct = ((volCurrent - volBase) / volBase) * 100
       changes.push({ name: current.name, pct })
     }
   })
@@ -319,7 +325,6 @@ export default function CurrentPhase({ onNavigate }) {
           />
         </div>
 
-        {/* Progreso temporal */}
         {progress !== null && (
           <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
             <div className="flex justify-between mb-2">
@@ -332,7 +337,6 @@ export default function CurrentPhase({ onNavigate }) {
           </div>
         )}
 
-        {/* Rendimiento en gym */}
         <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
           <p className="text-[#888888] font-mono text-xs mb-3">RENDIMIENTO EN GYM</p>
           {!strengthProgress ? (
@@ -343,7 +347,7 @@ export default function CurrentPhase({ onNavigate }) {
                 <p className="font-mono text-3xl font-bold" style={{ color: strengthColor(strengthProgress.avg) }}>
                   {strengthProgress.avg > 0 ? '+' : ''}{strengthProgress.avg.toFixed(1)}%
                 </p>
-                <p className="text-[#888888] font-mono text-xs mb-1">media de fuerza</p>
+                <p className="text-[#888888] font-mono text-xs mb-1">volumen medio</p>
               </div>
               <div className="flex flex-col gap-1">
                 {strengthProgress.exercises.map((ex, i) => (
@@ -359,7 +363,6 @@ export default function CurrentPhase({ onNavigate }) {
           )}
         </div>
 
-        {/* Ritmo semanal */}
         {weeklyStats && (
           <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
             <p className="text-[#888888] font-mono text-xs mb-3">RITMO SEMANAL</p>

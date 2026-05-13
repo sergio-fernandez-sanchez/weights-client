@@ -16,6 +16,7 @@ export default function DataMenu({ onNavigate }) {
           ['// FASE ACTUAL →',  'currentPhase'],
           ['// INFORMES →',     'reports'],
           ['// GYM →',          'gymHistory'],
+          ['// CALORÍAS →',     'caloriesHistory'],
         ].map(([label, page]) => (
           <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>
             {label}

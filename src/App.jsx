@@ -13,6 +13,7 @@ import EditPhaseGoals from './pages/EditPhaseGoals'
 import Calories from './pages/Calories'
 import Gym from './pages/Gym'
 import GymHistory from './pages/GymHistory'
+import CaloriesHistory from './pages/CaloriesHistory'
 import ParticleBackground from './components/ParticleBackground'
 
 export default function App() {
@@ -21,14 +22,12 @@ export default function App() {
   const [pageData, setPageData] = useState(null)
 
   function navigate(newPage, data = null) {
-    // Empujar al historial del navegador
     window.history.pushState({ page: newPage, data }, '', '')
     setPage(newPage)
     setPageData(data)
   }
 
   useEffect(() => {
-    // Inicializar el estado del historial con home
     window.history.replaceState({ page: 'home', data: null }, '', '')
 
     function handlePopState(e) {
@@ -56,18 +55,19 @@ export default function App() {
           }} />
         ) : (
           <div key={page} className="animate-fade-in">
-            {page === 'home'           && <Home           onNavigate={navigate} onLogout={() => { setAuth(false); window.history.replaceState({ page: 'home', data: null }, '', '') }} />}
-            {page === 'phase'          && <Phase          onNavigate={navigate} />}
-            {page === 'report'         && <Report         onNavigate={navigate} />}
-            {page === 'data'           && <DataMenu       onNavigate={navigate} />}
-            {page === 'weightHistory'  && <WeightHistory  onNavigate={navigate} />}
-            {page === 'currentPhase'   && <CurrentPhase   onNavigate={navigate} />}
-            {page === 'reports'        && <Reports        onNavigate={navigate} />}
-            {page === 'aiReport'       && <AiReport       onNavigate={navigate} />}
-            {page === 'editPhaseGoals' && <EditPhaseGoals onNavigate={navigate} phase={pageData} />}
-            {page === 'calories'       && <Calories       onNavigate={navigate} currentCalories={pageData} />}
-            {page === 'gym'            && <Gym            onNavigate={navigate} />}
-            {page === 'gymHistory'     && <GymHistory     onNavigate={navigate} />}
+            {page === 'home'             && <Home             onNavigate={navigate} onLogout={() => { setAuth(false); window.history.replaceState({ page: 'home', data: null }, '', '') }} />}
+            {page === 'phase'            && <Phase            onNavigate={navigate} />}
+            {page === 'report'           && <Report           onNavigate={navigate} />}
+            {page === 'data'             && <DataMenu         onNavigate={navigate} />}
+            {page === 'weightHistory'    && <WeightHistory    onNavigate={navigate} />}
+            {page === 'currentPhase'     && <CurrentPhase     onNavigate={navigate} />}
+            {page === 'reports'          && <Reports          onNavigate={navigate} />}
+            {page === 'aiReport'         && <AiReport         onNavigate={navigate} />}
+            {page === 'editPhaseGoals'   && <EditPhaseGoals   onNavigate={navigate} phase={pageData} />}
+            {page === 'calories'         && <Calories         onNavigate={navigate} currentCalories={pageData} />}
+            {page === 'gym'              && <Gym              onNavigate={navigate} />}
+            {page === 'gymHistory'       && <GymHistory       onNavigate={navigate} />}
+            {page === 'caloriesHistory'  && <CaloriesHistory  onNavigate={navigate} />}
           </div>
         )}
       </div>

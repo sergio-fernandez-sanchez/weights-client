@@ -26,6 +26,11 @@ async function request(path, options = {}) {
     ...options.headers,
   }
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers })
+  if (res.status === 401) {
+    removeToken()
+    window.location.reload()
+    return
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
     throw new Error(err.detail || `Error ${res.status}`)
@@ -171,6 +176,11 @@ async function deleteGymLog(log_id) {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` }
   })
+  if (res.status === 401) {
+    removeToken()
+    window.location.reload()
+    return
+  }
   if (!res.ok) throw new Error(`Error ${res.status}`)
   return true
 }
@@ -182,6 +192,11 @@ async function getAiReport() {
   const res = await fetch(`${BASE_URL}/generate-report`, {
     headers: { Authorization: `Bearer ${token}` }
   })
+  if (res.status === 401) {
+    removeToken()
+    window.location.reload()
+    return
+  }
   if (!res.ok) throw new Error('Error generando informe')
   return res.text()
 }
@@ -191,6 +206,11 @@ async function getRawReport() {
   const res = await fetch(`${BASE_URL}/generate-report/raw`, {
     headers: { Authorization: `Bearer ${token}` }
   })
+  if (res.status === 401) {
+    removeToken()
+    window.location.reload()
+    return
+  }
   if (!res.ok) throw new Error('Error generando informe')
   return res.text()
 }
@@ -212,8 +232,8 @@ export {
   patchPhaseGoals,
   getReports,
   postReport,
-  getRawReport,
   getAiReport,
+  getRawReport,
   getCalories,
   getActiveCalories,
   postCalories,

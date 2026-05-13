@@ -38,7 +38,6 @@ function ExerciseChart({ exerciseId, name, logs, phases }) {
       log,
     }))
     .sort((a, b) => a.date - b.date)
-    .filter((p, i, arr) => i === 0 || p.weight !== arr[i - 1].weight)
 
   if (points.length < 1) return null
 

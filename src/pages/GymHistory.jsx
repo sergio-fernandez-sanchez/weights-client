@@ -44,6 +44,7 @@ function ExerciseChart({ name, logs, phases }) {
     })
     .filter(Boolean)
     .sort((a, b) => a.date - b.date)
+    .filter((p, i, arr) => i === 0 || p.vol !== arr[i-1].vol)
 
   if (points.length < 1) return null
 

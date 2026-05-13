@@ -24,37 +24,21 @@ function getPhaseOnDate(phases, date) {
   return 'unknown'
 }
 
-function volume(log) {
-  if (log.weight && log.reps) return parseFloat(log.weight) * parseInt(log.reps)
-  if (log.weight) return parseFloat(log.weight)
-  return null
-}
-
 function ExerciseChart({ exerciseId, name, logs, phases }) {
   const [tooltip, setTooltip] = useState(null)
   const svgRef = useRef(null)
 
-  // Deduplicar por start_date — quedarse con el de mayor volumen
-  const dedupedLogs = Object.values(
-    logs.reduce((acc, log) => {
-      const key = log.start_date
-      const vol = volume(log) || 0
-      if (!acc[key] || vol > volume(acc[key])) acc[key] = log
-      return acc
-    }, {})
-  )
-
-  const points = dedupedLogs
-    .map(log => {
-      const vol = volume(log)
-      if (!vol) return null
-      const date = parseDate(log.start_date)
-      const phase = getPhaseOnDate(phases, date)
-      return { date, vol, phase, log }
-    })
-    .filter(Boolean)
+  const points = logs
+    .filter(log => log.weight)
+    .map(log => ({
+      date: parseDate(log.start_date),
+      weight: parseFloat(log.weight),
+      reps: log.reps,
+      phase: getPhaseOnDate(phases, parseDate(log.start_date)),
+      log,
+    }))
     .sort((a, b) => a.date - b.date)
-    .filter((p, i, arr) => i === 0 || p.vol !== arr[i - 1].vol)
+    .filter((p, i, arr) => i === 0 || p.weight !== arr[i - 1].weight)
 
   if (points.length < 1) return null
 
@@ -67,24 +51,22 @@ function ExerciseChart({ exerciseId, name, logs, phases }) {
   const maxDate = points[points.length - 1].date.getTime()
   const dateRange = maxDate - minDate || 1
 
-  const vols = points.map(p => p.vol)
-  const minVol = Math.min(...vols)
-  const maxVol = Math.max(...vols)
-  const volRange = maxVol - minVol || 1
+  const weights = points.map(p => p.weight)
+  const minW = Math.min(...weights)
+  const maxW = Math.max(...weights)
+  const wRange = maxW - minW || 1
 
   function xPos(date) {
     return PAD.left + ((date.getTime() - minDate) / dateRange) * chartW
   }
-  function yPos(vol) {
-    return PAD.top + chartH - ((vol - minVol) / volRange) * chartH
+  function yPos(w) {
+    return PAD.top + chartH - ((w - minW) / wRange) * chartH
   }
 
   const yTicks = Array.from({ length: 3 }, (_, i) => {
-    const val = minVol + (volRange * i) / 2
+    const val = minW + (wRange * i) / 2
     return { val, y: yPos(val) }
   })
-
-  const xTicks = [points[0], points[points.length - 1]]
 
   function handleMouseMove(e) {
     const svg = svgRef.current
@@ -94,19 +76,17 @@ function ExerciseChart({ exerciseId, name, logs, phases }) {
     let closest = null
     let minDist = Infinity
     points.forEach(p => {
-      const px = xPos(p.date)
-      const dist = Math.abs(mx - px)
+      const dist = Math.abs(mx - xPos(p.date))
       if (dist < minDist) { minDist = dist; closest = p }
     })
     if (closest && minDist < 30) {
       setTooltip({
         x: xPos(closest.date),
-        y: yPos(closest.vol),
-        vol: closest.vol,
+        y: yPos(closest.weight),
+        weight: closest.weight,
+        reps: closest.reps,
         date: closest.date.toLocaleDateString('es-ES'),
         phase: closest.phase,
-        weight: closest.log.weight,
-        reps: closest.log.reps,
       })
     } else {
       setTooltip(null)
@@ -123,34 +103,34 @@ function ExerciseChart({ exerciseId, name, logs, phases }) {
           <g key={i}>
             <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#1f1f1f" strokeWidth="1" />
             <text x={PAD.left - 4} y={t.y + 4} textAnchor="end" fill="#555" fontSize="8" fontFamily="Courier New">
-              {t.val >= 1000 ? `${(t.val / 1000).toFixed(1)}k` : t.val.toFixed(0)}
+              {t.val.toFixed(0)}
             </text>
           </g>
         ))}
 
-        {xTicks.map((p, i) => (
-          <text key={i} x={xPos(p.date)} y={H - 4} textAnchor={i === 0 ? 'start' : 'end'}
-            fill="#555" fontSize="8" fontFamily="Courier New">
-            {p.date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
-          </text>
-        ))}
+        <text x={PAD.left} y={H - 4} textAnchor="start" fill="#555" fontSize="8" fontFamily="Courier New">
+          {points[0].date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+        </text>
+        <text x={W - PAD.right} y={H - 4} textAnchor="end" fill="#555" fontSize="8" fontFamily="Courier New">
+          {points[points.length - 1].date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+        </text>
 
         {points.map((p, i) => {
           if (i === 0) return null
           const prev = points[i - 1]
           return (
             <line key={i}
-              x1={xPos(prev.date)} y1={yPos(prev.vol)}
-              x2={xPos(p.date)} y2={yPos(p.vol)}
+              x1={xPos(prev.date)} y1={yPos(prev.weight)}
+              x2={xPos(p.date)} y2={yPos(p.weight)}
               stroke={PHASE_COLORS[p.phase] || '#888888'}
-              strokeWidth="1.5" strokeOpacity="0.5"
+              strokeWidth="1.5" strokeOpacity="0.6"
             />
           )
         })}
 
         {points.map((p, i) => (
           <circle key={i}
-            cx={xPos(p.date)} cy={yPos(p.vol)} r="4"
+            cx={xPos(p.date)} cy={yPos(p.weight)} r="4"
             fill={PHASE_COLORS[p.phase] || '#888888'}
             stroke="#0a0a0a" strokeWidth="1.5"
           />
@@ -166,10 +146,8 @@ function ExerciseChart({ exerciseId, name, logs, phases }) {
         <div className="absolute top-8 right-4 bg-[#0a0a0a] border border-[#333333] px-3 py-2 font-mono text-xs pointer-events-none">
           <p className="text-[#888888]">{tooltip.date}</p>
           <p className="font-bold" style={{ color: PHASE_COLORS[tooltip.phase] }}>
-            {tooltip.weight ? `${tooltip.weight} kg` : '—'}
-            {tooltip.weight && tooltip.reps ? ` × ${tooltip.reps}` : ''}
+            {tooltip.weight} kg{tooltip.reps ? ` × ${tooltip.reps} reps` : ''}
           </p>
-          <p className="text-[#555555]">vol: {tooltip.vol.toFixed(0)}</p>
         </div>
       )}
 

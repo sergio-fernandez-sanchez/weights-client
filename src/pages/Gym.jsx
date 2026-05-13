@@ -66,7 +66,7 @@ function ProgressCard({ label, value, noData }) {
       />
       <p className="text-[#3a3a3a] font-mono text-xs tracking-widest mb-1">{label}</p>
       {noData ? (
-        <p className="text-[#2a2a2a] font-mono text-xs">sin historial</p>
+        <p className="text-[#555555] font-mono text-xs font-bold">0.0%</p>
       ) : (
         <p className="font-mono text-base font-bold" style={{ color: progressColor(value) }}>
           {progressLabel(value)}

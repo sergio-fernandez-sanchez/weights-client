@@ -30,11 +30,21 @@ function volume(log) {
   return null
 }
 
-function ExerciseChart({ name, logs, phases }) {
+function ExerciseChart({ exerciseId, name, logs, phases }) {
   const [tooltip, setTooltip] = useState(null)
   const svgRef = useRef(null)
 
-  const points = logs
+  // Deduplicar por start_date — quedarse con el de mayor volumen
+  const dedupedLogs = Object.values(
+    logs.reduce((acc, log) => {
+      const key = log.start_date
+      const vol = volume(log) || 0
+      if (!acc[key] || vol > volume(acc[key])) acc[key] = log
+      return acc
+    }, {})
+  )
+
+  const points = dedupedLogs
     .map(log => {
       const vol = volume(log)
       if (!vol) return null
@@ -44,7 +54,7 @@ function ExerciseChart({ name, logs, phases }) {
     })
     .filter(Boolean)
     .sort((a, b) => a.date - b.date)
-    .filter((p, i, arr) => i === 0 || p.vol !== arr[i-1].vol)
+    .filter((p, i, arr) => i === 0 || p.vol !== arr[i - 1].vol)
 
   if (points.length < 1) return null
 
@@ -69,13 +79,11 @@ function ExerciseChart({ name, logs, phases }) {
     return PAD.top + chartH - ((vol - minVol) / volRange) * chartH
   }
 
-  // Ticks Y
   const yTicks = Array.from({ length: 3 }, (_, i) => {
     const val = minVol + (volRange * i) / 2
     return { val, y: yPos(val) }
   })
 
-  // Ticks X — primero y último
   const xTicks = [points[0], points[points.length - 1]]
 
   function handleMouseMove(e) {
@@ -111,17 +119,15 @@ function ExerciseChart({ name, logs, phases }) {
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
         onMouseMove={handleMouseMove} onMouseLeave={() => setTooltip(null)}>
 
-        {/* Grid Y */}
         {yTicks.map((t, i) => (
           <g key={i}>
             <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#1f1f1f" strokeWidth="1" />
             <text x={PAD.left - 4} y={t.y + 4} textAnchor="end" fill="#555" fontSize="8" fontFamily="Courier New">
-              {t.val >= 1000 ? `${(t.val/1000).toFixed(1)}k` : t.val.toFixed(0)}
+              {t.val >= 1000 ? `${(t.val / 1000).toFixed(1)}k` : t.val.toFixed(0)}
             </text>
           </g>
         ))}
 
-        {/* Ticks X */}
         {xTicks.map((p, i) => (
           <text key={i} x={xPos(p.date)} y={H - 4} textAnchor={i === 0 ? 'start' : 'end'}
             fill="#555" fontSize="8" fontFamily="Courier New">
@@ -129,7 +135,6 @@ function ExerciseChart({ name, logs, phases }) {
           </text>
         ))}
 
-        {/* Líneas entre puntos del mismo color de fase */}
         {points.map((p, i) => {
           if (i === 0) return null
           const prev = points[i - 1]
@@ -143,7 +148,6 @@ function ExerciseChart({ name, logs, phases }) {
           )
         })}
 
-        {/* Puntos */}
         {points.map((p, i) => (
           <circle key={i}
             cx={xPos(p.date)} cy={yPos(p.vol)} r="4"
@@ -152,14 +156,12 @@ function ExerciseChart({ name, logs, phases }) {
           />
         ))}
 
-        {/* Tooltip crosshair */}
         {tooltip && (
           <line x1={tooltip.x} y1={PAD.top} x2={tooltip.x} y2={H - PAD.bottom}
             stroke="#333" strokeWidth="1" strokeDasharray="3,3" />
         )}
       </svg>
 
-      {/* Tooltip */}
       {tooltip && (
         <div className="absolute top-8 right-4 bg-[#0a0a0a] border border-[#333333] px-3 py-2 font-mono text-xs pointer-events-none">
           <p className="text-[#888888]">{tooltip.date}</p>
@@ -171,7 +173,6 @@ function ExerciseChart({ name, logs, phases }) {
         </div>
       )}
 
-      {/* Leyenda de fases presentes */}
       <div className="flex gap-3 mt-2 flex-wrap">
         {[...new Set(points.map(p => p.phase))].map(phase => (
           <div key={phase} className="flex items-center gap-1">
@@ -207,7 +208,6 @@ export default function GymHistory({ onNavigate }) {
     </div>
   )
 
-  // Agrupar logs por ejercicio
   const byExercise = {}
   gymLogs.forEach(log => {
     const key = log.exercise_type_id
@@ -224,8 +224,8 @@ export default function GymHistory({ onNavigate }) {
         {Object.values(byExercise).length === 0 ? (
           <p className="text-[#888888] font-mono text-sm">sin datos</p>
         ) : (
-          Object.values(byExercise).map(({ name, logs }) => (
-            <ExerciseChart key={name} name={name} logs={logs} phases={phases} />
+          Object.entries(byExercise).map(([exerciseId, { name, logs }]) => (
+            <ExerciseChart key={exerciseId} exerciseId={exerciseId} name={name} logs={logs} phases={phases} />
           ))
         )}
 

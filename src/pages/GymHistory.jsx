@@ -24,6 +24,12 @@ function getPhaseOnDate(phases, date) {
   return 'unknown'
 }
 
+function oneRM(log) {
+  if (log.weight && log.reps) return parseFloat(log.weight) * (1 + parseInt(log.reps) / 30)
+  if (log.weight) return parseFloat(log.weight)
+  return null
+}
+
 function ExerciseChart({ exerciseId, name, logs, phases }) {
   const svgRef = useRef(null)
 
@@ -31,8 +37,9 @@ function ExerciseChart({ exerciseId, name, logs, phases }) {
     .filter(log => log.weight)
     .map(log => ({
       date: parseDate(log.start_date),
-      weight: parseFloat(log.weight),
+      weight: oneRM(log),
       reps: log.reps,
+      rawWeight: parseFloat(log.weight),
       phase: getPhaseOnDate(phases, parseDate(log.start_date)),
       log,
     }))
@@ -70,6 +77,7 @@ function ExerciseChart({ exerciseId, name, logs, phases }) {
   return (
     <div className="bg-[#141414] border border-[#333333] p-4 mb-4 relative">
       <p className="text-[#888888] font-mono text-xs mb-1 tracking-widest uppercase">{name}</p>
+      <p className="text-[#555555] font-mono text-xs mb-2">1RM estimado (Epley)</p>
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full">
 
         {yTicks.map((t, i) => (

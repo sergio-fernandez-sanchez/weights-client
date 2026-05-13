@@ -14,6 +14,12 @@ function parseDate(dateStr) {
   return new Date(dateStr + 'T00:00:00')
 }
 
+function oneRM(log) {
+  if (log.weight && log.reps) return parseFloat(log.weight) * (1 + parseInt(log.reps) / 30)
+  if (log.weight) return parseFloat(log.weight)
+  return null
+}
+
 function MetricCard({ label, value, sub, valueColor = '#c8f500' }) {
   return (
     <div className="bg-[#141414] border border-[#333333] p-4">
@@ -105,7 +111,6 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
 
 function calcWeeklyStats(phaseWeights) {
   if (phaseWeights.length < 2) return null
-
   const byWeek = {}
   phaseWeights.forEach(w => {
     const d = parseDate(w.date)
@@ -115,54 +120,42 @@ function calcWeeklyStats(phaseWeights) {
     if (!byWeek[key]) byWeek[key] = []
     byWeek[key].push(parseFloat(w.weight))
   })
-
   const weekKeys = Object.keys(byWeek).sort()
   if (weekKeys.length < 2) return null
-
   const weeklyAvgs = weekKeys.map(k => {
     const vals = byWeek[k]
     return vals.reduce((a, b) => a + b, 0) / vals.length
   })
-
   const weeklyChanges = []
-  for (let i = 1; i < weeklyAvgs.length; i++) {
-    weeklyChanges.push(weeklyAvgs[i] - weeklyAvgs[i - 1])
-  }
-
+  for (let i = 1; i < weeklyAvgs.length; i++) weeklyChanges.push(weeklyAvgs[i] - weeklyAvgs[i - 1])
   const avgChange = weeklyChanges.reduce((a, b) => a + b, 0) / weeklyChanges.length
   const variance = weeklyChanges.reduce((acc, v) => acc + Math.pow(v - avgChange, 2), 0) / weeklyChanges.length
   const stdDev = Math.sqrt(variance)
-
   return { avgChange, stdDev, weeks: weeklyChanges.length }
 }
 
-// Exactamente la misma función que en Gym.jsx
 function calcProgress(allLogs, exerciseTypeId, phaseStartDate) {
   const history = allLogs
     .filter(l => l.exercise_type_id === exerciseTypeId && l.weight)
     .sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
-
   if (history.length < 2) return { phase: null, total: null, noData: true }
-
   const current = history[history.length - 1]
   const first = history[0]
-  const totalPct = ((current.weight - first.weight) / first.weight) * 100
-
+  const totalPct = ((oneRM(current) - oneRM(first)) / oneRM(first)) * 100
   let phasePct = null
   if (phaseStartDate) {
     const phaseStart = parseDate(phaseStartDate)
     const phaseHistory = history.filter(l => parseDate(l.start_date) >= phaseStart)
     if (phaseHistory.length >= 2) {
-      phasePct = ((current.weight - phaseHistory[0].weight) / phaseHistory[0].weight) * 100
+      phasePct = ((oneRM(current) - oneRM(phaseHistory[0])) / oneRM(phaseHistory[0])) * 100
     } else if (phaseHistory.length === 1) {
       const beforePhase = history.filter(l => parseDate(l.start_date) < phaseStart)
       if (beforePhase.length > 0) {
         const lastBefore = beforePhase[beforePhase.length - 1]
-        phasePct = ((current.weight - lastBefore.weight) / lastBefore.weight) * 100
+        phasePct = ((oneRM(current) - oneRM(lastBefore)) / oneRM(lastBefore)) * 100
       }
     }
   }
-
   return { phase: phasePct, total: totalPct, noData: false }
 }
 
@@ -212,47 +205,33 @@ export default function CurrentPhase({ onNavigate }) {
   )
 
   const phaseColor = PHASE_COLORS[phase.phase_type] || '#c8f500'
-
   const phaseWeights = weights
     .filter(w => parseDate(w.date) >= parseDate(phase.start_date))
     .sort((a, b) => parseDate(a.date) - parseDate(b.date))
-
   const chartData = phaseWeights.map(w => ({ date: w.date, weight: parseFloat(w.weight) }))
   const sortedDesc = [...phaseWeights].sort((a, b) => parseDate(b.date) - parseDate(a.date))
   const currentWeight = sortedDesc[0]?.weight ?? null
   const startWeight = phaseWeights[0]?.weight ?? null
-
   const weightGoal = phase.weight_goal ? parseFloat(phase.weight_goal) : null
   const dateGoal = phase.date_goal ? parseDate(phase.date_goal) : null
   const startDate = parseDate(phase.start_date)
   const today = new Date()
-
   const daysElapsed = Math.floor((today - startDate) / (1000 * 60 * 60 * 24))
   const daysLeft = dateGoal ? Math.ceil((dateGoal - today) / (1000 * 60 * 60 * 24)) : null
   const totalDays = dateGoal ? Math.floor((dateGoal - startDate) / (1000 * 60 * 60 * 24)) : null
   const totalWeeks = totalDays ? totalDays / 7 : null
   const progress = totalDays && totalDays > 0 ? Math.max(0, Math.min(1, daysElapsed / totalDays)) : null
-
   const diff = currentWeight && weightGoal ? (weightGoal - parseFloat(currentWeight)).toFixed(2) : null
   const gained = currentWeight && startWeight ? (parseFloat(currentWeight) - parseFloat(startWeight)).toFixed(2) : null
-
-  const impliedWeeklyGoal = weightGoal && startWeight && totalWeeks
-    ? ((weightGoal - parseFloat(startWeight)) / totalWeeks) : null
-
+  const impliedWeeklyGoal = weightGoal && startWeight && totalWeeks ? ((weightGoal - parseFloat(startWeight)) / totalWeeks) : null
   const weeklyStats = calcWeeklyStats(phaseWeights)
 
-  // Calcular progreso por ejercicio igual que Gym.jsx
   const gymProgress = activeGymLogs.map(log => {
-    const progress = calcProgress(gymLogs, log.exercise_type_id, phase.start_date)
-    return { name: log.name, progress }
+    const p = calcProgress(gymLogs, log.exercise_type_id, phase.start_date)
+    return { name: log.name, progress: p }
   })
-
-  const validPcts = gymProgress
-    .filter(e => !e.progress.noData && e.progress.phase !== null)
-    .map(e => e.progress.phase)
-  const avgStrength = validPcts.length > 0
-    ? validPcts.reduce((a, b) => a + b, 0) / validPcts.length
-    : null
+  const validPcts = gymProgress.filter(e => !e.progress.noData && e.progress.phase !== null).map(e => e.progress.phase)
+  const avgStrength = validPcts.length > 0 ? validPcts.reduce((a, b) => a + b, 0) / validPcts.length : null
 
   function gainedColor() {
     if (!gained) return '#c8f500'
@@ -290,12 +269,8 @@ export default function CurrentPhase({ onNavigate }) {
 
         <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
           <p className="text-[#888888] font-mono text-xs mb-1">TIPO DE FASE</p>
-          <p className="font-mono text-3xl font-bold" style={{ color: phaseColor }}>
-            {phase.phase_type.toUpperCase()}
-          </p>
-          <p className="text-[#888888] font-mono text-xs mt-1">
-            desde {startDate.toLocaleDateString('es-ES')}
-          </p>
+          <p className="font-mono text-3xl font-bold" style={{ color: phaseColor }}>{phase.phase_type.toUpperCase()}</p>
+          <p className="text-[#888888] font-mono text-xs mt-1">desde {startDate.toLocaleDateString('es-ES')}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
@@ -309,11 +284,7 @@ export default function CurrentPhase({ onNavigate }) {
             valueColor={gainedColor()}
           />
           <MetricCard label="DÍAS EN FASE" value={`${daysElapsed} días`} />
-          <MetricCard
-            label="DÍAS RESTANTES"
-            value={daysLeft !== null ? `${daysLeft} días` : '—'}
-            sub={dateGoal ? dateGoal.toLocaleDateString('es-ES') : ''}
-          />
+          <MetricCard label="DÍAS RESTANTES" value={daysLeft !== null ? `${daysLeft} días` : '—'} sub={dateGoal ? dateGoal.toLocaleDateString('es-ES') : ''} />
         </div>
 
         {progress !== null && (
@@ -328,9 +299,9 @@ export default function CurrentPhase({ onNavigate }) {
           </div>
         )}
 
-        {/* Rendimiento en gym */}
         <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
-          <p className="text-[#888888] font-mono text-xs mb-3">RENDIMIENTO EN GYM</p>
+          <p className="text-[#888888] font-mono text-xs mb-1">RENDIMIENTO EN GYM</p>
+          <p className="text-[#555555] font-mono text-xs mb-3">1RM estimado (Epley)</p>
           {gymProgress.length === 0 ? (
             <p className="text-[#555555] font-mono text-xs">sin datos suficientes</p>
           ) : (
@@ -350,11 +321,8 @@ export default function CurrentPhase({ onNavigate }) {
                   return (
                     <div key={i} className="flex justify-between items-center">
                       <span className="text-[#555555] font-mono text-xs uppercase truncate mr-2">{ex.name}</span>
-                      <span className="font-mono text-xs font-bold flex-shrink-0"
-                        style={{ color: progressColor(displayPct) }}>
-                        {phasePct !== null
-                          ? `${phasePct > 0 ? '+' : ''}${phasePct.toFixed(1)}%`
-                          : '0.0%'}
+                      <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color: progressColor(displayPct) }}>
+                        {phasePct !== null ? `${phasePct > 0 ? '+' : ''}${phasePct.toFixed(1)}%` : '0.0%'}
                       </span>
                     </div>
                   )

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getActivePhase, getWeights, getGymLogs } from '../api/client'
+import { getActivePhase, getWeights, getGymLogs, getActiveGymLogs } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
@@ -12,12 +12,6 @@ const PHASE_COLORS = {
 
 function parseDate(dateStr) {
   return new Date(dateStr + 'T00:00:00')
-}
-
-function volume(log) {
-  if (log.weight && log.reps) return parseFloat(log.weight) * parseInt(log.reps)
-  if (log.weight) return parseFloat(log.weight)
-  return null
 }
 
 function MetricCard({ label, value, sub, valueColor = '#c8f500' }) {
@@ -142,79 +136,59 @@ function calcWeeklyStats(phaseWeights) {
   return { avgChange, stdDev, weeks: weeklyChanges.length }
 }
 
-function calcStrengthProgress(gymLogs, phaseStartDate) {
-  if (!gymLogs.length || !phaseStartDate) return null
+// Exactamente la misma función que en Gym.jsx
+function calcProgress(allLogs, exerciseTypeId, phaseStartDate) {
+  const history = allLogs
+    .filter(l => l.exercise_type_id === exerciseTypeId && l.weight)
+    .sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
 
-  const phaseStart = parseDate(phaseStartDate)
+  if (history.length < 2) return { phase: null, total: null, noData: true }
 
-  // Agrupar por ejercicio
-  const byExercise = {}
-  gymLogs.forEach(log => {
-    if (!log.weight) return
-    const eid = log.exercise_type_id
-    if (!byExercise[eid]) byExercise[eid] = []
-    byExercise[eid].push(log)
-  })
+  const current = history[history.length - 1]
+  const first = history[0]
+  const totalPct = ((current.weight - first.weight) / first.weight) * 100
 
-  const changes = []
-
-  Object.values(byExercise).forEach(logs => {
-    const sorted = logs.sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
-    const current = sorted[sorted.length - 1]
-
-    // Misma lógica que calcProgress en Gym.jsx
-    const phaseHistory = sorted.filter(l => parseDate(l.start_date) >= phaseStart)
-    const beforePhase  = sorted.filter(l => parseDate(l.start_date) < phaseStart)
-
-    let baseLog = null
+  let phasePct = null
+  if (phaseStartDate) {
+    const phaseStart = parseDate(phaseStartDate)
+    const phaseHistory = history.filter(l => parseDate(l.start_date) >= phaseStart)
     if (phaseHistory.length >= 2) {
-      baseLog = phaseHistory[0]
-    } else if (phaseHistory.length === 1 && beforePhase.length > 0) {
-      baseLog = beforePhase[beforePhase.length - 1]
+      phasePct = ((current.weight - phaseHistory[0].weight) / phaseHistory[0].weight) * 100
+    } else if (phaseHistory.length === 1) {
+      const beforePhase = history.filter(l => parseDate(l.start_date) < phaseStart)
+      if (beforePhase.length > 0) {
+        const lastBefore = beforePhase[beforePhase.length - 1]
+        phasePct = ((current.weight - lastBefore.weight) / lastBefore.weight) * 100
+      }
     }
+  }
 
-    if (!baseLog || baseLog.id === current.id) {
-      changes.push({ name: current.name, pct: 0, noData: true })
-      return
-    }
+  return { phase: phasePct, total: totalPct, noData: false }
+}
 
-    const volBase    = volume(baseLog)
-    const volCurrent = volume(current)
-
-    if (!volBase || !volCurrent) {
-      changes.push({ name: current.name, pct: 0, noData: true })
-      return
-    }
-
-    const pct = ((volCurrent - volBase) / volBase) * 100
-    changes.push({ name: current.name, pct, noData: false })
-  })
-
-  if (!changes.length) return null
-
-  const validChanges = changes.filter(c => !c.noData)
-  const avg = validChanges.length > 0
-    ? validChanges.reduce((a, b) => a + b.pct, 0) / validChanges.length
-    : 0
-
-  return { avg, exercises: changes }
+function progressColor(pct) {
+  if (pct > 2) return '#4caf50'
+  if (pct < -2) return '#ff2d2d'
+  return '#ff9f00'
 }
 
 export default function CurrentPhase({ onNavigate }) {
   const [phase, setPhase] = useState(null)
   const [weights, setWeights] = useState([])
   const [gymLogs, setGymLogs] = useState([])
+  const [activeGymLogs, setActiveGymLogs] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [phaseData, weightData, gymData] = await Promise.all([
-          getActivePhase(), getWeights(), getGymLogs()
+        const [phaseData, weightData, gymData, activeGymData] = await Promise.all([
+          getActivePhase(), getWeights(), getGymLogs(), getActiveGymLogs()
         ])
         setPhase(phaseData)
         setWeights(weightData)
         setGymLogs(gymData)
+        setActiveGymLogs(activeGymData)
       } catch {}
       finally { setLoading(false) }
     }
@@ -266,7 +240,19 @@ export default function CurrentPhase({ onNavigate }) {
     ? ((weightGoal - parseFloat(startWeight)) / totalWeeks) : null
 
   const weeklyStats = calcWeeklyStats(phaseWeights)
-  const strengthProgress = calcStrengthProgress(gymLogs, phase.start_date)
+
+  // Calcular progreso por ejercicio igual que Gym.jsx
+  const gymProgress = activeGymLogs.map(log => {
+    const progress = calcProgress(gymLogs, log.exercise_type_id, phase.start_date)
+    return { name: log.name, progress }
+  })
+
+  const validPcts = gymProgress
+    .filter(e => !e.progress.noData && e.progress.phase !== null)
+    .map(e => e.progress.phase)
+  const avgStrength = validPcts.length > 0
+    ? validPcts.reduce((a, b) => a + b, 0) / validPcts.length
+    : null
 
   function gainedColor() {
     if (!gained) return '#c8f500'
@@ -274,17 +260,6 @@ export default function CurrentPhase({ onNavigate }) {
     if (phase.phase_type === 'bulk') return g > 0 ? '#4caf50' : '#f44336'
     if (phase.phase_type === 'cut')  return g < 0 ? '#4caf50' : '#f44336'
     return '#c8f500'
-  }
-
-  function strengthColor(pct) {
-    if (phase.phase_type === 'cut') {
-      if (pct >= -3) return '#4caf50'
-      if (pct >= -8) return '#ff9f00'
-      return '#f44336'
-    }
-    if (pct > 2) return '#4caf50'
-    if (pct >= 0) return '#ff9f00'
-    return '#f44336'
   }
 
   function weeklyRateColor(actual, goal) {
@@ -353,28 +328,37 @@ export default function CurrentPhase({ onNavigate }) {
           </div>
         )}
 
+        {/* Rendimiento en gym */}
         <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
           <p className="text-[#888888] font-mono text-xs mb-3">RENDIMIENTO EN GYM</p>
-          {!strengthProgress ? (
+          {gymProgress.length === 0 ? (
             <p className="text-[#555555] font-mono text-xs">sin datos suficientes</p>
           ) : (
             <>
-              <div className="flex items-end gap-3 mb-3">
-                <p className="font-mono text-3xl font-bold" style={{ color: strengthColor(strengthProgress.avg) }}>
-                  {strengthProgress.avg > 0 ? '+' : ''}{strengthProgress.avg.toFixed(1)}%
-                </p>
-                <p className="text-[#888888] font-mono text-xs mb-1">volumen medio</p>
-              </div>
+              {avgStrength !== null && (
+                <div className="flex items-end gap-3 mb-3">
+                  <p className="font-mono text-3xl font-bold" style={{ color: progressColor(avgStrength) }}>
+                    {avgStrength > 0 ? '+' : ''}{avgStrength.toFixed(1)}%
+                  </p>
+                  <p className="text-[#888888] font-mono text-xs mb-1">media fase</p>
+                </div>
+              )}
               <div className="flex flex-col gap-1">
-                {strengthProgress.exercises.map((ex, i) => (
-                  <div key={i} className="flex justify-between items-center">
-                    <span className="text-[#555555] font-mono text-xs uppercase truncate mr-2">{ex.name}</span>
-                    <span className="font-mono text-xs font-bold flex-shrink-0"
-                      style={{ color: strengthColor(ex.noData ? 0 : ex.pct) }}>
-                      {ex.noData ? '0.0%' : `${ex.pct > 0 ? '+' : ''}${ex.pct.toFixed(1)}%`}
-                    </span>
-                  </div>
-                ))}
+                {gymProgress.map((ex, i) => {
+                  const phasePct = ex.progress.noData ? null : ex.progress.phase
+                  const displayPct = phasePct ?? 0
+                  return (
+                    <div key={i} className="flex justify-between items-center">
+                      <span className="text-[#555555] font-mono text-xs uppercase truncate mr-2">{ex.name}</span>
+                      <span className="font-mono text-xs font-bold flex-shrink-0"
+                        style={{ color: progressColor(displayPct) }}>
+                        {phasePct !== null
+                          ? `${phasePct > 0 ? '+' : ''}${phasePct.toFixed(1)}%`
+                          : '0.0%'}
+                      </span>
+                    </div>
+                  )
+                })}
               </div>
             </>
           )}

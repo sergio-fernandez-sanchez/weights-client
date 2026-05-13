@@ -363,7 +363,7 @@ export default function CurrentPhase({ onNavigate }) {
                   <div key={i} className="flex justify-between items-center">
                     <span className="text-[#555555] font-mono text-xs uppercase truncate mr-2">{ex.name}</span>
                     <span className="font-mono text-xs font-bold flex-shrink-0"
-                      style={{ color: ex.noData ? '#555555' : strengthColor(ex.pct) }}>
+                      style={{ color: ex.noData ? strengthColor(0) : strengthColor(ex.pct) }}>
                       {ex.noData ? '0.0%' : `${ex.pct > 0 ? '+' : ''}${ex.pct.toFixed(1)}%`}
                     </span>
                   </div>

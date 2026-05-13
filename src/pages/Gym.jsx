@@ -57,20 +57,17 @@ function calcProgress(allLogs, exerciseTypeId, phaseStartDate) {
 }
 
 function ProgressCard({ label, value, noData }) {
+  const displayValue = noData ? 0 : value
   return (
     <div className="flex-1 bg-[#0a0a0a] border border-[#1e1e1e] px-3 py-2 relative overflow-hidden">
       <div
         className="absolute top-0 left-0 right-0 h-px"
-        style={{ backgroundColor: noData ? '#2a2a2a' : progressColor(value) }}
+        style={{ backgroundColor: progressColor(displayValue) }}
       />
       <p className="text-[#3a3a3a] font-mono text-xs tracking-widest mb-1">{label}</p>
-      {noData ? (
-        <p className="font-mono text-base font-bold" style={{ color: '#555555' }}>0.0%</p>
-      ) : (
-        <p className="font-mono text-base font-bold" style={{ color: progressColor(value) }}>
-          {progressLabel(value)}
-        </p>
-      )}
+      <p className="font-mono text-base font-bold" style={{ color: progressColor(displayValue) }}>
+        {noData ? '0.0%' : progressLabel(value)}
+      </p>
     </div>
   )
 }

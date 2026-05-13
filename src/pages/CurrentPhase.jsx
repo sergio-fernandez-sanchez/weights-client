@@ -147,40 +147,47 @@ function calcStrengthProgress(gymLogs, phaseStartDate) {
 
   const phaseStart = parseDate(phaseStartDate)
 
+  // Agrupar por ejercicio
   const byExercise = {}
   gymLogs.forEach(log => {
     if (!log.weight) return
-    if (!byExercise[log.exercise_type_id]) byExercise[log.exercise_type_id] = []
-    byExercise[log.exercise_type_id].push(log)
+    const eid = log.exercise_type_id
+    if (!byExercise[eid]) byExercise[eid] = []
+    byExercise[eid].push(log)
   })
 
   const changes = []
+
   Object.values(byExercise).forEach(logs => {
     const sorted = logs.sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
     const current = sorted[sorted.length - 1]
 
-    const beforePhase = sorted.filter(l => parseDate(l.start_date) < phaseStart)
-    const duringPhase = sorted.filter(l => parseDate(l.start_date) >= phaseStart)
+    // Misma lógica que calcProgress en Gym.jsx
+    const phaseHistory = sorted.filter(l => parseDate(l.start_date) >= phaseStart)
+    const beforePhase  = sorted.filter(l => parseDate(l.start_date) < phaseStart)
 
     let baseLog = null
-    if (duringPhase.length > 0 && beforePhase.length > 0) {
+    if (phaseHistory.length >= 2) {
+      baseLog = phaseHistory[0]
+    } else if (phaseHistory.length === 1 && beforePhase.length > 0) {
       baseLog = beforePhase[beforePhase.length - 1]
-    } else if (duringPhase.length >= 2) {
-      baseLog = duringPhase[0]
     }
 
-    if (baseLog && current.id !== baseLog.id) {
-      const volBase    = volume(baseLog)
-      const volCurrent = volume(current)
-      if (!volBase || !volCurrent) {
-        changes.push({ name: current.name, pct: 0, noData: true })
-        return
-      }
-      const pct = ((volCurrent - volBase) / volBase) * 100
-      changes.push({ name: current.name, pct, noData: false })
-    } else {
+    if (!baseLog || baseLog.id === current.id) {
       changes.push({ name: current.name, pct: 0, noData: true })
+      return
     }
+
+    const volBase    = volume(baseLog)
+    const volCurrent = volume(current)
+
+    if (!volBase || !volCurrent) {
+      changes.push({ name: current.name, pct: 0, noData: true })
+      return
+    }
+
+    const pct = ((volCurrent - volBase) / volBase) * 100
+    changes.push({ name: current.name, pct, noData: false })
   })
 
   if (!changes.length) return null
@@ -363,7 +370,7 @@ export default function CurrentPhase({ onNavigate }) {
                   <div key={i} className="flex justify-between items-center">
                     <span className="text-[#555555] font-mono text-xs uppercase truncate mr-2">{ex.name}</span>
                     <span className="font-mono text-xs font-bold flex-shrink-0"
-                      style={{ color: ex.noData ? strengthColor(0) : strengthColor(ex.pct) }}>
+                      style={{ color: strengthColor(ex.noData ? 0 : ex.pct) }}>
                       {ex.noData ? '0.0%' : `${ex.pct > 0 ? '+' : ''}${ex.pct.toFixed(1)}%`}
                     </span>
                   </div>

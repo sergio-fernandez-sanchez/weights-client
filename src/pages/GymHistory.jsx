@@ -25,7 +25,6 @@ function getPhaseOnDate(phases, date) {
 }
 
 function ExerciseChart({ exerciseId, name, logs, phases }) {
-  const [tooltip, setTooltip] = useState(null)
   const svgRef = useRef(null)
 
   const points = logs
@@ -67,36 +66,11 @@ function ExerciseChart({ exerciseId, name, logs, phases }) {
     return { val, y: yPos(val) }
   })
 
-  function handleMouseMove(e) {
-    const svg = svgRef.current
-    if (!svg) return
-    const rect = svg.getBoundingClientRect()
-    const mx = e.clientX - rect.left
-    let closest = null
-    let minDist = Infinity
-    points.forEach(p => {
-      const dist = Math.abs(mx - xPos(p.date))
-      if (dist < minDist) { minDist = dist; closest = p }
-    })
-    if (closest && minDist < 30) {
-      setTooltip({
-        x: xPos(closest.date),
-        y: yPos(closest.weight),
-        weight: closest.weight,
-        reps: closest.reps,
-        date: closest.date.toLocaleDateString('es-ES'),
-        phase: closest.phase,
-      })
-    } else {
-      setTooltip(null)
-    }
-  }
 
   return (
     <div className="bg-[#141414] border border-[#333333] p-4 mb-4 relative">
       <p className="text-[#888888] font-mono text-xs mb-1 tracking-widest uppercase">{name}</p>
-      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
-        onMouseMove={handleMouseMove} onMouseLeave={() => setTooltip(null)}>
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full">
 
         {yTicks.map((t, i) => (
           <g key={i}>
@@ -134,21 +108,7 @@ function ExerciseChart({ exerciseId, name, logs, phases }) {
             stroke="#0a0a0a" strokeWidth="1.5"
           />
         ))}
-
-        {tooltip && (
-          <line x1={tooltip.x} y1={PAD.top} x2={tooltip.x} y2={H - PAD.bottom}
-            stroke="#333" strokeWidth="1" strokeDasharray="3,3" />
-        )}
       </svg>
-
-      {tooltip && (
-        <div className="absolute top-8 right-4 bg-[#0a0a0a] border border-[#333333] px-3 py-2 font-mono text-xs pointer-events-none">
-          <p className="text-[#888888]">{tooltip.date}</p>
-          <p className="font-bold" style={{ color: PHASE_COLORS[tooltip.phase] }}>
-            {tooltip.weight} kg{tooltip.reps ? ` × ${tooltip.reps} reps` : ''}
-          </p>
-        </div>
-      )}
 
       <div className="flex gap-3 mt-2 flex-wrap">
         {[...new Set(points.map(p => p.phase))].map(phase => (

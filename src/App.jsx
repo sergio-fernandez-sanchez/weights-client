@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { isAuthenticated } from './api/client'
 import Auth from './pages/Auth'
 import Home from './pages/Home'
@@ -21,19 +21,42 @@ export default function App() {
   const [pageData, setPageData] = useState(null)
 
   function navigate(newPage, data = null) {
+    // Empujar al historial del navegador
+    window.history.pushState({ page: newPage, data }, '', '')
     setPage(newPage)
     setPageData(data)
   }
+
+  useEffect(() => {
+    // Inicializar el estado del historial con home
+    window.history.replaceState({ page: 'home', data: null }, '', '')
+
+    function handlePopState(e) {
+      if (e.state) {
+        setPage(e.state.page)
+        setPageData(e.state.data)
+      } else {
+        setPage('home')
+        setPageData(null)
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] relative">
       <ParticleBackground />
       <div className="relative" style={{ zIndex: 1 }}>
         {!auth ? (
-          <Auth onLogin={() => setAuth(true)} />
+          <Auth onLogin={() => {
+            setAuth(true)
+            window.history.replaceState({ page: 'home', data: null }, '', '')
+          }} />
         ) : (
           <div key={page} className="animate-fade-in">
-            {page === 'home'           && <Home           onNavigate={navigate} onLogout={() => setAuth(false)} />}
+            {page === 'home'           && <Home           onNavigate={navigate} onLogout={() => { setAuth(false); window.history.replaceState({ page: 'home', data: null }, '', '') }} />}
             {page === 'phase'          && <Phase          onNavigate={navigate} />}
             {page === 'report'         && <Report         onNavigate={navigate} />}
             {page === 'data'           && <DataMenu       onNavigate={navigate} />}

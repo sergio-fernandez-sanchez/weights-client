@@ -12,9 +12,10 @@ export default function DataMenu({ onNavigate }) {
 
       <div className="flex flex-col gap-3">
         {[
-          ['// EVOLUCIÓN →',  'weightHistory'],
-          ['// FASE ACTUAL →', 'currentPhase'],
-          ['// INFORMES →',    'reports'],
+          ['// EVOLUCIÓN →',    'weightHistory'],
+          ['// FASE ACTUAL →',  'currentPhase'],
+          ['// INFORMES →',     'reports'],
+          ['// GYM →',          'gymHistory'],
         ].map(([label, page]) => (
           <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>
             {label}

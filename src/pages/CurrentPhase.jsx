@@ -172,15 +172,24 @@ function calcStrengthProgress(gymLogs, phaseStartDate) {
     if (baseLog && current.id !== baseLog.id) {
       const volBase    = volume(baseLog)
       const volCurrent = volume(current)
-      if (!volBase || !volCurrent) return
+      if (!volBase || !volCurrent) {
+        changes.push({ name: current.name, pct: 0, noData: true })
+        return
+      }
       const pct = ((volCurrent - volBase) / volBase) * 100
-      changes.push({ name: current.name, pct })
+      changes.push({ name: current.name, pct, noData: false })
+    } else {
+      changes.push({ name: current.name, pct: 0, noData: true })
     }
   })
 
   if (!changes.length) return null
 
-  const avg = changes.reduce((a, b) => a + b.pct, 0) / changes.length
+  const validChanges = changes.filter(c => !c.noData)
+  const avg = validChanges.length > 0
+    ? validChanges.reduce((a, b) => a + b.pct, 0) / validChanges.length
+    : 0
+
   return { avg, exercises: changes }
 }
 
@@ -353,8 +362,9 @@ export default function CurrentPhase({ onNavigate }) {
                 {strengthProgress.exercises.map((ex, i) => (
                   <div key={i} className="flex justify-between items-center">
                     <span className="text-[#555555] font-mono text-xs uppercase truncate mr-2">{ex.name}</span>
-                    <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color: strengthColor(ex.pct) }}>
-                      {ex.pct > 0 ? '+' : ''}{ex.pct.toFixed(1)}%
+                    <span className="font-mono text-xs font-bold flex-shrink-0"
+                      style={{ color: ex.noData ? '#555555' : strengthColor(ex.pct) }}>
+                      {ex.noData ? '0.0%' : `${ex.pct > 0 ? '+' : ''}${ex.pct.toFixed(1)}%`}
                     </span>
                   </div>
                 ))}

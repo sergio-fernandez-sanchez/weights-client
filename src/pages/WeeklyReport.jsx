@@ -7,20 +7,23 @@ import Input from '../components/Input'
 import Button from '../components/Button'
 
 function getMonday(date) {
-  const d = new Date(date)
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  d.setDate(diff)
-  d.setHours(0, 0, 0, 0)
-  return d
+  const y = date.getFullYear()
+  const m = date.getMonth()
+  const d = date.getDate()
+  const day = date.getDay()
+  const daysToMonday = day === 0 ? 6 : day - 1
+  return new Date(y, m, d - daysToMonday)
 }
 
 function fmtDate(date) {
-  return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })
+  return `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}`
 }
 
 function toISO(date) {
-  return date.toISOString().split('T')[0]
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
 export default function WeeklyReport({ onNavigate, initialWeekStart }) {

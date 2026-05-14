@@ -6,34 +6,43 @@ import Button from '../components/Button'
 import Input from '../components/Input'
 import Separator from '../components/Separator'
 
-function getLastMonday() {
-  const today = new Date()
-  const day = today.getDay()
-  const diff = today.getDate() - day + (day === 0 ? -6 : 1) - 7
-  const monday = new Date(today)
-  monday.setDate(diff)
-  monday.setHours(0, 0, 0, 0)
-  return monday
+function getLastMondayISO() {
+  const now = new Date()
+  // Usar fecha local, no UTC
+  const year  = now.getFullYear()
+  const month = now.getMonth()
+  const date  = now.getDate()
+  const day   = now.getDay() // 0=domingo, 1=lunes...
+
+  // Días hasta el lunes de esta semana
+  const daysToThisMonday = day === 0 ? 6 : day - 1
+  // Lunes de la semana pasada = lunes de esta semana - 7
+  const lastMondayDate = new Date(year, month, date - daysToThisMonday - 7)
+
+  const y = lastMondayDate.getFullYear()
+  const m = String(lastMondayDate.getMonth() + 1).padStart(2, '0')
+  const d = String(lastMondayDate.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
 }
 
-function fmtWeek(monday) {
-  const sunday = new Date(monday)
-  sunday.setDate(sunday.getDate() + 6)
-  const fmt = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })
+function fmtWeekFromISO(isoDate) {
+  const [y, m, d] = isoDate.split('-').map(Number)
+  const monday = new Date(y, m - 1, d)
+  const sunday = new Date(y, m - 1, d + 6)
+  const fmt = date => `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}`
   return `${fmt(monday)}-${fmt(sunday)}`
 }
 
 export default function Home({ onNavigate, onLogout }) {
-  const [lastWeight, setLastWeight]       = useState(null)
-  const [input, setInput]                 = useState('')
-  const [msg, setMsg]                     = useState('')
-  const [loading, setLoading]             = useState(false)
-  const [todayLogged, setTodayLogged]     = useState(false)
+  const [lastWeight, setLastWeight]         = useState(null)
+  const [input, setInput]                   = useState('')
+  const [msg, setMsg]                       = useState('')
+  const [loading, setLoading]               = useState(false)
+  const [todayLogged, setTodayLogged]       = useState(false)
   const [activeCalories, setActiveCalories] = useState(null)
-  const [weekFilled, setWeekFilled]       = useState(null) // null=cargando, true/false
+  const [weekFilled, setWeekFilled]         = useState(null)
 
-  const lastMonday    = getLastMonday()
-  const lastMondayISO = lastMonday.toISOString().split('T')[0]
+  const lastMondayISO = getLastMondayISO()
 
   useEffect(() => {
     fetchLastWeight()
@@ -46,8 +55,9 @@ export default function Home({ onNavigate, onLogout }) {
       const data = await getLastWeight()
       if (data) {
         setLastWeight(data)
-        const today = new Date().toISOString().split('T')[0]
-        setTodayLogged(data.date === today)
+        const today = new Date()
+        const todayISO = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
+        setTodayLogged(data.date === todayISO)
       }
     } catch {}
   }
@@ -91,7 +101,6 @@ export default function Home({ onNavigate, onLogout }) {
     <PageWrapper>
       <HomeHeader />
 
-      {/* Peso + botón informe semanal en la misma fila */}
       <div className="flex items-start justify-between mb-6 gap-3">
         <div className="flex-1">
           {lastWeight && (
@@ -103,7 +112,6 @@ export default function Home({ onNavigate, onLogout }) {
           )}
         </div>
 
-        {/* Botón informe semanal */}
         {weekFilled !== null && (
           <button
             onClick={() => onNavigate('weeklyReport', lastMondayISO)}
@@ -116,7 +124,7 @@ export default function Home({ onNavigate, onLogout }) {
             }}
           >
             <p className="font-mono text-xs opacity-50 tracking-widest mb-1">SEMANA</p>
-            <p className="font-bold tracking-wide">{fmtWeek(lastMonday)}</p>
+            <p className="font-bold tracking-wide">{fmtWeekFromISO(lastMondayISO)}</p>
             <p className="text-xs mt-1 font-bold">{weekFilled ? '✓ relleno' : '✗ pendiente'}</p>
           </button>
         )}

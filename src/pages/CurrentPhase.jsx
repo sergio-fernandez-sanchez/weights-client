@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getActivePhase, getWeights, getGymLogs, getActiveGymLogs } from '../api/client'
+import { getPhases, getWeights, getGymLogs, getActiveGymLogs } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
@@ -130,33 +130,36 @@ function calcWeeklyStats(phaseWeights) {
   for (let i = 1; i < weeklyAvgs.length; i++) weeklyChanges.push(weeklyAvgs[i] - weeklyAvgs[i - 1])
   const avgChange = weeklyChanges.reduce((a, b) => a + b, 0) / weeklyChanges.length
   const variance = weeklyChanges.reduce((acc, v) => acc + Math.pow(v - avgChange, 2), 0) / weeklyChanges.length
-  const stdDev = Math.sqrt(variance)
-  return { avgChange, stdDev, weeks: weeklyChanges.length }
+  return { avgChange, stdDev: Math.sqrt(variance) }
 }
 
-function calcProgress(allLogs, exerciseTypeId, phaseStartDate) {
+function calcProgress(allLogs, exerciseTypeId, phaseStartDate, phaseEndDate) {
+  const phaseEnd = phaseEndDate ? parseDate(phaseEndDate) : new Date()
   const history = allLogs
     .filter(l => l.exercise_type_id === exerciseTypeId && l.weight)
     .sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
-  if (history.length < 2) return { phase: null, total: null, noData: true }
-  const current = history[history.length - 1]
-  const first = history[0]
-  const totalPct = ((oneRM(current) - oneRM(first)) / oneRM(first)) * 100
-  let phasePct = null
-  if (phaseStartDate) {
-    const phaseStart = parseDate(phaseStartDate)
-    const phaseHistory = history.filter(l => parseDate(l.start_date) >= phaseStart)
-    if (phaseHistory.length >= 2) {
-      phasePct = ((oneRM(current) - oneRM(phaseHistory[0])) / oneRM(phaseHistory[0])) * 100
-    } else if (phaseHistory.length === 1) {
-      const beforePhase = history.filter(l => parseDate(l.start_date) < phaseStart)
-      if (beforePhase.length > 0) {
-        const lastBefore = beforePhase[beforePhase.length - 1]
-        phasePct = ((oneRM(current) - oneRM(lastBefore)) / oneRM(lastBefore)) * 100
-      }
-    }
-  }
-  return { phase: phasePct, total: totalPct, noData: false }
+  if (history.length < 2) return { phase: null, noData: true }
+
+  // Para fases pasadas, current = último log antes del fin de la fase
+  const logsUntilEnd = history.filter(l => parseDate(l.start_date) <= phaseEnd)
+  if (logsUntilEnd.length < 1) return { phase: null, noData: true }
+  const current = logsUntilEnd[logsUntilEnd.length - 1]
+
+  const phaseStart = parseDate(phaseStartDate)
+  const phaseHistory = logsUntilEnd.filter(l => parseDate(l.start_date) >= phaseStart)
+  const beforePhase  = history.filter(l => parseDate(l.start_date) < phaseStart)
+
+  let baseLog = null
+  if (phaseHistory.length >= 2) baseLog = phaseHistory[0]
+  else if (phaseHistory.length === 1 && beforePhase.length > 0) baseLog = beforePhase[beforePhase.length - 1]
+
+  if (!baseLog || baseLog.id === current.id) return { phase: null, noData: true }
+
+  const rmBase = oneRM(baseLog)
+  const rmCurr = oneRM(current)
+  if (!rmBase || !rmCurr) return { phase: null, noData: true }
+
+  return { phase: ((rmCurr - rmBase) / rmBase) * 100, noData: false }
 }
 
 function progressColor(pct) {
@@ -166,22 +169,25 @@ function progressColor(pct) {
 }
 
 export default function CurrentPhase({ onNavigate }) {
-  const [phase, setPhase] = useState(null)
-  const [weights, setWeights] = useState([])
-  const [gymLogs, setGymLogs] = useState([])
+  const [phases, setPhases]         = useState([])
+  const [weights, setWeights]       = useState([])
+  const [gymLogs, setGymLogs]       = useState([])
   const [activeGymLogs, setActiveGymLogs] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [phaseIndex, setPhaseIndex] = useState(null)
+  const [loading, setLoading]       = useState(true)
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [phaseData, weightData, gymData, activeGymData] = await Promise.all([
-          getActivePhase(), getWeights(), getGymLogs(), getActiveGymLogs()
+        const [phasesData, weightData, gymData, activeGymData] = await Promise.all([
+          getPhases(), getWeights(), getGymLogs(), getActiveGymLogs()
         ])
-        setPhase(phaseData)
+        const sorted = [...phasesData].sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
+        setPhases(sorted)
         setWeights(weightData)
         setGymLogs(gymData)
         setActiveGymLogs(activeGymData)
+        setPhaseIndex(sorted.length - 1) // empezar en la fase más reciente
       } catch {}
       finally { setLoading(false) }
     }
@@ -194,43 +200,63 @@ export default function CurrentPhase({ onNavigate }) {
     </div>
   )
 
-  if (!phase) return (
+  if (!phases.length) return (
     <div className="min-h-screen px-6 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => onNavigate('data')} />
-        <PageHeader title="// FASE ACTUAL" />
-        <p className="text-[#888888] font-mono text-sm">no hay fase activa</p>
+        <PageHeader title="// FASES" />
+        <p className="text-[#888888] font-mono text-sm">no hay fases registradas</p>
       </div>
     </div>
   )
 
+  const phase    = phases[phaseIndex]
+  const isActive = !phase.end_date
   const phaseColor = PHASE_COLORS[phase.phase_type] || '#c8f500'
+
+  const phaseEnd   = phase.end_date ? parseDate(phase.end_date) : new Date()
+  const phaseStart = parseDate(phase.start_date)
+
   const phaseWeights = weights
-    .filter(w => parseDate(w.date) >= parseDate(phase.start_date))
+    .filter(w => {
+      const d = parseDate(w.date)
+      return d >= phaseStart && d <= phaseEnd
+    })
     .sort((a, b) => parseDate(a.date) - parseDate(b.date))
-  const chartData = phaseWeights.map(w => ({ date: w.date, weight: parseFloat(w.weight) }))
-  const sortedDesc = [...phaseWeights].sort((a, b) => parseDate(b.date) - parseDate(a.date))
+
+  const chartData    = phaseWeights.map(w => ({ date: w.date, weight: parseFloat(w.weight) }))
+  const sortedDesc   = [...phaseWeights].sort((a, b) => parseDate(b.date) - parseDate(a.date))
   const currentWeight = sortedDesc[0]?.weight ?? null
-  const startWeight = phaseWeights[0]?.weight ?? null
+  const startWeight   = phaseWeights[0]?.weight ?? null
+
   const weightGoal = phase.weight_goal ? parseFloat(phase.weight_goal) : null
-  const dateGoal = phase.date_goal ? parseDate(phase.date_goal) : null
-  const startDate = parseDate(phase.start_date)
-  const today = new Date()
-  const daysElapsed = Math.floor((today - startDate) / (1000 * 60 * 60 * 24))
-  const daysLeft = dateGoal ? Math.ceil((dateGoal - today) / (1000 * 60 * 60 * 24)) : null
-  const totalDays = dateGoal ? Math.floor((dateGoal - startDate) / (1000 * 60 * 60 * 24)) : null
-  const totalWeeks = totalDays ? totalDays / 7 : null
-  const progress = totalDays && totalDays > 0 ? Math.max(0, Math.min(1, daysElapsed / totalDays)) : null
-  const diff = currentWeight && weightGoal ? (weightGoal - parseFloat(currentWeight)).toFixed(2) : null
+  const dateGoal   = phase.date_goal ? parseDate(phase.date_goal) : null
+  const today      = new Date()
+
+  const daysElapsed = Math.floor((phaseEnd - phaseStart) / (1000 * 60 * 60 * 24))
+  const daysLeft    = isActive && dateGoal ? Math.ceil((dateGoal - today) / (1000 * 60 * 60 * 24)) : null
+  const totalDays   = isActive && dateGoal ? Math.floor((dateGoal - phaseStart) / (1000 * 60 * 60 * 24)) : null
+  const totalWeeks  = totalDays ? totalDays / 7 : null
+  const progress    = isActive && totalDays && totalDays > 0 ? Math.max(0, Math.min(1, Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24)) / totalDays)) : null
+
+  const diff   = currentWeight && weightGoal ? (weightGoal - parseFloat(currentWeight)).toFixed(2) : null
   const gained = currentWeight && startWeight ? (parseFloat(currentWeight) - parseFloat(startWeight)).toFixed(2) : null
-  const impliedWeeklyGoal = weightGoal && startWeight && totalWeeks ? ((weightGoal - parseFloat(startWeight)) / totalWeeks) : null
+  const impliedWeeklyGoal = isActive && weightGoal && startWeight && totalWeeks ? ((weightGoal - parseFloat(startWeight)) / totalWeeks) : null
   const weeklyStats = calcWeeklyStats(phaseWeights)
 
-  const gymProgress = activeGymLogs.map(log => {
-    const p = calcProgress(gymLogs, log.exercise_type_id, phase.start_date)
+  // Gym progress — para fases pasadas usar logs hasta el fin de la fase
+  const logsForGym = isActive ? activeGymLogs : [...new Map(
+    gymLogs
+      .filter(l => parseDate(l.start_date) <= phaseEnd)
+      .sort((a, b) => parseDate(b.start_date) - parseDate(a.start_date))
+      .map(l => [l.exercise_type_id, l])
+  ).values()]
+
+  const gymProgress = logsForGym.map(log => {
+    const p = calcProgress(gymLogs, log.exercise_type_id, phase.start_date, phase.end_date)
     return { name: log.name, progress: p }
   })
-  const validPcts = gymProgress.filter(e => !e.progress.noData && e.progress.phase !== null).map(e => e.progress.phase)
+  const validPcts  = gymProgress.filter(e => !e.progress.noData && e.progress.phase !== null).map(e => e.progress.phase)
   const avgStrength = validPcts.length > 0 ? validPcts.reduce((a, b) => a + b, 0) / validPcts.length : null
 
   function gainedColor() {
@@ -265,28 +291,52 @@ export default function CurrentPhase({ onNavigate }) {
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => onNavigate('data')} />
-        <PageHeader title="// FASE ACTUAL" />
+        <PageHeader title="// FASES" />
 
-        <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
-          <p className="text-[#888888] font-mono text-xs mb-1">TIPO DE FASE</p>
-          <p className="font-mono text-3xl font-bold" style={{ color: phaseColor }}>{phase.phase_type.toUpperCase()}</p>
-          <p className="text-[#888888] font-mono text-xs mt-1">desde {startDate.toLocaleDateString('es-ES')}</p>
+        {/* Navegador de fases */}
+        <div className="flex items-center justify-between bg-[#141414] border border-[#333333] p-4 mb-4">
+          <button
+            onClick={() => setPhaseIndex(i => Math.max(0, i - 1))}
+            disabled={phaseIndex === 0}
+            className="text-[#888888] font-mono text-lg hover:text-[#c8f500] disabled:opacity-20 transition-colors px-2"
+          >←</button>
+          <div className="text-center">
+            <p className="font-mono text-2xl font-bold" style={{ color: phaseColor }}>
+              {phase.phase_type.toUpperCase()}
+            </p>
+            <p className="text-[#888888] font-mono text-xs mt-1">
+              {phaseStart.toLocaleDateString('es-ES')} — {phase.end_date ? parseDate(phase.end_date).toLocaleDateString('es-ES') : 'hoy'}
+            </p>
+            {isActive && <p className="text-[#c8f500] font-mono text-xs mt-0.5">● ACTIVA</p>}
+          </div>
+          <button
+            onClick={() => setPhaseIndex(i => Math.min(phases.length - 1, i + 1))}
+            disabled={phaseIndex === phases.length - 1}
+            className="text-[#888888] font-mono text-lg hover:text-[#c8f500] disabled:opacity-20 transition-colors px-2"
+          >→</button>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <MetricCard label="PESO ACTUAL" value={currentWeight ? `${parseFloat(currentWeight).toFixed(2)} kg` : '—'} />
-          <MetricCard label="PESO OBJETIVO" value={weightGoal ? `${weightGoal.toFixed(2)} kg` : '—'} />
-          <MetricCard label="DIFERENCIA" value={diff ? `${diff > 0 ? '+' : ''}${diff} kg` : '—'} sub="para el objetivo" />
+          <MetricCard label="PESO INICIO" value={startWeight ? `${parseFloat(startWeight).toFixed(2)} kg` : '—'} />
+          <MetricCard label={isActive ? 'PESO ACTUAL' : 'PESO FINAL'} value={currentWeight ? `${parseFloat(currentWeight).toFixed(2)} kg` : '—'} />
           <MetricCard
-            label="DESDE INICIO"
+            label="CAMBIO"
             value={gained ? `${gained > 0 ? '+' : ''}${gained} kg` : '—'}
-            sub={startWeight ? `inicio: ${parseFloat(startWeight).toFixed(2)} kg` : ''}
             valueColor={gainedColor()}
           />
-          <MetricCard label="DÍAS EN FASE" value={`${daysElapsed} días`} />
-          <MetricCard label="DÍAS RESTANTES" value={daysLeft !== null ? `${daysLeft} días` : '—'} sub={dateGoal ? dateGoal.toLocaleDateString('es-ES') : ''} />
+          <MetricCard label="DURACIÓN" value={`${daysElapsed} días`} />
+          {isActive && weightGoal && (
+            <MetricCard label="OBJETIVO" value={`${weightGoal.toFixed(2)} kg`} />
+          )}
+          {isActive && diff && (
+            <MetricCard label="DIFERENCIA" value={`${diff > 0 ? '+' : ''}${diff} kg`} sub="para el objetivo" />
+          )}
+          {isActive && daysLeft !== null && (
+            <MetricCard label="DÍAS RESTANTES" value={`${daysLeft} días`} sub={dateGoal ? dateGoal.toLocaleDateString('es-ES') : ''} />
+          )}
         </div>
 
+        {/* Barra de progreso — solo fase activa */}
         {progress !== null && (
           <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
             <div className="flex justify-between mb-2">
@@ -299,6 +349,7 @@ export default function CurrentPhase({ onNavigate }) {
           </div>
         )}
 
+        {/* Rendimiento gym */}
         <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
           <p className="text-[#888888] font-mono text-xs mb-1">RENDIMIENTO EN GYM</p>
           <p className="text-[#555555] font-mono text-xs mb-3">1RM estimado (Epley)</p>
@@ -316,7 +367,7 @@ export default function CurrentPhase({ onNavigate }) {
               )}
               <div className="flex flex-col gap-1">
                 {gymProgress.map((ex, i) => {
-                  const phasePct = ex.progress.noData ? null : ex.progress.phase
+                  const phasePct  = ex.progress.noData ? null : ex.progress.phase
                   const displayPct = phasePct ?? 0
                   return (
                     <div key={i} className="flex justify-between items-center">
@@ -332,6 +383,7 @@ export default function CurrentPhase({ onNavigate }) {
           )}
         </div>
 
+        {/* Ritmo semanal */}
         {weeklyStats && (
           <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
             <p className="text-[#888888] font-mono text-xs mb-3">RITMO SEMANAL</p>
@@ -358,7 +410,7 @@ export default function CurrentPhase({ onNavigate }) {
                 </p>
               </div>
             </div>
-            {impliedWeeklyGoal && (
+            {isActive && impliedWeeklyGoal && (
               <div className="mt-3">
                 <div className="flex justify-between mb-1">
                   <p className="text-[#888888] font-mono text-xs">RITMO VS OBJETIVO</p>
@@ -380,15 +432,18 @@ export default function CurrentPhase({ onNavigate }) {
         )}
 
         {chartData.length > 1 && (
-          <PhaseChart data={chartData} phaseColor={phaseColor} weightGoal={weightGoal} />
+          <PhaseChart data={chartData} phaseColor={phaseColor} weightGoal={isActive ? weightGoal : null} />
         )}
 
-        <button
-          onClick={() => onNavigate('editPhaseGoals', phase)}
-          className="w-full h-10 bg-transparent border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors mb-4"
-        >
-          // EDITAR OBJETIVOS
-        </button>
+        {/* Botón editar objetivos — solo fase activa */}
+        {isActive && (
+          <button
+            onClick={() => onNavigate('editPhaseGoals', phase)}
+            className="w-full h-10 bg-transparent border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors mb-4"
+          >
+            // EDITAR OBJETIVOS
+          </button>
+        )}
 
         <Separator className="mt-2 mb-4" />
         <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>

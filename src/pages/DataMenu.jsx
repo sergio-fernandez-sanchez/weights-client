@@ -12,8 +12,8 @@ export default function DataMenu({ onNavigate }) {
 
       <div className="flex flex-col gap-3">
         {[
-          ['// EVOLUCIÓN →',    'weightHistory'],
-          ['// FASE ACTUAL →',  'currentPhase'],
+          ['// PESO →',    'weightHistory'],
+          ['// FASES →',  'currentPhase'],
           ['// INFORMES →',     'reports'],
           ['// GYM →',          'gymHistory'],
           ['// CALORÍAS →',     'caloriesHistory'],

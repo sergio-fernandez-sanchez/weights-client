@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getLastWeight, postWeight, getActiveCalories, getWeeklyReport, logout } from '../api/client'
+import { getLastWeight, postWeight, getActiveCalories, getWeeklyReports, logout } from '../api/client'
 import PageWrapper from '../components/PageWrapper'
 import HomeHeader from '../components/HomeHeader'
 import Button from '../components/Button'
@@ -61,8 +61,9 @@ export default function Home({ onNavigate, onLogout }) {
 
   async function fetchWeeklyStatus() {
     try {
-      const data = await getWeeklyReport(lastMondayISO)
-      setWeekFilled(data !== null && data !== undefined)
+      const data = await getWeeklyReports()
+      const found = Array.isArray(data) && data.some(r => r.week_start === lastMondayISO)
+      setWeekFilled(found)
     } catch {
       setWeekFilled(false)
     }
@@ -106,16 +107,17 @@ export default function Home({ onNavigate, onLogout }) {
         {weekFilled !== null && (
           <button
             onClick={() => onNavigate('weeklyReport', lastMondayISO)}
-            className="flex-shrink-0 px-3 py-2 border font-mono text-xs transition-all hover:opacity-80 active:scale-95"
+            className="flex-shrink-0 px-3 py-2 border font-mono text-xs transition-all active:scale-95"
             style={{
-              backgroundColor: weekFilled ? '#c8f500' : '#1a0000',
+              backgroundColor: weekFilled ? 'rgba(200,245,0,0.08)' : 'rgba(255,45,45,0.06)',
               borderColor:     weekFilled ? '#c8f500' : '#ff2d2d',
-              color:           weekFilled ? '#0a0a0a' : '#ff2d2d',
+              color:           weekFilled ? '#c8f500' : '#ff2d2d',
+              boxShadow:       weekFilled ? '0 0 12px rgba(200,245,0,0.15)' : '0 0 12px rgba(255,45,45,0.1)',
             }}
           >
-            <p className="font-mono text-xs opacity-70">INFORME SEMANAL</p>
-            <p className="font-bold">{fmtWeek(lastMonday)}</p>
-            <p className="text-xs mt-0.5">{weekFilled ? '✓ relleno' : '✗ falta'}</p>
+            <p className="font-mono text-xs opacity-50 tracking-widest mb-1">SEMANA</p>
+            <p className="font-bold tracking-wide">{fmtWeek(lastMonday)}</p>
+            <p className="text-xs mt-1 font-bold">{weekFilled ? '✓ relleno' : '✗ pendiente'}</p>
           </button>
         )}
       </div>

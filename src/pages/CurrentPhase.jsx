@@ -307,7 +307,6 @@ export default function CurrentPhase({ onNavigate }) {
             <p className="text-[#888888] font-mono text-xs mt-1">
               {phaseStart.toLocaleDateString('es-ES')} — {phase.end_date ? parseDate(phase.end_date).toLocaleDateString('es-ES') : 'hoy'}
             </p>
-            {isActive && <p className="text-[#c8f500] font-mono text-xs mt-0.5">● ACTIVA</p>}
           </div>
           <button
             onClick={() => setPhaseIndex(i => Math.min(phases.length - 1, i + 1))}
@@ -331,9 +330,7 @@ export default function CurrentPhase({ onNavigate }) {
           {isActive && diff && (
             <MetricCard label="DIFERENCIA" value={`${diff > 0 ? '+' : ''}${diff} kg`} sub="para el objetivo" />
           )}
-          {isActive && daysLeft !== null && (
-            <MetricCard label="DÍAS RESTANTES" value={`${daysLeft} días`} sub={dateGoal ? dateGoal.toLocaleDateString('es-ES') : ''} />
-          )}
+
         </div>
 
         {/* Barra de progreso — solo fase activa */}
@@ -343,9 +340,15 @@ export default function CurrentPhase({ onNavigate }) {
               <p className="text-[#888888] font-mono text-xs">PROGRESO TEMPORAL</p>
               <p className="text-[#c8f500] font-mono text-xs">{Math.round(progress * 100)}%</p>
             </div>
-            <div className="w-full bg-[#333333] h-2">
+            <div className="w-full bg-[#333333] h-2 mb-2">
               <div className="h-2 transition-all" style={{ width: `${progress * 100}%`, backgroundColor: phaseColor }} />
             </div>
+            {daysLeft !== null && (
+              <div className="flex justify-between">
+                <p className="text-[#555555] font-mono text-xs">{Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24))} días transcurridos</p>
+                <p className="text-[#888888] font-mono text-xs">{daysLeft} días restantes</p>
+              </div>
+            )}
           </div>
         )}
 

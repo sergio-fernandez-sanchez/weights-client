@@ -1,6 +1,6 @@
 # Weights Client
 
-Mobile-first web interface for the [Weights API](https://github.com/sergio-fernandez-sanchez/weights-api). Built with React and Tailwind CSS, optimized for iPhone Safari.
+Mobile-first web interface for the [Weights API](https://github.com/sergio-fernandez-sanchez/weights-client). Built with React and Tailwind CSS, optimized for iPhone Safari.
 
 Live at: [https://weights.up.railway.app](https://weights.up.railway.app)
 
@@ -18,16 +18,20 @@ Live at: [https://weights.up.railway.app](https://weights.up.railway.app)
 ## Pages
 
 - **Login / Register** — authentication with tab switcher
-- **Home** — log or update today's weight, calorie target button, gym shortcut
-- **Weight History** — weight chart and table with filters (current phase, all, week, month, year) + body composition charts from nutritionist reports
-- **Current Phase** — active phase metrics, temporal progress bar, gym strength progress (volume-based), weekly rhythm and consistency stats, weight evolution chart, edit goals button
-- **Reports** — nutritionist body composition reports with delta comparison, weight and phase context per report date
-- **AI Report** — generate and download two report types: optimized for AI analysis or full raw data
+- **Home** — log or update today's weight, calorie target button, gym shortcut, weekly report status button
+- **Weight History** — weight chart and table with filters (current phase, all, week, month, year)
+- **Phases** — browse all phases (past and active) with navigator, metrics, gym strength progress (1RM Epley), weekly rhythm, consistency stats and weight evolution chart
+- **Reports** — two tabs: nutritionist body composition reports with delta comparison and weight/phase context; body composition charts (% fat, muscle mass, fat-free mass)
+- **AI Report** — generate and download two JSON report types: optimized for AI analysis or full raw data
 - **New Phase** — start a new training phase with optional manual start date
 - **New Report** — log a new nutritionist measurement with optional manual date
 - **Calories** — update current daily calorie target
-- **Gym** — track gym performance: list active exercises with progress (phase and total %), add/edit/remove exercises, create custom exercises
+- **Calories History** — full calorie target history with overlapping phases
+- **Gym** — track gym performance: list active exercises with 1RM progress (phase and total %), add/edit/remove exercises, create custom exercises
+- **Gym History** — per-exercise charts with 1RM on Y axis, points colored by phase
 - **Edit Phase Goals** — update weight and date goal of the active phase
+- **Personal Data** — manage personal profile: name, birth date, sex, height, allergies/intolerances, supplements
+- **Weekly Report** — fill in weekly lifestyle data: training days, steps, alcohol, cigarettes, water, notes; week navigator to fill in past weeks
 
 ---
 
@@ -51,15 +55,19 @@ weights-client/
 │   │   ├── AiReport.jsx
 │   │   ├── Auth.jsx
 │   │   ├── Calories.jsx
+│   │   ├── CaloriesHistory.jsx
 │   │   ├── CurrentPhase.jsx
 │   │   ├── DataMenu.jsx
 │   │   ├── EditPhaseGoals.jsx
 │   │   ├── Gym.jsx
+│   │   ├── GymHistory.jsx
 │   │   ├── Home.jsx
 │   │   ├── Phase.jsx
+│   │   ├── Profile.jsx
 │   │   ├── Report.jsx
 │   │   ├── Reports.jsx
-│   │   └── WeightHistory.jsx
+│   │   ├── WeightHistory.jsx
+│   │   └── WeeklyReport.jsx
 │   ├── App.jsx
 │   ├── main.jsx
 │   └── index.css

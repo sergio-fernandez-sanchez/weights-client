@@ -99,7 +99,7 @@ export default function Home({ onNavigate, onLogout }) {
 
   return (
     <PageWrapper>
-      <HomeHeader />
+      <HomeHeader onNavigate={onNavigate} />
 
       <div className="flex items-start justify-between mb-6 gap-3">
         <div className="flex-1">
@@ -169,7 +169,6 @@ export default function Home({ onNavigate, onLogout }) {
           ['// VER DATOS →',     'data'],
           ['// NUEVA FASE →',    'phase'],
           ['// NUEVO INFORME →', 'report'],
-          ['// PERFIL →',        'profile'],
         ].map(([label, page]) => (
           <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>
             {label}

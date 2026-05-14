@@ -62,7 +62,7 @@ export default function Home({ onNavigate, onLogout }) {
   async function fetchWeeklyStatus() {
     try {
       const data = await getWeeklyReport(lastMondayISO)
-      setWeekFilled(!!data)
+      setWeekFilled(data !== null && data !== undefined)
     } catch {
       setWeekFilled(false)
     }
@@ -106,13 +106,14 @@ export default function Home({ onNavigate, onLogout }) {
         {weekFilled !== null && (
           <button
             onClick={() => onNavigate('weeklyReport', lastMondayISO)}
-            className="flex-shrink-0 px-3 py-2 border font-mono text-xs transition-colors"
+            className="flex-shrink-0 px-3 py-2 border font-mono text-xs transition-all hover:opacity-80 active:scale-95"
             style={{
               backgroundColor: weekFilled ? '#c8f500' : '#1a0000',
               borderColor:     weekFilled ? '#c8f500' : '#ff2d2d',
               color:           weekFilled ? '#0a0a0a' : '#ff2d2d',
             }}
           >
+            <p className="font-mono text-xs opacity-70">INFORME SEMANAL</p>
             <p className="font-bold">{fmtWeek(lastMonday)}</p>
             <p className="text-xs mt-0.5">{weekFilled ? '✓ relleno' : '✗ falta'}</p>
           </button>

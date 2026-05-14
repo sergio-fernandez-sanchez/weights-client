@@ -112,6 +112,7 @@ export default function WeeklyReport({ onNavigate, initialWeekStart }) {
         ...prev,
         [week_start]: { week_start, ...form }
       }))
+      setTimeout(() => onNavigate('home'), 800)
     } catch {
       setMsg('✗  error al guardar')
     } finally {

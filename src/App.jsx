@@ -15,6 +15,7 @@ import Gym from './pages/Gym'
 import GymHistory from './pages/GymHistory'
 import CaloriesHistory from './pages/CaloriesHistory'
 import Profile from './pages/Profile'
+import WeeklyReport from './pages/WeeklyReport'
 import ParticleBackground from './components/ParticleBackground'
 
 export default function App() {
@@ -70,6 +71,7 @@ export default function App() {
             {page === 'gymHistory'       && <GymHistory       onNavigate={navigate} />}
             {page === 'caloriesHistory'  && <CaloriesHistory  onNavigate={navigate} />}
             {page === 'profile'           && <Profile           onNavigate={navigate} />}
+            {page === 'weeklyReport'     && <WeeklyReport     onNavigate={navigate} initialWeekStart={pageData} />}
           </div>
         )}
       </div>

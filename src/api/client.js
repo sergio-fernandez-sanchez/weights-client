@@ -198,6 +198,23 @@ async function saveProfile(profileData) {
   })
 }
 
+// ── Weekly reports ───────────────────────────────────────────────────────────
+
+async function getWeeklyReports() {
+  return request('/weekly-reports')
+}
+
+async function getWeeklyReport(weekStart) {
+  return request(`/weekly-reports/${weekStart}`)
+}
+
+async function saveWeeklyReport(reportData) {
+  return request('/weekly-reports', {
+    method: 'PATCH',
+    body: JSON.stringify(reportData),
+  })
+}
+
 // ── AI Report ─────────────────────────────────────────────────────────────────
 
 async function getAiReport() {
@@ -233,6 +250,9 @@ async function getRawReport() {
 export {
   getProfile,
   saveProfile,
+  getWeeklyReports,
+  getWeeklyReport,
+  saveWeeklyReport,
   isAuthenticated,
   login,
   register,

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getWeightsWithPhase, getActivePhase, getReports } from '../api/client'
+import { getWeightsWithPhase, getActivePhase } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
@@ -20,12 +20,6 @@ const FILTERS = [
 ]
 
 const PAGE_SIZE = 20
-
-const BODY_METRICS = [
-  { key: 'body_fat_pct',         label: '% GRASA',         color: '#ff6b35' },
-  { key: 'skeletal_muscle_mass', label: 'M.M. ESQUELÉTICA', color: '#4a9eff' },
-  { key: 'fat_free_mass',        label: 'M. LIBRE GRASA',  color: '#c8f500' },
-]
 
 function parseDate(dateStr) {
   return new Date(dateStr + 'T00:00:00')
@@ -122,99 +116,22 @@ function WeightChart({ data }) {
   )
 }
 
-function MetricChart({ reports, metricKey, label, color }) {
-  const [tooltip, setTooltip] = useState(null)
-  const svgRef = useRef(null)
-
-  const data = reports
-    .filter(r => r[metricKey] != null)
-    .sort((a, b) => parseDate(a.date) - parseDate(b.date))
-    .map(r => ({ date: r.date, value: parseFloat(r[metricKey]) }))
-
-  if (data.length < 2) return (
-    <div className="bg-[#141414] border border-[#333333] p-3 mb-3">
-      <p className="text-[#888888] font-mono text-xs mb-1" style={{ color }}>{label}</p>
-      <p className="text-[#888888] font-mono text-xs">sin suficientes datos</p>
-    </div>
-  )
-
-  const W = 320, H = 120
-  const PAD = { top: 8, right: 10, bottom: 16, left: 36 }
-  const chartW = W - PAD.left - PAD.right
-  const chartH = H - PAD.top - PAD.bottom
-
-  const vals = data.map(d => d.value)
-  const minV = Math.min(...vals), maxV = Math.max(...vals)
-  const range = maxV - minV || 1
-
-  function xPos(i) { return PAD.left + (i / (data.length - 1)) * chartW }
-  function yPos(v) { return PAD.top + chartH - ((v - minV) / range) * chartH }
-
-  const points = data.map((d, i) => `${xPos(i)},${yPos(d.value)}`).join(' ')
-
-  const ticks = [minV, (minV + maxV) / 2, maxV].map(val => ({ val, y: yPos(val) }))
-
-  function handleMouseMove(e) {
-    const svg = svgRef.current
-    if (!svg) return
-    const rect = svg.getBoundingClientRect()
-    const x = e.clientX - rect.left - PAD.left
-    const idx = Math.max(0, Math.min(data.length - 1, Math.round((x / chartW) * (data.length - 1))))
-    const d = data[idx]
-    setTooltip({ x: xPos(idx), y: yPos(d.value), value: d.value, date: parseDate(d.date).toLocaleDateString('es-ES') })
-  }
-
-  return (
-    <div className="bg-[#141414] border border-[#333333] p-3 mb-3 relative">
-      <p className="font-mono text-xs mb-2" style={{ color }}>{label}</p>
-      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
-        onMouseMove={handleMouseMove} onMouseLeave={() => setTooltip(null)}>
-        {ticks.map((t, i) => (
-          <g key={i}>
-            <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#1f1f1f" strokeWidth="1" />
-            <text x={PAD.left - 4} y={t.y + 4} textAnchor="end" fill="#666" fontSize="9" fontFamily="Courier New">
-              {t.val.toFixed(1)}
-            </text>
-          </g>
-        ))}
-        <polyline points={points} fill="none" stroke={color} strokeWidth="2"
-          strokeLinejoin="round" strokeLinecap="round" />
-        {tooltip && (
-          <>
-            <line x1={tooltip.x} y1={PAD.top} x2={tooltip.x} y2={H - PAD.bottom}
-              stroke="#333" strokeWidth="1" strokeDasharray="3,3" />
-            <circle cx={tooltip.x} cy={tooltip.y} r="4" fill={color} />
-          </>
-        )}
-      </svg>
-      {tooltip && (
-        <div className="absolute top-8 right-3 bg-[#0a0a0a] border border-[#333333] px-3 py-2 font-mono text-xs pointer-events-none">
-          <p className="text-[#888888]">{tooltip.date}</p>
-          <p className="font-bold" style={{ color }}>{tooltip.value.toFixed(1)}</p>
-        </div>
-      )}
-    </div>
-  )
-}
-
 export default function WeightHistory({ onNavigate }) {
   const [weights, setWeights] = useState([])
-  const [reports, setReports] = useState([])
   const [activePhase, setActivePhase] = useState(null)
   const [filter, setFilter] = useState('phase')
-  const [viewMode, setViewMode] = useState('weightChart')
+  const [viewMode, setViewMode] = useState('chart')
   const [currentPage, setCurrentPage] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [weightData, phaseData, reportData] = await Promise.all([
-          getWeightsWithPhase(), getActivePhase(), getReports()
+        const [weightData, phaseData] = await Promise.all([
+          getWeightsWithPhase(), getActivePhase()
         ])
         setWeights(weightData)
         setActivePhase(phaseData)
-        setReports(reportData)
       } catch {}
       finally { setLoading(false) }
     }
@@ -241,13 +158,11 @@ export default function WeightHistory({ onNavigate }) {
     if (filter === 'month') {
       const cutoff = new Date()
       cutoff.setDate(cutoff.getDate() - 30)
-      cutoff.setHours(0, 0, 0, 0)
       return sorted.filter(w => parseDate(w.date) >= cutoff)
     }
     if (filter === 'year') {
       const cutoff = new Date()
       cutoff.setFullYear(cutoff.getFullYear() - 1)
-      cutoff.setHours(0, 0, 0, 0)
       return sorted.filter(w => parseDate(w.date) >= cutoff)
     }
     return sorted
@@ -266,34 +181,24 @@ export default function WeightHistory({ onNavigate }) {
     .sort((a, b) => parseDate(a.date) - parseDate(b.date))
     .map(w => ({ date: w.date, weight: parseFloat(w.weight), phase_type: w.phase_type || 'unknown' }))
 
-  const VIEW_MODES = [
-    ['GRÁFICA PESOS', 'weightChart'],
-    ['GRÁFICA CUERPO', 'bodyChart'],
-    ['TABLA PESOS', 'table'],
-  ]
-
   return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => onNavigate('data')} />
-        <PageHeader title="// EVOLUCIÓN" />
+        <PageHeader title="// PESO" />
 
-        {/* Filters — only for weight views */}
-        {viewMode !== 'bodyChart' && (
-          <div className="flex gap-1 mb-4">
-            {FILTERS.map(([label, val]) => (
-              <button key={val} onClick={() => setFilter(val)}
-                className={`flex-1 h-9 font-mono text-xs border transition-colors ${
-                  filter === val
-                    ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]'
-                    : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'
-                }`}>{label}</button>
-            ))}
-          </div>
-        )}
+        <div className="flex gap-1 mb-4">
+          {FILTERS.map(([label, val]) => (
+            <button key={val} onClick={() => setFilter(val)}
+              className={`flex-1 h-9 font-mono text-xs border transition-colors ${
+                filter === val
+                  ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]'
+                  : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'
+              }`}>{label}</button>
+          ))}
+        </div>
 
-        {/* Summary — only for weight views */}
-        {viewMode !== 'bodyChart' && filtered.length > 0 && (
+        {filtered.length > 0 && (
           <div className="grid grid-cols-3 gap-2 mb-4">
             {[['MÍN', min], ['MÁX', max], ['MEDIA', avg]].map(([label, val]) => (
               <div key={label} className="bg-[#141414] border border-[#333333] p-3 text-center">
@@ -304,9 +209,8 @@ export default function WeightHistory({ onNavigate }) {
           </div>
         )}
 
-        {/* View mode toggle */}
         <div className="flex gap-1 mb-4">
-          {VIEW_MODES.map(([label, val]) => (
+          {[['GRÁFICA', 'chart'], ['TABLA', 'table']].map(([label, val]) => (
             <button key={val} onClick={() => setViewMode(val)}
               className={`flex-1 h-9 font-mono text-xs border transition-colors ${
                 viewMode === val
@@ -318,22 +222,14 @@ export default function WeightHistory({ onNavigate }) {
 
         {loading ? (
           <p className="text-[#888888] font-mono text-sm">cargando...</p>
-        ) : viewMode === 'weightChart' ? (
+        ) : viewMode === 'chart' ? (
           filtered.length === 0
             ? <p className="text-[#888888] font-mono text-sm">sin datos para este período</p>
             : <WeightChart data={chartData} />
-        ) : viewMode === 'bodyChart' ? (
-          reports.length === 0
-            ? <p className="text-[#888888] font-mono text-sm">no hay informes registrados</p>
-            : BODY_METRICS.map(m => (
-                <MetricChart key={m.key} reports={reports} metricKey={m.key} label={m.label} color={m.color} />
-              ))
         ) : (
-          <>
-            {filtered.length === 0 ? (
-              <p className="text-[#888888] font-mono text-sm">sin datos para este período</p>
-            ) : (
-              <>
+          filtered.length === 0
+            ? <p className="text-[#888888] font-mono text-sm">sin datos para este período</p>
+            : <>
                 <div className="flex flex-col gap-px">
                   <div className="flex bg-[#141414] border border-[#333333] px-4 py-2">
                     <span className="flex-1 text-[#c8f500] font-mono text-xs">FECHA</span>
@@ -366,8 +262,6 @@ export default function WeightHistory({ onNavigate }) {
                   </div>
                 )}
               </>
-            )}
-          </>
         )}
 
         <Separator className="mt-8 mb-4" />

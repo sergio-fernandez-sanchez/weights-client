@@ -62,10 +62,13 @@ function getWeightOnDate(weights, date) {
 function getPhaseOnDate(phases, date) {
   const dateStr = typeof date === 'string' ? date : toISO(date)
   const d = parseDate(dateStr)
+  // Buscar la fase del día ANTERIOR al informe (el informe se hace al final de una fase)
+  const prevDay = new Date(d)
+  prevDay.setDate(prevDay.getDate() - 1)
   for (const phase of phases) {
     const start = parseDate(phase.start_date)
     const end = phase.end_date ? parseDate(phase.end_date) : new Date('2099-01-01')
-    if (d >= start && d <= end) return phase.phase_type
+    if (prevDay >= start && prevDay <= end) return phase.phase_type
   }
   return null
 }

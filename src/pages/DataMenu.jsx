@@ -12,7 +12,7 @@ export default function DataMenu({ onNavigate }) {
 
       <div className="flex flex-col gap-3">
         {[
-          ['// PESO →',    'weightHistory'],
+          ['// PESOS →',    'weightHistory'],
           ['// FASES →',  'currentPhase'],
           ['// INFORMES →',     'reports'],
           ['// GYM →',          'gymHistory'],

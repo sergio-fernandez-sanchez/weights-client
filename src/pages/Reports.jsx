@@ -49,26 +49,34 @@ function toISO(date) {
   return `${y}-${m}-${d}`
 }
 
+function normalizeDate(date) {
+  // Normaliza cualquier formato de fecha a string YYYY-MM-DD
+  if (!date) return null
+  if (typeof date === 'string') return date.split('T')[0]
+  return toISO(new Date(date))
+}
+
 function getWeightOnDate(weights, date) {
-  // date puede venir como string ISO o como objeto Date
-  const dateStr = typeof date === 'string' ? date : toISO(date)
-  const found = weights.find(w => {
-    const wStr = typeof w.date === 'string' ? w.date : toISO(new Date(w.date))
-    return wStr === dateStr
-  })
-  return found?.weight ?? null
+  const dateStr = normalizeDate(date)
+  // Buscar peso exacto ese día, si no el último disponible anterior
+  const sorted = [...weights].sort((a, b) => normalizeDate(b.date).localeCompare(normalizeDate(a.date)))
+  const exact = sorted.find(w => normalizeDate(w.date) === dateStr)
+  if (exact) return exact.weight
+  // Último peso anterior a esa fecha
+  const before = sorted.find(w => normalizeDate(w.date) < dateStr)
+  return before?.weight ?? null
 }
 
 function getPhaseOnDate(phases, date) {
-  const dateStr = typeof date === 'string' ? date : toISO(date)
-  const d = parseDate(dateStr)
+  const dateStr = normalizeDate(date)
   // Buscar la fase del día ANTERIOR al informe (el informe se hace al final de una fase)
-  const prevDay = new Date(d)
-  prevDay.setDate(prevDay.getDate() - 1)
+  const [y, m, d] = dateStr.split('-').map(Number)
+  const prevDay = new Date(y, m - 1, d - 1)
+  const prevStr = toISO(prevDay)
   for (const phase of phases) {
-    const start = parseDate(phase.start_date)
-    const end = phase.end_date ? parseDate(phase.end_date) : new Date('2099-01-01')
-    if (prevDay >= start && prevDay <= end) return phase.phase_type
+    const startStr = normalizeDate(phase.start_date)
+    const endStr   = phase.end_date ? normalizeDate(phase.end_date) : '2099-01-01'
+    if (prevStr >= startStr && prevStr <= endStr) return phase.phase_type
   }
   return null
 }

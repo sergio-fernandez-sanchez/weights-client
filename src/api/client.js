@@ -185,6 +185,19 @@ async function deleteGymLog(log_id) {
   return true
 }
 
+// ── Profile ──────────────────────────────────────────────────────────────────
+
+async function getProfile() {
+  return request('/profile')
+}
+
+async function saveProfile(profileData) {
+  return request('/profile', {
+    method: 'PATCH',
+    body: JSON.stringify(profileData),
+  })
+}
+
 // ── AI Report ─────────────────────────────────────────────────────────────────
 
 async function getAiReport() {
@@ -218,6 +231,8 @@ async function getRawReport() {
 // ── Exports ───────────────────────────────────────────────────────────────────
 
 export {
+  getProfile,
+  saveProfile,
   isAuthenticated,
   login,
   register,

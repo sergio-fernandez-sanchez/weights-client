@@ -84,7 +84,6 @@ export default function Home({ onNavigate, onLogout }) {
 
       {msg && <p className="text-[#c8f500] font-mono text-sm mb-2">{msg}</p>}
 
-      {/* Botones secundarios bajo el peso */}
       <div className="flex gap-2 mt-2 mb-2">
         <button
           onClick={() => onNavigate('calories', activeCalories)}
@@ -104,9 +103,10 @@ export default function Home({ onNavigate, onLogout }) {
 
       <div className="flex flex-col gap-3">
         {[
-          ['// VER DATOS →', 'data'],
-          ['// NUEVA FASE →', 'phase'],
-          ['// NUEVO INFORME →', 'report'],
+          ['// VER DATOS →',      'data'],
+          ['// NUEVA FASE →',     'phase'],
+          ['// NUEVO INFORME →',  'report'],
+          ['// PERFIL →',         'profile'],
         ].map(([label, page]) => (
           <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>
             {label}

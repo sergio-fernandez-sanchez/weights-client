@@ -3,11 +3,9 @@ import { isAuthenticated } from './api/client'
 import Auth from './pages/Auth'
 import Home from './pages/Home'
 import Phase from './pages/Phase'
-import Report from './pages/Report'
 import DataMenu from './pages/DataMenu'
 import WeightHistory from './pages/WeightHistory'
 import CurrentPhase from './pages/CurrentPhase'
-import Reports from './pages/Reports'
 import AiReport from './pages/AiReport'
 import EditPhaseGoals from './pages/EditPhaseGoals'
 import Calories from './pages/Calories'
@@ -63,27 +61,25 @@ export default function App() {
           }} />
         ) : (
           <div key={page} className="animate-fade-in">
-            {page === 'home'             && <Home             onNavigate={navigate} onLogout={() => { setAuth(false); window.history.replaceState({ page: 'home', data: null }, '', '') }} />}
-            {page === 'phase'            && <Phase            onNavigate={navigate} />}
-            {page === 'report'           && <Report           onNavigate={navigate} />}
-            {page === 'data'             && <DataMenu         onNavigate={navigate} />}
-            {page === 'weightHistory'    && <WeightHistory    onNavigate={navigate} />}
-            {page === 'currentPhase'     && <CurrentPhase     onNavigate={navigate} />}
-            {page === 'reports'          && <Reports          onNavigate={navigate} />}
-            {page === 'aiReport'         && <AiReport         onNavigate={navigate} />}
-            {page === 'editPhaseGoals'   && <EditPhaseGoals   onNavigate={navigate} phase={pageData} />}
-            {page === 'calories'         && <Calories         onNavigate={navigate} currentCalories={pageData} />}
-            {page === 'gym'              && <Gym              onNavigate={navigate} />}
-            {page === 'gymHistory'       && <GymHistory       onNavigate={navigate} />}
-            {page === 'caloriesHistory'  && <CaloriesHistory  onNavigate={navigate} />}
-            {page === 'profile'           && <Profile           onNavigate={navigate} />}
-            {page === 'weeklyReport'          && <WeeklyReport          onNavigate={navigate} initialWeekStart={pageData} />}
-            {page === 'newBioimpedance'      && <NewBioimpedanceReport onNavigate={navigate} />}
-            {page === 'newDexa'              && <NewDexaReport         onNavigate={navigate} />}
-            {page === 'newBodyMeasurement'   && <NewBodyMeasurement    onNavigate={navigate} />}
-            {page === 'bioimpedanceReports'  && <BioimpedanceReports   onNavigate={navigate} />}
-            {page === 'dexaReports'          && <DexaReports           onNavigate={navigate} />}
-            {page === 'bodyMeasurements'     && <BodyMeasurements      onNavigate={navigate} />}
+            {page === 'home'                && <Home                 onNavigate={navigate} onLogout={() => { setAuth(false); window.history.replaceState({ page: 'home', data: null }, '', '') }} />}
+            {page === 'phase'               && <Phase                onNavigate={navigate} />}
+            {page === 'data'                && <DataMenu             onNavigate={navigate} />}
+            {page === 'weightHistory'       && <WeightHistory        onNavigate={navigate} />}
+            {page === 'currentPhase'        && <CurrentPhase         onNavigate={navigate} />}
+            {page === 'aiReport'            && <AiReport             onNavigate={navigate} />}
+            {page === 'editPhaseGoals'      && <EditPhaseGoals       onNavigate={navigate} phase={pageData} />}
+            {page === 'calories'            && <Calories             onNavigate={navigate} currentCalories={pageData} />}
+            {page === 'gym'                 && <Gym                  onNavigate={navigate} />}
+            {page === 'gymHistory'          && <GymHistory           onNavigate={navigate} />}
+            {page === 'caloriesHistory'     && <CaloriesHistory      onNavigate={navigate} />}
+            {page === 'profile'             && <Profile              onNavigate={navigate} />}
+            {page === 'weeklyReport'        && <WeeklyReport         onNavigate={navigate} initialWeekStart={pageData} />}
+            {page === 'newBioimpedance'     && <NewBioimpedanceReport onNavigate={navigate} />}
+            {page === 'newDexa'             && <NewDexaReport        onNavigate={navigate} />}
+            {page === 'newBodyMeasurement'  && <NewBodyMeasurement   onNavigate={navigate} />}
+            {page === 'bioimpedanceReports' && <BioimpedanceReports  onNavigate={navigate} />}
+            {page === 'dexaReports'         && <DexaReports          onNavigate={navigate} />}
+            {page === 'bodyMeasurements'    && <BodyMeasurements     onNavigate={navigate} />}
           </div>
         )}
       </div>

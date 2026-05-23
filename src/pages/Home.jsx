@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getLastWeight, postWeight, getActiveCalories, getWeeklyReports, logout } from '../api/client'
 import PageWrapper from '../components/PageWrapper'
-import HomeHeader from '../components/HomeHeader'
+import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import Input from '../components/Input'
 import Separator from '../components/Separator'
@@ -99,7 +99,7 @@ export default function Home({ onNavigate, onLogout }) {
 
   return (
     <PageWrapper>
-      <HomeHeader />
+      <PageHeader title="// W E I G H T S" blink />
 
       <div className="flex items-start justify-between mb-6 gap-3">
         <div className="flex-1">

@@ -166,12 +166,10 @@ export default function Home({ onNavigate, onLogout }) {
 
       <div className="flex flex-col gap-3">
         {[
-          ['// VER DATOS →',           'data'],
-          ['// NUEVA FASE →',          'phase'],
-          ['// NUEVA BIOIMPEDANCIA →', 'newBioimpedance'],
-          ['// NUEVO DEXA →',           'newDexa'],
-          ['// NUEVAS MEDIDAS →',       'newBodyMeasurement'],
-          ['// DATOS PERSONALES →',     'profile'],
+          ['// VER DATOS →',        'data'],
+          ['// NUEVA FASE →',       'phase'],
+          ['// NUEVO INFORME →',     'newReport'],
+          ['// DATOS PERSONALES →',  'profile'],
         ].map(([label, page]) => (
           <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>
             {label}

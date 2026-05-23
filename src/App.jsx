@@ -14,6 +14,7 @@ import GymHistory from './pages/GymHistory'
 import CaloriesHistory from './pages/CaloriesHistory'
 import Profile from './pages/Profile'
 import WeeklyReport from './pages/WeeklyReport'
+import NewReport from './pages/NewReport'
 import NewBioimpedanceReport from './pages/NewBioimpedanceReport'
 import NewDexaReport from './pages/NewDexaReport'
 import NewBodyMeasurement from './pages/NewBodyMeasurement'
@@ -74,6 +75,7 @@ export default function App() {
             {page === 'caloriesHistory'     && <CaloriesHistory      onNavigate={navigate} />}
             {page === 'profile'             && <Profile              onNavigate={navigate} />}
             {page === 'weeklyReport'        && <WeeklyReport         onNavigate={navigate} initialWeekStart={pageData} />}
+            {page === 'newReport'           && <NewReport            onNavigate={navigate} />}
             {page === 'newBioimpedance'     && <NewBioimpedanceReport onNavigate={navigate} />}
             {page === 'newDexa'             && <NewDexaReport        onNavigate={navigate} />}
             {page === 'newBodyMeasurement'  && <NewBodyMeasurement   onNavigate={navigate} />}

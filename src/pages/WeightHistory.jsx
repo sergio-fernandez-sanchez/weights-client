@@ -25,6 +25,19 @@ function parseDate(dateStr) {
   return new Date(dateStr + 'T00:00:00')
 }
 
+function movingAverage(data, windowDays) {
+  return data.map((point, i) => {
+    const pointDate = parseDate(point.date).getTime()
+    const cutoff = pointDate - windowDays * 24 * 60 * 60 * 1000
+    const window = data.filter(d => {
+      const t = parseDate(d.date).getTime()
+      return t >= cutoff && t <= pointDate
+    })
+    const avg = window.reduce((sum, d) => sum + d.weight, 0) / window.length
+    return { date: point.date, weight: avg }
+  })
+}
+
 function WeightChart({ data }) {
   const [tooltip, setTooltip] = useState(null)
   const svgRef = useRef(null)
@@ -88,6 +101,14 @@ function WeightChart({ data }) {
             stroke={PHASE_COLORS[seg.phase] || '#888'} strokeWidth="2"
             strokeLinejoin="round" strokeLinecap="round" />
         ))}
+        {/* Línea de tendencia 7d */}
+        {(() => {
+          const maData = movingAverage(data, 7)
+          if (maData.length < 2) return null
+          const maPoints = maData.map((d, i) => `${xPos(i)},${yPos(d.weight)}`).join(' ')
+          return <polyline points={maPoints} fill="none" stroke="#ffffff" strokeWidth="1"
+            strokeDasharray="4,4" strokeOpacity="0.25" strokeLinejoin="round" />
+        })()}
         {tooltip && (
           <>
             <line x1={tooltip.x} y1={PAD.top} x2={tooltip.x} y2={H - PAD.bottom}
@@ -102,16 +123,18 @@ function WeightChart({ data }) {
           <p className="font-bold" style={{ color: tooltip.color }}>{tooltip.weight.toFixed(2)} kg</p>
         </div>
       )}
-      {presentPhases.length > 1 && (
-        <div className="flex gap-4 mt-2 justify-center">
-          {presentPhases.map(phase => (
-            <div key={phase} className="flex items-center gap-1">
-              <div className="w-4 h-0.5" style={{ backgroundColor: PHASE_COLORS[phase] }} />
-              <span className="text-[#888888] font-mono text-xs">{phase}</span>
-            </div>
-          ))}
+      <div className="flex gap-4 mt-2 justify-center flex-wrap">
+        {presentPhases.length > 1 && presentPhases.map(phase => (
+          <div key={phase} className="flex items-center gap-1">
+            <div className="w-4 h-0.5" style={{ backgroundColor: PHASE_COLORS[phase] }} />
+            <span className="text-[#888888] font-mono text-xs">{phase}</span>
+          </div>
+        ))}
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-0.5" style={{ backgroundColor: '#ffffff', opacity: 0.25, borderTop: '1px dashed white' }} />
+          <span className="text-[#555555] font-mono text-xs">media 7d</span>
         </div>
-      )}
+      </div>
     </div>
   )
 }

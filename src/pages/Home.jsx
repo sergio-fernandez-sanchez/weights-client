@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getLastWeight, postWeight, getActiveCalories, getWeeklyReports, getActivePhase, getWeights, getActiveGymLogs } from '../api/client'
+import { getLastWeight, postWeight, getActiveCalories, getWeeklyReports, getActivePhase, getWeights, getActiveGymLogs, logout } from '../api/client'
 import PageWrapper from '../components/PageWrapper'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
@@ -8,17 +8,12 @@ import Separator from '../components/Separator'
 
 function getLastMondayISO() {
   const now = new Date()
-  // Usar fecha local, no UTC
   const year  = now.getFullYear()
   const month = now.getMonth()
   const date  = now.getDate()
-  const day   = now.getDay() // 0=domingo, 1=lunes...
-
-  // Días hasta el lunes de esta semana
+  const day   = now.getDay()
   const daysToThisMonday = day === 0 ? 6 : day - 1
-  // Lunes de la semana pasada = lunes de esta semana - 7
   const lastMondayDate = new Date(year, month, date - daysToThisMonday - 7)
-
   const y = lastMondayDate.getFullYear()
   const m = String(lastMondayDate.getMonth() + 1).padStart(2, '0')
   const d = String(lastMondayDate.getDate()).padStart(2, '0')
@@ -33,6 +28,8 @@ function fmtWeekFromISO(isoDate) {
   return `${fmt(monday)}-${fmt(sunday)}`
 }
 
+const PHASE_COLORS = { bulk: '#c8f500', cut: '#ff2d2d', maintenance: '#ff9f00' }
+
 export default function Home({ onNavigate, onLogout }) {
   const [lastWeight, setLastWeight]         = useState(null)
   const [input, setInput]                   = useState('')
@@ -41,6 +38,9 @@ export default function Home({ onNavigate, onLogout }) {
   const [todayLogged, setTodayLogged]       = useState(false)
   const [activeCalories, setActiveCalories] = useState(null)
   const [weekFilled, setWeekFilled]         = useState(null)
+  const [activePhase, setActivePhase]       = useState(null)
+  const [weeklyTrend, setWeeklyTrend]       = useState(null)
+  const [bestOneRM, setBestOneRM]           = useState(null)
 
   const lastMondayISO = getLastMondayISO()
 
@@ -87,14 +87,13 @@ export default function Home({ onNavigate, onLogout }) {
       ])
       setActivePhase(phaseData)
 
-      // Tendencia semanal — comparar media últimos 7 días vs 7 anteriores
       if (weightsData && weightsData.length >= 2) {
         const sorted = [...weightsData].sort((a, b) => new Date(a.date) - new Date(b.date))
         const today = new Date()
         const cutoff7  = new Date(today); cutoff7.setDate(today.getDate() - 7)
         const cutoff14 = new Date(today); cutoff14.setDate(today.getDate() - 14)
-        const last7  = sorted.filter(w => new Date(w.date) >= cutoff7).map(w => parseFloat(w.weight))
-        const prev7  = sorted.filter(w => new Date(w.date) >= cutoff14 && new Date(w.date) < cutoff7).map(w => parseFloat(w.weight))
+        const last7 = sorted.filter(w => new Date(w.date) >= cutoff7).map(w => parseFloat(w.weight))
+        const prev7 = sorted.filter(w => new Date(w.date) >= cutoff14 && new Date(w.date) < cutoff7).map(w => parseFloat(w.weight))
         if (last7.length > 0 && prev7.length > 0) {
           const avg7  = last7.reduce((a, b) => a + b, 0) / last7.length
           const avgP7 = prev7.reduce((a, b) => a + b, 0) / prev7.length
@@ -102,7 +101,6 @@ export default function Home({ onNavigate, onLogout }) {
         }
       }
 
-      // Mejor 1RM activo
       if (gymData && gymData.length > 0) {
         let best = null
         gymData.forEach(log => {
@@ -150,7 +148,7 @@ export default function Home({ onNavigate, onLogout }) {
               </p>
               <div className="flex gap-3 mt-1 flex-wrap">
                 {activePhase && (
-                  <span className="font-mono text-xs" style={{ color: activePhase.phase_type === 'bulk' ? '#c8f500' : activePhase.phase_type === 'cut' ? '#ff2d2d' : '#ff9f00' }}>
+                  <span className="font-mono text-xs" style={{ color: PHASE_COLORS[activePhase.phase_type] || '#888888' }}>
                     {activePhase.phase_type} · {Math.floor((new Date() - new Date(activePhase.start_date + 'T00:00:00')) / (1000*60*60*24))}d
                   </span>
                 )}
@@ -225,8 +223,8 @@ export default function Home({ onNavigate, onLogout }) {
         {[
           ['// VER DATOS →',        'data'],
           ['// NUEVA FASE →',       'phase'],
-          ['// NUEVO INFORME →',     'newReport'],
-          ['// DATOS PERSONALES →',  'profile'],
+          ['// NUEVO INFORME →',    'newReport'],
+          ['// DATOS PERSONALES →', 'profile'],
         ].map(([label, page]) => (
           <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>
             {label}

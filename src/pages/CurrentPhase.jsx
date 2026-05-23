@@ -5,9 +5,10 @@ import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 
 const PHASE_COLORS = {
-  bulk:        '#4a9eff',
-  cut:         '#ff6b35',
-  maintenance: '#c8f500',
+  bulk:        '#c8f500',
+  cut:         '#ff2d2d',
+  maintenance: '#ff9f00',
+  unknown:     '#888888',
 }
 
 function parseDate(dateStr) {
@@ -212,7 +213,7 @@ export default function CurrentPhase({ onNavigate }) {
 
   const phase    = phases[phaseIndex]
   const isActive = !phase.end_date
-  const phaseColor = PHASE_COLORS[phase.phase_type] || '#c8f500'
+  const phaseColor = PHASE_COLORS[phase.phase_type] || '#888888'
 
   const phaseEnd   = phase.end_date ? parseDate(phase.end_date) : new Date()
   const phaseStart = parseDate(phase.start_date)

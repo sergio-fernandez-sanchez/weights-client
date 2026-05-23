@@ -21,7 +21,12 @@ const CHART_METRICS = [
   { key: 'fat_free_mass',        label: 'M. LIBRE GRASA',  color: '#c8f500' },
 ]
 
-const PHASE_COLORS = { bulk: '#c8f500', cut: '#ff2d2d', maintenance: '#ff9f00' }
+const PHASE_COLORS = {
+  bulk:        '#c8f500',
+  cut:         '#ff2d2d',
+  maintenance: '#ff9f00',
+  unknown:     '#888888',
+}
 
 function deltaColor(delta, upIsGood) {
   if (upIsGood === null || delta === 0) return '#888888'

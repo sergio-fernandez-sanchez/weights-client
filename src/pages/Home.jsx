@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getLastWeight, postWeight, getActiveCalories, getWeeklyReports, logout } from '../api/client'
+import { getLastWeight, postWeight, getActiveCalories, getWeeklyReports, getActivePhase, getWeights, getActiveGymLogs } from '../api/client'
 import PageWrapper from '../components/PageWrapper'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
@@ -48,6 +48,7 @@ export default function Home({ onNavigate, onLogout }) {
     fetchLastWeight()
     fetchCalories()
     fetchWeeklyStatus()
+    fetchExtraStats()
   }, [])
 
   async function fetchLastWeight() {
@@ -79,6 +80,43 @@ export default function Home({ onNavigate, onLogout }) {
     }
   }
 
+  async function fetchExtraStats() {
+    try {
+      const [phaseData, weightsData, gymData] = await Promise.all([
+        getActivePhase(), getWeights(), getActiveGymLogs()
+      ])
+      setActivePhase(phaseData)
+
+      // Tendencia semanal — comparar media últimos 7 días vs 7 anteriores
+      if (weightsData && weightsData.length >= 2) {
+        const sorted = [...weightsData].sort((a, b) => new Date(a.date) - new Date(b.date))
+        const today = new Date()
+        const cutoff7  = new Date(today); cutoff7.setDate(today.getDate() - 7)
+        const cutoff14 = new Date(today); cutoff14.setDate(today.getDate() - 14)
+        const last7  = sorted.filter(w => new Date(w.date) >= cutoff7).map(w => parseFloat(w.weight))
+        const prev7  = sorted.filter(w => new Date(w.date) >= cutoff14 && new Date(w.date) < cutoff7).map(w => parseFloat(w.weight))
+        if (last7.length > 0 && prev7.length > 0) {
+          const avg7  = last7.reduce((a, b) => a + b, 0) / last7.length
+          const avgP7 = prev7.reduce((a, b) => a + b, 0) / prev7.length
+          setWeeklyTrend(parseFloat((avg7 - avgP7).toFixed(2)))
+        }
+      }
+
+      // Mejor 1RM activo
+      if (gymData && gymData.length > 0) {
+        let best = null
+        gymData.forEach(log => {
+          if (!log.weight) return
+          const rm = log.reps
+            ? parseFloat(log.weight) * (1 + parseInt(log.reps) / 30)
+            : parseFloat(log.weight)
+          if (!best || rm > best.rm) best = { name: log.name, rm: Math.round(rm) }
+        })
+        setBestOneRM(best)
+      }
+    } catch {}
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     if (!input) return
@@ -104,11 +142,30 @@ export default function Home({ onNavigate, onLogout }) {
       <div className="flex items-start justify-between mb-6 gap-3">
         <div className="flex-1">
           {lastWeight && (
-            <p className="text-[#c8f500] font-mono text-sm">
-              {todayLogged
-                ? `✓  ${lastWeight.weight} kg registrado hoy`
-                : `último: ${lastWeight.weight} kg — ${lastWeight.date}`}
-            </p>
+            <div>
+              <p className="text-[#c8f500] font-mono text-sm">
+                {todayLogged
+                  ? `✓  ${lastWeight.weight} kg registrado hoy`
+                  : `último: ${lastWeight.weight} kg — ${lastWeight.date}`}
+              </p>
+              <div className="flex gap-3 mt-1 flex-wrap">
+                {activePhase && (
+                  <span className="font-mono text-xs" style={{ color: activePhase.phase_type === 'bulk' ? '#c8f500' : activePhase.phase_type === 'cut' ? '#ff2d2d' : '#ff9f00' }}>
+                    {activePhase.phase_type} · {Math.floor((new Date() - new Date(activePhase.start_date + 'T00:00:00')) / (1000*60*60*24))}d
+                  </span>
+                )}
+                {weeklyTrend !== null && (
+                  <span className="font-mono text-xs" style={{ color: weeklyTrend > 0 ? '#4a9eff' : weeklyTrend < 0 ? '#ff2d2d' : '#888888' }}>
+                    {weeklyTrend > 0 ? '↑' : weeklyTrend < 0 ? '↓' : '→'} {Math.abs(weeklyTrend)} kg/sem
+                  </span>
+                )}
+                {bestOneRM && (
+                  <span className="text-[#555555] font-mono text-xs">
+                    1RM {bestOneRM.name.toLowerCase()} {bestOneRM.rm}kg
+                  </span>
+                )}
+              </div>
+            </div>
           )}
         </div>
 

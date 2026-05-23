@@ -154,7 +154,7 @@ export default function Home({ onNavigate, onLogout }) {
                 )}
                 {weeklyTrend !== null && (
                   <span className="font-mono text-xs" style={{ color: weeklyTrend > 0 ? '#4a9eff' : weeklyTrend < 0 ? '#ff2d2d' : '#888888' }}>
-                    {weeklyTrend > 0 ? '↑' : weeklyTrend < 0 ? '↓' : '→'} {Math.abs(weeklyTrend)} kg/sem
+                    {weeklyTrend > 0 ? '↑' : weeklyTrend < 0 ? '↓' : '→'} {Math.abs(weeklyTrend)} kg (7d)
                   </span>
                 )}
                 {bestOneRM && (

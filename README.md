@@ -21,10 +21,14 @@ Live at: [https://weights.up.railway.app](https://weights.up.railway.app)
 - **Home** — log or update today's weight, calorie target button, gym shortcut, weekly report status button
 - **Weight History** — weight chart and table with filters (current phase, all, week, month, year)
 - **Phases** — browse all phases (past and active) with navigator, metrics, gym strength progress (1RM Epley), weekly rhythm, consistency stats and weight evolution chart
-- **Reports** — two tabs: nutritionist body composition reports with delta comparison and weight/phase context; body composition charts (% fat, muscle mass, fat-free mass)
+- **Bioimpedance Reports** — bioimpedance reports with delta comparison, weight/phase context, and body composition charts
+- **DEXA Reports** — DEXA scan reports with delta comparison and weight/phase context
+- **Body Measurements** — body circumference measurements (neck, shoulders, chest, bicep, waist, hip, thigh) with delta comparison
 - **AI Report** — generate and download two JSON report types: optimized for AI analysis or full raw data
 - **New Phase** — start a new training phase with optional manual start date
-- **New Report** — log a new nutritionist measurement with optional manual date
+- **New Bioimpedance** — log a new bioimpedance report with optional manual date
+- **New DEXA** — log a new DEXA scan report with optional manual date
+- **New Measurements** — log new body measurements with optional manual date
 - **Calories** — update current daily calorie target
 - **Calories History** — full calorie target history with overlapping phases
 - **Gym** — track gym performance: list active exercises with 1RM progress (phase and total %), add/edit/remove exercises, create custom exercises
@@ -41,7 +45,7 @@ Live at: [https://weights.up.railway.app](https://weights.up.railway.app)
 weights-client/
 ├── src/
 │   ├── api/
-│   │   └── client.js              # API calls and auth token management
+│   │   └── client.js                  # API calls and auth token management
 │   ├── components/
 │   │   ├── BackButton.jsx
 │   │   ├── Button.jsx
@@ -54,18 +58,22 @@ weights-client/
 │   ├── pages/
 │   │   ├── AiReport.jsx
 │   │   ├── Auth.jsx
+│   │   ├── BioimpedanceReports.jsx
+│   │   ├── BodyMeasurements.jsx
 │   │   ├── Calories.jsx
 │   │   ├── CaloriesHistory.jsx
 │   │   ├── CurrentPhase.jsx
 │   │   ├── DataMenu.jsx
+│   │   ├── DexaReports.jsx
 │   │   ├── EditPhaseGoals.jsx
 │   │   ├── Gym.jsx
 │   │   ├── GymHistory.jsx
 │   │   ├── Home.jsx
+│   │   ├── NewBioimpedanceReport.jsx
+│   │   ├── NewBodyMeasurement.jsx
+│   │   ├── NewDexaReport.jsx
 │   │   ├── Phase.jsx
 │   │   ├── Profile.jsx
-│   │   ├── Report.jsx
-│   │   ├── Reports.jsx
 │   │   ├── WeightHistory.jsx
 │   │   └── WeeklyReport.jsx
 │   ├── App.jsx

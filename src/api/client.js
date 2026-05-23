@@ -198,6 +198,36 @@ async function saveProfile(profileData) {
   })
 }
 
+// ── Bioimpedance reports ─────────────────────────────────────────────────────
+
+async function getBioimpedanceReports() {
+  return request('/bioimpedance-reports')
+}
+
+async function postBioimpedanceReport(data) {
+  return request('/bioimpedance-reports', { method: 'POST', body: JSON.stringify(data) })
+}
+
+// ── DEXA reports ──────────────────────────────────────────────────────────────
+
+async function getDexaReports() {
+  return request('/dexa-reports')
+}
+
+async function postDexaReport(data) {
+  return request('/dexa-reports', { method: 'POST', body: JSON.stringify(data) })
+}
+
+// ── Body measurements ─────────────────────────────────────────────────────────
+
+async function getBodyMeasurements() {
+  return request('/body-measurements')
+}
+
+async function postBodyMeasurement(data) {
+  return request('/body-measurements', { method: 'POST', body: JSON.stringify(data) })
+}
+
 // ── Weekly reports ───────────────────────────────────────────────────────────
 
 async function getWeeklyReports() {
@@ -250,6 +280,12 @@ async function getRawReport() {
 export {
   getProfile,
   saveProfile,
+  getBioimpedanceReports,
+  postBioimpedanceReport,
+  getDexaReports,
+  postDexaReport,
+  getBodyMeasurements,
+  postBodyMeasurement,
   getWeeklyReports,
   getWeeklyReport,
   saveWeeklyReport,

@@ -16,6 +16,12 @@ import GymHistory from './pages/GymHistory'
 import CaloriesHistory from './pages/CaloriesHistory'
 import Profile from './pages/Profile'
 import WeeklyReport from './pages/WeeklyReport'
+import NewBioimpedanceReport from './pages/NewBioimpedanceReport'
+import NewDexaReport from './pages/NewDexaReport'
+import NewBodyMeasurement from './pages/NewBodyMeasurement'
+import BioimpedanceReports from './pages/BioimpedanceReports'
+import DexaReports from './pages/DexaReports'
+import BodyMeasurements from './pages/BodyMeasurements'
 import ParticleBackground from './components/ParticleBackground'
 
 export default function App() {
@@ -71,7 +77,13 @@ export default function App() {
             {page === 'gymHistory'       && <GymHistory       onNavigate={navigate} />}
             {page === 'caloriesHistory'  && <CaloriesHistory  onNavigate={navigate} />}
             {page === 'profile'           && <Profile           onNavigate={navigate} />}
-            {page === 'weeklyReport'     && <WeeklyReport     onNavigate={navigate} initialWeekStart={pageData} />}
+            {page === 'weeklyReport'          && <WeeklyReport          onNavigate={navigate} initialWeekStart={pageData} />}
+            {page === 'newBioimpedance'      && <NewBioimpedanceReport onNavigate={navigate} />}
+            {page === 'newDexa'              && <NewDexaReport         onNavigate={navigate} />}
+            {page === 'newBodyMeasurement'   && <NewBodyMeasurement    onNavigate={navigate} />}
+            {page === 'bioimpedanceReports'  && <BioimpedanceReports   onNavigate={navigate} />}
+            {page === 'dexaReports'          && <DexaReports           onNavigate={navigate} />}
+            {page === 'bodyMeasurements'     && <BodyMeasurements      onNavigate={navigate} />}
           </div>
         )}
       </div>

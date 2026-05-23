@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { login, register } from '../api/client'
 import PageWrapper from '../components/PageWrapper'
-import HomeHeader from '../components/HomeHeader'
+import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import Input from '../components/Input'
 import Separator from '../components/Separator'
@@ -38,7 +38,7 @@ export default function Auth({ onLogin }) {
 
   return (
     <PageWrapper>
-      <HomeHeader />
+      <PageHeader title="// W E I G H T S" blink />
 
       <div className="flex w-full mb-6">
         {['login', 'register'].map((m) => (

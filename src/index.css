@@ -55,7 +55,7 @@
 
 .animate-fade-in-up { animation: fadeInUp 0.5s ease-out backwards; }
 .animate-fade-in    { animation: fadeIn 0.4s ease-out backwards; }
-.animate-slide-up   { animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+.animate-slide-up   { animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
 .animate-slide-right { animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
 
 .glow-text {

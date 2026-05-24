@@ -5,6 +5,7 @@ import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import Input from '../components/Input'
 import Separator from '../components/Separator'
+import Tabs from '../components/Tabs'
 
 export default function Auth({ onLogin }) {
   const [mode, setMode] = useState('login')
@@ -40,21 +41,7 @@ export default function Auth({ onLogin }) {
     <PageWrapper>
       <PageHeader title="// W E I G H T S" blink />
 
-      <div className="flex w-full mb-6">
-        {['login', 'register'].map((m) => (
-          <button
-            key={m}
-            onClick={() => { setMode(m); setError(''); setSuccess('') }}
-            className={`flex-1 h-10 font-mono text-sm border transition-colors ${
-              mode === m
-                ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]'
-                : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'
-            }`}
-          >
-            {m === 'login' ? 'INICIAR SESIÓN' : 'REGISTRARSE'}
-          </button>
-        ))}
-      </div>
+      <Tabs options={[['INICIAR SESIÓN', 'login'], ['REGISTRARSE', 'register']]} value={mode} onChange={(m) => { setMode(m); setError(''); setSuccess('') }} className="mb-6" />
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input required label="EMAIL" type="email" value={email} onChange={e => setEmail(e.target.value)} />

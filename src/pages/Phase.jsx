@@ -6,6 +6,7 @@ import Button from '../components/Button'
 import Input from '../components/Input'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
+import Tabs from '../components/Tabs'
 
 const PHASE_TYPES = ['bulk', 'cut', 'maintenance']
 
@@ -57,22 +58,7 @@ export default function Phase({ onNavigate }) {
       {/* Tipo de fase */}
       <div className="flex flex-col gap-1 mb-6">
         <label className="text-[#888888] font-mono text-sm">TIPO DE FASE</label>
-        <div className="flex">
-          {PHASE_TYPES.map(type => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => setPhaseType(type)}
-              className={`flex-1 h-12 font-mono text-sm border transition-colors ${
-                phaseType === type
-                  ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]'
-                  : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'
-              }`}
-            >
-              {type.toUpperCase()}
-            </button>
-          ))}
-        </div>
+        <Tabs options={PHASE_TYPES.map(t => [t.toUpperCase(), t])} value={phaseType} onChange={setPhaseType} className="mb-0" />
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -80,22 +66,7 @@ export default function Phase({ onNavigate }) {
         {/* Fecha de inicio */}
         <div className="flex flex-col gap-2">
           <label className="text-[#888888] font-mono text-sm">FECHA DE INICIO</label>
-          <div className="flex gap-2">
-            {[['HOY', 'today'], ['MANUAL', 'manual']].map(([label, val]) => (
-              <button
-                key={val}
-                type="button"
-                onClick={() => setStartDateMode(val)}
-                className={`flex-1 h-10 font-mono text-xs border transition-colors ${
-                  startDateMode === val
-                    ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]'
-                    : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <Tabs options={[['HOY', 'today'], ['MANUAL', 'manual']]} value={startDateMode} onChange={setStartDateMode} className="mb-0" />
           {startDateMode === 'manual' && (
             <Input
               type="text"

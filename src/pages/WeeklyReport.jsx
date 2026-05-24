@@ -142,23 +142,24 @@ export default function WeeklyReport({ onNavigate, initialWeekStart }) {
         <BackButton onClick={() => onNavigate('home')} />
         <PageHeader title="// INFORME SEMANAL" />
 
-        {/* Selector de semana */}
-        <div className="bg-[#141414] border border-[#333333] p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <button onClick={prevWeek} className="text-[#888888] font-mono text-lg hover:text-[#c8f500] transition-colors px-2">←</button>
-            <div className="text-center">
-              <p className="font-mono text-sm text-[#e8e8e8] font-bold">
-                {fmtDate(currentMonday)} — {fmtDate(weekEnd)}
+        {/* Banner selector de semana */}
+        <div className="relative bg-[#0f0f0f] mb-6 overflow-hidden"
+             style={{ borderTop: `2px solid ${isFilled ? '#c8f500' : '#ff2d2d'}`, borderBottom: `2px solid ${isFilled ? '#c8f500' : '#ff2d2d'}` }}>
+          <div className="absolute inset-0 pointer-events-none"
+               style={{ backgroundImage: `repeating-linear-gradient(90deg, transparent 0, transparent 18px, ${isFilled ? '#c8f500' : '#ff2d2d'}0a 18px, ${isFilled ? '#c8f500' : '#ff2d2d'}0a 19px)` }} />
+          <div className="relative flex items-center justify-between p-4">
+            <button onClick={prevWeek} className="text-[#888888] font-mono text-xl hover:text-[#c8f500] transition-colors px-2 z-10">←</button>
+            <div className="text-center flex-1">
+              <p className="text-[#555555] font-mono text-[10px] tracking-[0.3em] mb-1">SEMANA</p>
+              <p className="font-mono text-xl font-bold tracking-[0.2em] leading-none text-[#e8e8e8]">
+                {fmtDate(currentMonday)} → {fmtDate(weekEnd)}
               </p>
-              <p className="font-mono text-xs mt-1" style={{ color: isFilled ? '#c8f500' : '#ff2d2d' }}>
-                {isFilled ? '✓ relleno' : '✗ sin rellenar'}
+              <p className="font-mono text-[10px] tracking-widest mt-2" style={{ color: isFilled ? '#c8f500' : '#ff2d2d' }}>
+                {isFilled ? '● RELLENO' : '○ PENDIENTE'}
               </p>
             </div>
-            <button
-              onClick={nextWeek}
-              disabled={!canGoNext}
-              className={`font-mono text-lg px-2 transition-colors ${canGoNext ? 'text-[#888888] hover:text-[#c8f500]' : 'text-[#333333] cursor-default'}`}
-            >→</button>
+            <button onClick={nextWeek} disabled={!canGoNext}
+              className={`font-mono text-xl px-2 transition-colors z-10 ${canGoNext ? 'text-[#888888] hover:text-[#c8f500]' : 'text-[#333333] cursor-default'}`}>→</button>
           </div>
         </div>
 

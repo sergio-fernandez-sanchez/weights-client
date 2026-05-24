@@ -3,6 +3,7 @@ import { getDexaReports, getWeights, getPhases } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
+import MetricCard from '../components/MetricCard'
 
 const METRICS = [
   ['fat_mass_kg',          'MASA GRASA (kg)',    false],
@@ -98,24 +99,27 @@ export default function DexaReports({ onNavigate }) {
         <PageHeader title="// DEXA" />
 
         <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-          {reports.map((r, i) => (
-            <button key={i} onClick={() => setSelectedIdx(i)}
-              className={`flex-shrink-0 px-3 h-9 font-mono text-xs border transition-colors whitespace-nowrap ${selectedIdx === i ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]' : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'}`}>
-              {parseDate(r.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
-            </button>
-          ))}
+          {reports.map((r, i) => {
+            const active = selectedIdx === i
+            return (
+              <button key={i} onClick={() => setSelectedIdx(i)}
+                className={`relative flex-shrink-0 px-3 h-9 font-mono text-xs font-bold border transition-all whitespace-nowrap ${active ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]' : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'}`}>
+                {active && (
+                  <>
+                    <span className="absolute top-0 left-0 w-1.5 h-1.5 border-l border-t border-[#0a0a0a]" />
+                    <span className="absolute bottom-0 right-0 w-1.5 h-1.5 border-r border-b border-[#0a0a0a]" />
+                  </>
+                )}
+                {parseDate(r.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+              </button>
+            )
+          })}
         </div>
 
         {current && (
           <div className="grid grid-cols-2 gap-2 mb-4">
-            <div className="bg-[#141414] border border-[#333333] p-3">
-              <p className="text-[#888888] font-mono text-xs mb-1">PESO ESE DÍA</p>
-              <p className="text-[#c8f500] font-mono text-xl font-bold">{weightOnDate ? `${parseFloat(weightOnDate).toFixed(2)} kg` : '—'}</p>
-            </div>
-            <div className="bg-[#141414] border border-[#333333] p-3">
-              <p className="text-[#888888] font-mono text-xs mb-1">FASE</p>
-              <p className="font-mono text-xl font-bold" style={{ color: phaseColor }}>{phaseOnDate ? phaseOnDate.toUpperCase() : '—'}</p>
-            </div>
+            <MetricCard label="PESO ESE DÍA" value={weightOnDate ? `${parseFloat(weightOnDate).toFixed(2)} kg` : '—'} />
+            <MetricCard label="FASE" value={phaseOnDate ? phaseOnDate.toUpperCase() : '—'} valueColor={phaseColor} />
           </div>
         )}
 

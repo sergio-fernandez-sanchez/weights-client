@@ -3,6 +3,7 @@ import { getBodyMeasurements } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
+import Tabs from '../components/Tabs'
 
 const METRICS = [
   { key: 'neck_cm',      label: 'CUELLO',   color: '#c8f500' },
@@ -205,29 +206,28 @@ export default function BodyMeasurements({ onNavigate }) {
         <BackButton onClick={() => onNavigate('data')} />
         <PageHeader title="// MEDIDAS CORPORALES" />
 
-        {/* Pestañas */}
-        <div className="flex gap-1 mb-4">
-          {[['GRÁFICA', 'chart'], ['TABLA', 'table']].map(([label, val]) => (
-            <button key={val} onClick={() => setTab(val)}
-              className={`flex-1 h-9 font-mono text-xs border transition-colors ${
-                tab === val ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]' : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'
-              }`}>{label}</button>
-          ))}
-        </div>
+        <Tabs options={[['GRÁFICA', 'chart'], ['TABLA', 'table']]} value={tab} onChange={setTab} />
 
         {tab === 'chart' ? (
           <MeasurementsChart reports={reports} />
         ) : (
           <>
             <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-              {reports.map((r, i) => (
-                <button key={i} onClick={() => setSelectedIdx(i)}
-                  className={`flex-shrink-0 px-3 h-9 font-mono text-xs border transition-colors whitespace-nowrap ${
-                    selectedIdx === i ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]' : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'
-                  }`}>
-                  {parseDate(r.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
-                </button>
-              ))}
+              {reports.map((r, i) => {
+                const active = selectedIdx === i
+                return (
+                  <button key={i} onClick={() => setSelectedIdx(i)}
+                    className={`relative flex-shrink-0 px-3 h-9 font-mono text-xs font-bold border transition-all whitespace-nowrap ${active ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]' : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'}`}>
+                    {active && (
+                      <>
+                        <span className="absolute top-0 left-0 w-1.5 h-1.5 border-l border-t border-[#0a0a0a]" />
+                        <span className="absolute bottom-0 right-0 w-1.5 h-1.5 border-r border-b border-[#0a0a0a]" />
+                      </>
+                    )}
+                    {parseDate(r.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                  </button>
+                )
+              })}
             </div>
 
             <div className="flex flex-col gap-px">

@@ -4,6 +4,7 @@ import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 import Tabs from '../components/Tabs'
+import MetricCard from '../components/MetricCard'
 
 const PHASE_COLORS = {
   bulk:        '#c8f500',
@@ -216,10 +217,7 @@ export default function WeightHistory({ onNavigate }) {
         {filtered.length > 0 && (
           <div className="grid grid-cols-3 gap-2 mb-4">
             {[['MÍN', min], ['MÁX', max], ['MEDIA', avg]].map(([label, val]) => (
-              <div key={label} className="bg-[#141414] border border-[#333333] p-3 text-center">
-                <p className="text-[#888888] font-mono text-xs">{label}</p>
-                <p className="text-[#c8f500] font-mono text-base font-bold">{val}</p>
-              </div>
+              <MetricCard key={label} label={label} value={val} />
             ))}
           </div>
         )}

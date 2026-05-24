@@ -6,6 +6,7 @@ import Button from '../components/Button'
 import Input from '../components/Input'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
+import Tabs from '../components/Tabs'
 
 const FIELDS = [
   ['body_fat_pct',         '% GRASA CORPORAL'],
@@ -65,14 +66,7 @@ export default function NewBioimpedanceReport({ onNavigate }) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <label className="text-[#888888] font-mono text-sm">FECHA</label>
-            <div className="flex gap-2">
-              {[['HOY', 'today'], ['MANUAL', 'manual']].map(([label, val]) => (
-                <button key={val} type="button" onClick={() => setDateMode(val)}
-                  className={`flex-1 h-10 font-mono text-xs border transition-colors ${
-                    dateMode === val ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]' : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'
-                  }`}>{label}</button>
-              ))}
-            </div>
+            <Tabs options={[['HOY', 'today'], ['MANUAL', 'manual']]} value={dateMode} onChange={setDateMode} className="mb-0" />
             {dateMode === 'manual' && (
               <Input type="text" value={manualDate} onChange={e => setManualDate(e.target.value)} placeholder="dd/mm/aa" />
             )}

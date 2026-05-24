@@ -29,21 +29,20 @@ function ScanTransition({ onDone }) {
   useEffect(() => {
     const cvs = canvasRef.current
     if (!cvs) return
-    const parent = cvs.parentElement
-    const W = parent.offsetWidth
-    const H = parent.offsetHeight
+    const W = window.innerWidth
+    const H = window.innerHeight
     cvs.width = W
     cvs.height = H
     const ctx = cvs.getContext('2d')
     const start = performance.now()
-    const dur = 700
-    const chars = '01アイウエオカキ10█▓▒░'.split('')
-    const rain = Array.from({length: 25}, () => ({
+    const dur = 900
+    const chars = '01アイウエオカキクケコ10█▓▒░⠿⣿'.split('')
+    const rain = Array.from({length: 40}, () => ({
       x: Math.random() * W,
       y: Math.random() * H,
       char: chars[Math.floor(Math.random() * chars.length)],
     }))
-    const strips = Array.from({length: 10}, () => ({
+    const strips = Array.from({length: 16}, () => ({
       y: Math.random() * H,
       h: 2 + Math.random() * 7,
       dx: (Math.random() - 0.5) * 28,
@@ -56,31 +55,33 @@ function ScanTransition({ onDone }) {
       const scanY = t * (H + 80) - 40
       ctx.clearRect(0, 0, W, H)
 
-      ctx.fillStyle = 'rgba(0,0,0,0.4)'
+      ctx.fillStyle = 'rgba(0,0,0,0.55)'
       ctx.fillRect(0, 0, W, scanY - 30)
 
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 8; i++) {
         const by = scanY - 2 - i * 3
-        const a = (1 - i / 5) * 0.12
+        const a = (1 - i / 8) * 0.22
         ctx.fillStyle = `rgba(0,200,255,${a})`
-        ctx.fillRect(-3, by, W, 2)
+        ctx.fillRect(-5, by, W, 2)
         ctx.fillStyle = `rgba(255,0,80,${a})`
-        ctx.fillRect(3, by, W, 2)
+        ctx.fillRect(5, by, W, 2)
       }
 
       const grad = ctx.createLinearGradient(0, scanY - 40, 0, scanY + 12)
       grad.addColorStop(0,    'rgba(200,245,0,0)')
-      grad.addColorStop(0.4,  'rgba(200,245,0,0.07)')
-      grad.addColorStop(0.75, 'rgba(200,245,0,0.5)')
-      grad.addColorStop(0.85, 'rgba(255,255,255,0.85)')
-      grad.addColorStop(1,    'rgba(200,245,0,0.15)')
+      grad.addColorStop(0.35, 'rgba(200,245,0,0.12)')
+      grad.addColorStop(0.7,  'rgba(200,245,0,0.65)')
+      grad.addColorStop(0.88, 'rgba(255,255,255,0.95)')
+      grad.addColorStop(1,    'rgba(200,245,0,0.25)')
       ctx.fillStyle = grad
-      ctx.fillRect(0, scanY - 40, W, 52)
+      ctx.fillRect(0, scanY - 60, W, 72)
 
       ctx.fillStyle = 'rgba(220,255,100,1)'
-      ctx.fillRect(0, scanY, W, 1.5)
-      ctx.fillStyle = 'rgba(255,255,255,0.85)'
-      ctx.fillRect(0, scanY + 1, W, 0.5)
+      ctx.fillRect(0, scanY, W, 2)
+      ctx.fillStyle = 'rgba(255,255,255,1)'
+      ctx.fillRect(0, scanY + 1.5, W, 1)
+      ctx.fillStyle = 'rgba(200,245,0,0.4)'
+      ctx.fillRect(0, scanY + 2.5, W, 1)
 
       for (let gy = 0; gy < scanY; gy += 20) {
         const a = Math.max(0, 0.05 - (scanY - gy) / (H * 2))

@@ -29,11 +29,15 @@ function ScanTransition({ onDone }) {
   useEffect(() => {
     const cvs = canvasRef.current
     if (!cvs) return
+    const dpr = window.devicePixelRatio || 1
     const W = window.innerWidth
     const H = window.innerHeight
-    cvs.width = W
-    cvs.height = H
+    cvs.width  = W * dpr
+    cvs.height = H * dpr
+    cvs.style.width  = W + 'px'
+    cvs.style.height = H + 'px'
     const ctx = cvs.getContext('2d')
+    ctx.scale(dpr, dpr)
     const start = performance.now()
     const dur = 900
     const chars = '01アイウエオカキクケコ10█▓▒░⠿⣿'.split('')

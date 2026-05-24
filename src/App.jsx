@@ -61,7 +61,7 @@ export default function App() {
             window.history.replaceState({ page: 'home', data: null }, '', '')
           }} />
         ) : (
-          <div key={page} className="animate-fade-in">
+          <div key={page} className="animate-slide-up">
             {page === 'home'                && <Home                 onNavigate={navigate} onLogout={() => { setAuth(false); window.history.replaceState({ page: 'home', data: null }, '', '') }} />}
             {page === 'phase'               && <Phase                onNavigate={navigate} />}
             {page === 'data'                && <DataMenu             onNavigate={navigate} />}

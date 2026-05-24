@@ -14,6 +14,16 @@
   to   { opacity: 1; }
 }
 
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
 @keyframes glow {
   0%, 100% { text-shadow: 0 0 8px rgba(200, 245, 0, 0.35); }
   50%      { text-shadow: 0 0 16px rgba(200, 245, 0, 0.65), 0 0 24px rgba(200, 245, 0, 0.35); }
@@ -45,6 +55,8 @@
 
 .animate-fade-in-up { animation: fadeInUp 0.5s ease-out backwards; }
 .animate-fade-in    { animation: fadeIn 0.4s ease-out backwards; }
+.animate-slide-up   { animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+.animate-slide-right { animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
 
 .glow-text {
   animation: glow 3s ease-in-out infinite;

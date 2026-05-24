@@ -70,21 +70,17 @@ function ScanTransition({ onDone }) {
       const scanY = t * (H + 80) - 40
       ctx.clearRect(0, 0, W, H)
 
-      // dark overlay above scan
-      ctx.fillStyle = 'rgba(0,0,0,0.55)'
-      ctx.fillRect(0, 0, W, Math.max(0, scanY - 30))
-
       // grid lines revealed by scan
       for (let gy = 0; gy < H; gy += 20) {
         if (gy > scanY) break
         const distToScan = scanY - gy
-        const a = Math.max(0, 0.07 - distToScan / (H * 1.5))
+        const a = Math.max(0, 0.4 - distToScan / (H * 1.5))
         ctx.strokeStyle = `rgba(200,245,0,${a})`
         ctx.lineWidth = 0.5
         ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke()
       }
       for (let gx = 0; gx < W; gx += 40) {
-        const a = 0.02
+        const a = 0.15
         ctx.strokeStyle = `rgba(200,245,0,${a})`
         ctx.lineWidth = 0.5
         ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, Math.min(scanY, H)); ctx.stroke()
@@ -93,7 +89,7 @@ function ScanTransition({ onDone }) {
       // glowing dots in scanned area
       dots.forEach(d => {
         if (d.y < scanY) {
-          const a = Math.max(0, 0.4 - (scanY - d.y) / H)
+          const a = Math.max(0, 0.8 - (scanY - d.y) / H)
           ctx.fillStyle = `rgba(200,245,0,${a})`
           ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2); ctx.fill()
         }
@@ -145,7 +141,7 @@ function ScanTransition({ onDone }) {
       rain.forEach(r => {
         const dist = Math.abs(r.y - scanY)
         if (dist < 120) {
-          const a = (1 - dist / 120) * 0.7
+          const a = (1 - dist / 120) * 0.95
           ctx.font = `${r.size}px Courier New`
           ctx.fillStyle = `rgba(200,245,0,${a})`
           ctx.fillText(r.char, r.x, r.y)

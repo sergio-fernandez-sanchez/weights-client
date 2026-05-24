@@ -3,6 +3,7 @@ import { getWeightsWithPhase, getActivePhase } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
+import Tabs from '../components/Tabs'
 
 const PHASE_COLORS = {
   bulk:        '#c8f500',
@@ -210,16 +211,7 @@ export default function WeightHistory({ onNavigate }) {
         <BackButton onClick={() => onNavigate('data')} />
         <PageHeader title="// PESO" />
 
-        <div className="flex gap-1 mb-4">
-          {FILTERS.map(([label, val]) => (
-            <button key={val} onClick={() => setFilter(val)}
-              className={`flex-1 h-9 font-mono text-xs border transition-colors ${
-                filter === val
-                  ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]'
-                  : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'
-              }`}>{label}</button>
-          ))}
-        </div>
+        <Tabs options={FILTERS} value={filter} onChange={setFilter} />
 
         {filtered.length > 0 && (
           <div className="grid grid-cols-3 gap-2 mb-4">
@@ -232,16 +224,7 @@ export default function WeightHistory({ onNavigate }) {
           </div>
         )}
 
-        <div className="flex gap-1 mb-4">
-          {[['GRÁFICA', 'chart'], ['TABLA', 'table']].map(([label, val]) => (
-            <button key={val} onClick={() => setViewMode(val)}
-              className={`flex-1 h-9 font-mono text-xs border transition-colors ${
-                viewMode === val
-                  ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]'
-                  : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'
-              }`}>{label}</button>
-          ))}
-        </div>
+        <Tabs options={[['GRÁFICA', 'chart'], ['TABLA', 'table']]} value={viewMode} onChange={setViewMode} />
 
         {loading ? (
           <p className="text-[#888888] font-mono text-sm">cargando...</p>

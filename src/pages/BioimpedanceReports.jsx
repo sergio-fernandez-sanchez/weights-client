@@ -3,6 +3,7 @@ import { getBioimpedanceReports, getWeights, getPhases } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
+import Tabs from '../components/Tabs'
 
 const METRICS = [
   ['body_fat_pct',         '% GRASA',        false],
@@ -153,14 +154,7 @@ export default function BioimpedanceReports({ onNavigate }) {
         <BackButton onClick={() => onNavigate('data')} />
         <PageHeader title="// BIOIMPEDANCIA" />
 
-        <div className="flex gap-1 mb-4">
-          {[['VER INFORMES', 'reports'], ['GRÁFICAS', 'charts']].map(([label, val]) => (
-            <button key={val} onClick={() => setTab(val)}
-              className={`flex-1 h-9 font-mono text-xs border transition-colors ${tab === val ? 'bg-[#c8f500] text-[#0a0a0a] border-[#c8f500]' : 'bg-[#141414] text-[#888888] border-[#333333] hover:border-[#c8f500]'}`}>
-              {label}
-            </button>
-          ))}
-        </div>
+        <Tabs options={[['VER INFORMES', 'reports'], ['GRÁFICAS', 'charts']]} value={tab} onChange={setTab} />
 
         {tab === 'charts' ? (
           CHART_METRICS.map(m => <MetricChart key={m.key} reports={reports} metricKey={m.key} label={m.label} color={m.color} />)

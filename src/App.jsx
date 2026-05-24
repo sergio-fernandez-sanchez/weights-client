@@ -51,6 +51,34 @@ function ScanTransition({ onDone }) {
       const scanY = t * (H + 60) - 30
       ctx.clearRect(0, 0, W, H)
 
+      // ── grid de cuadrados dinámico ──────────────────────────────────
+      const cellSize = 28
+      const cols = Math.ceil(W / cellSize)
+      const rows = Math.ceil(H / cellSize)
+      for (let row = 0; row < rows; row++) {
+        const cellY = row * cellSize
+        const distToScan = Math.abs(cellY - scanY)
+        // intensidad según distancia al scan
+        let a = 0.04 // base muy sutil
+        if (distToScan < 200) {
+          a = 0.04 + (1 - distToScan / 200) * 0.5
+        }
+        // pulso aleatorio en algunas celdas cerca del scan
+        for (let col = 0; col < cols; col++) {
+          const cellX = col * cellSize
+          let cellA = a
+          // celdas brillantes aleatorias dentro del rango del scanner
+          if (distToScan < 100 && Math.random() > 0.92) {
+            cellA = 0.9
+            ctx.fillStyle = `rgba(200,245,0,0.15)`
+            ctx.fillRect(cellX, cellY, cellSize, cellSize)
+          }
+          ctx.strokeStyle = `rgba(200,245,0,${cellA})`
+          ctx.lineWidth = 0.5
+          ctx.strokeRect(cellX, cellY, cellSize, cellSize)
+        }
+      }
+
       // ── aberración cromática suave ──────────────────────────────────
       for (let i = 0; i < 5; i++) {
         const by = scanY - 2 - i * 3

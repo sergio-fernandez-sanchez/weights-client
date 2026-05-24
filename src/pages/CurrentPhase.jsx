@@ -3,6 +3,7 @@ import { getPhases, getWeights, getGymLogs, getActiveGymLogs } from '../api/clie
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
+import MetricCard from '../components/MetricCard'
 
 const PHASE_COLORS = {
   bulk:        '#c8f500',
@@ -19,16 +20,6 @@ function oneRM(log) {
   if (log.weight && log.reps) return parseFloat(log.weight) * (1 + parseInt(log.reps) / 30)
   if (log.weight) return parseFloat(log.weight)
   return null
-}
-
-function MetricCard({ label, value, sub, valueColor = '#c8f500' }) {
-  return (
-    <div className="bg-[#141414] border border-[#333333] p-4">
-      <p className="text-[#888888] font-mono text-xs mb-1">{label}</p>
-      <p className="font-mono text-xl font-bold" style={{ color: valueColor }}>{value}</p>
-      {sub && <p className="text-[#888888] font-mono text-xs mt-1">{sub}</p>}
-    </div>
-  )
 }
 
 function PhaseChart({ data, phaseColor, weightGoal }) {

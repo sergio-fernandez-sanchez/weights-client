@@ -38,19 +38,30 @@ function ScanTransition({ onDone }) {
     cvs.style.height = H + 'px'
     const ctx = cvs.getContext('2d')
     ctx.scale(dpr, dpr)
+
     const start = performance.now()
     const dur = 900
     const chars = '01アイウエオカキクケコ10█▓▒░⠿⣿'.split('')
+
     const rain = Array.from({length: 40}, () => ({
       x: Math.random() * W,
       y: Math.random() * H,
       char: chars[Math.floor(Math.random() * chars.length)],
+      size: 8 + Math.random() * 6,
     }))
+
     const strips = Array.from({length: 16}, () => ({
       y: Math.random() * H,
-      h: 2 + Math.random() * 7,
-      dx: (Math.random() - 0.5) * 28,
-      alpha: 0.3 + Math.random() * 0.4,
+      h: 2 + Math.random() * 8,
+      dx: (Math.random() - 0.5) * 30,
+      alpha: 0.3 + Math.random() * 0.5,
+    }))
+
+    // grid dots scattered across screen
+    const dots = Array.from({length: 60}, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 0.5 + Math.random() * 1.5,
     }))
 
     let raf
@@ -59,9 +70,36 @@ function ScanTransition({ onDone }) {
       const scanY = t * (H + 80) - 40
       ctx.clearRect(0, 0, W, H)
 
+      // dark overlay above scan
       ctx.fillStyle = 'rgba(0,0,0,0.55)'
-      ctx.fillRect(0, 0, W, scanY - 30)
+      ctx.fillRect(0, 0, W, Math.max(0, scanY - 30))
 
+      // grid lines revealed by scan
+      for (let gy = 0; gy < H; gy += 20) {
+        if (gy > scanY) break
+        const distToScan = scanY - gy
+        const a = Math.max(0, 0.07 - distToScan / (H * 1.5))
+        ctx.strokeStyle = `rgba(200,245,0,${a})`
+        ctx.lineWidth = 0.5
+        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke()
+      }
+      for (let gx = 0; gx < W; gx += 40) {
+        const a = 0.02
+        ctx.strokeStyle = `rgba(200,245,0,${a})`
+        ctx.lineWidth = 0.5
+        ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, Math.min(scanY, H)); ctx.stroke()
+      }
+
+      // glowing dots in scanned area
+      dots.forEach(d => {
+        if (d.y < scanY) {
+          const a = Math.max(0, 0.4 - (scanY - d.y) / H)
+          ctx.fillStyle = `rgba(200,245,0,${a})`
+          ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2); ctx.fill()
+        }
+      })
+
+      // chromatic aberration bands
       for (let i = 0; i < 8; i++) {
         const by = scanY - 2 - i * 3
         const a = (1 - i / 8) * 0.22
@@ -71,7 +109,8 @@ function ScanTransition({ onDone }) {
         ctx.fillRect(5, by, W, 2)
       }
 
-      const grad = ctx.createLinearGradient(0, scanY - 40, 0, scanY + 12)
+      // main beam glow
+      const grad = ctx.createLinearGradient(0, scanY - 60, 0, scanY + 12)
       grad.addColorStop(0,    'rgba(200,245,0,0)')
       grad.addColorStop(0.35, 'rgba(200,245,0,0.12)')
       grad.addColorStop(0.7,  'rgba(200,245,0,0.65)')
@@ -80,6 +119,7 @@ function ScanTransition({ onDone }) {
       ctx.fillStyle = grad
       ctx.fillRect(0, scanY - 60, W, 72)
 
+      // main scan line
       ctx.fillStyle = 'rgba(220,255,100,1)'
       ctx.fillRect(0, scanY, W, 2)
       ctx.fillStyle = 'rgba(255,255,255,1)'
@@ -87,38 +127,43 @@ function ScanTransition({ onDone }) {
       ctx.fillStyle = 'rgba(200,245,0,0.4)'
       ctx.fillRect(0, scanY + 2.5, W, 1)
 
-      for (let gy = 0; gy < scanY; gy += 20) {
-        const a = Math.max(0, 0.05 - (scanY - gy) / (H * 2))
-        ctx.strokeStyle = `rgba(200,245,0,${a})`
-        ctx.lineWidth = 0.5
-        ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke()
-      }
-
+      // glitch strips near scan
       strips.forEach(s => {
         const dist = Math.abs(s.y - scanY)
         if (dist < 80) {
           const a = s.alpha * (1 - dist / 80)
-          ctx.fillStyle = `rgba(200,245,0,${a * 0.35})`
+          ctx.fillStyle = `rgba(200,245,0,${a * 0.4})`
           ctx.fillRect(s.dx, s.y, W, s.h)
-          ctx.fillStyle = `rgba(0,200,255,${a * 0.18})`
+          ctx.fillStyle = `rgba(0,200,255,${a * 0.2})`
           ctx.fillRect(s.dx + 4, s.y, W, s.h * 0.5)
-          ctx.fillStyle = `rgba(255,0,80,${a * 0.18})`
+          ctx.fillStyle = `rgba(255,0,80,${a * 0.2})`
           ctx.fillRect(s.dx - 4, s.y, W, s.h * 0.5)
         }
       })
 
-      ctx.font = '9px Courier New'
+      // data rain chars near scan
       rain.forEach(r => {
         const dist = Math.abs(r.y - scanY)
-        if (dist < 100) {
-          const a = (1 - dist / 100) * 0.55
+        if (dist < 120) {
+          const a = (1 - dist / 120) * 0.7
+          ctx.font = `${r.size}px Courier New`
           ctx.fillStyle = `rgba(200,245,0,${a})`
           ctx.fillText(r.char, r.x, r.y)
-          if (Math.random() > 0.88) r.char = chars[Math.floor(Math.random() * chars.length)]
+          if (Math.random() > 0.85) r.char = chars[Math.floor(Math.random() * chars.length)]
         }
       })
 
-      const edgeA = 0.07 * (1 - Math.abs(t - 0.5) * 2)
+      // corner brackets glow
+      const bSize = 16, bW = 2
+      const ba = Math.min(t * 3, 1) * 0.6
+      ctx.strokeStyle = `rgba(200,245,0,${ba})`
+      ctx.lineWidth = bW
+      ;[[0,0,1,1],[W,0,-1,1],[0,H,1,-1],[W,H,-1,-1]].forEach(([x,y,sx,sy]) => {
+        ctx.beginPath(); ctx.moveTo(x+sx*bSize,y); ctx.lineTo(x,y); ctx.lineTo(x,y+sy*bSize); ctx.stroke()
+      })
+
+      // edge glow
+      const edgeA = 0.08 * (1 - Math.abs(t - 0.5) * 2)
       const eg = ctx.createLinearGradient(0, 0, W, 0)
       eg.addColorStop(0,    `rgba(200,245,0,${edgeA})`)
       eg.addColorStop(0.04, 'rgba(200,245,0,0)')
@@ -141,7 +186,7 @@ function ScanTransition({ onDone }) {
   return (
     <canvas
       ref={canvasRef}
-      style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', zIndex: 9999, pointerEvents: 'none' }}
+      style={{ position: 'fixed', top: 0, left: 0, zIndex: 9999, pointerEvents: 'none' }}
     />
   )
 }

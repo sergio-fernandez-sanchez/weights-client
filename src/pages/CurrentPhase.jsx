@@ -285,26 +285,39 @@ export default function CurrentPhase({ onNavigate }) {
         <BackButton onClick={() => onNavigate('data')} />
         <PageHeader title="// FASES" />
 
-        {/* Navegador de fases */}
-        <div className="flex items-center justify-between bg-[#141414] border border-[#333333] p-4 mb-4">
-          <button
-            onClick={() => setPhaseIndex(i => Math.max(0, i - 1))}
-            disabled={phaseIndex === 0}
-            className="text-[#888888] font-mono text-lg hover:text-[#c8f500] disabled:opacity-20 transition-colors px-2"
-          >←</button>
-          <div className="text-center">
-            <p className="font-mono text-2xl font-bold" style={{ color: phaseColor }}>
-              {phase.phase_type.toUpperCase()}
-            </p>
-            <p className="text-[#888888] font-mono text-xs mt-1">
-              {phaseStart.toLocaleDateString('es-ES')} — {phase.end_date ? parseDate(phase.end_date).toLocaleDateString('es-ES') : 'hoy'}
-            </p>
+        {/* Banner de fase con scanlines */}
+        <div className="relative bg-[#0f0f0f] mb-4 overflow-hidden"
+             style={{ borderTop: `2px solid ${phaseColor}`, borderBottom: `2px solid ${phaseColor}` }}>
+          {/* Scanlines verticales */}
+          <div className="absolute inset-0 pointer-events-none"
+               style={{ backgroundImage: `repeating-linear-gradient(90deg, transparent 0, transparent 18px, ${phaseColor}0a 18px, ${phaseColor}0a 19px)` }} />
+
+          <div className="relative flex items-center justify-between p-4">
+            <button
+              onClick={() => setPhaseIndex(i => Math.max(0, i - 1))}
+              disabled={phaseIndex === 0}
+              className="text-[#888888] font-mono text-xl hover:text-[#c8f500] disabled:opacity-20 transition-colors px-2 z-10"
+            >←</button>
+
+            <div className="text-center flex-1">
+              <p className="text-[#555555] font-mono text-[10px] tracking-[0.3em] mb-1">FASE ACTIVA</p>
+              <p className="font-mono text-2xl font-bold tracking-[0.25em] leading-none" style={{ color: phaseColor }}>
+                {phase.phase_type.toUpperCase()}
+              </p>
+              <p className="text-[#666666] font-mono text-[10px] mt-2">
+                ▶ {phaseStart.toLocaleDateString('es-ES')} → {phase.end_date ? parseDate(phase.end_date).toLocaleDateString('es-ES') : 'hoy'}
+              </p>
+              {isActive && (
+                <p className="font-mono text-[10px] tracking-widest mt-1" style={{ color: phaseColor }}>● ACTIVA</p>
+              )}
+            </div>
+
+            <button
+              onClick={() => setPhaseIndex(i => Math.min(phases.length - 1, i + 1))}
+              disabled={phaseIndex === phases.length - 1}
+              className="text-[#888888] font-mono text-xl hover:text-[#c8f500] disabled:opacity-20 transition-colors px-2 z-10"
+            >→</button>
           </div>
-          <button
-            onClick={() => setPhaseIndex(i => Math.min(phases.length - 1, i + 1))}
-            disabled={phaseIndex === phases.length - 1}
-            className="text-[#888888] font-mono text-lg hover:text-[#c8f500] disabled:opacity-20 transition-colors px-2"
-          >→</button>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-4">
@@ -325,20 +338,40 @@ export default function CurrentPhase({ onNavigate }) {
 
         </div>
 
-        {/* Barra de progreso — solo fase activa */}
+        {/* Barra de progreso segmentada — solo fase activa */}
         {progress !== null && (
-          <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
-            <div className="flex justify-between mb-2">
-              <p className="text-[#888888] font-mono text-xs">PROGRESO TEMPORAL</p>
-              <p className="text-[#c8f500] font-mono text-xs">{Math.round(progress * 100)}%</p>
+          <div className="bg-[#141414] border border-[#333333] p-4 mb-4 relative">
+            <span className="absolute top-0 left-0 w-1.5 h-1.5 border-l border-t border-[#444444]" />
+            <span className="absolute top-0 right-0 w-1.5 h-1.5 border-r border-t border-[#444444]" />
+            <span className="absolute bottom-0 left-0 w-1.5 h-1.5 border-l border-b border-[#444444]" />
+            <span className="absolute bottom-0 right-0 w-1.5 h-1.5 border-r border-b border-[#444444]" />
+
+            <div className="flex justify-between items-baseline mb-3">
+              <p className="text-[#666666] font-mono text-[10px] tracking-widest">PROGRESO TEMPORAL</p>
+              <p className="font-mono text-sm font-bold" style={{ color: phaseColor }}>{Math.round(progress * 100)}%</p>
             </div>
-            <div className="w-full bg-[#333333] h-2 mb-2">
-              <div className="h-2 transition-all" style={{ width: `${progress * 100}%`, backgroundColor: phaseColor }} />
+
+            {/* Segmentos */}
+            <div className="flex gap-[2px] mb-3">
+              {Array.from({ length: 20 }).map((_, i) => {
+                const segProgress = progress * 20
+                const filled = i < Math.floor(segProgress)
+                const partial = i === Math.floor(segProgress) ? segProgress - Math.floor(segProgress) : 0
+                return (
+                  <div key={i} className="flex-1 h-2 bg-[#1a1a1a] relative overflow-hidden">
+                    {filled && <div className="absolute inset-0" style={{ backgroundColor: phaseColor }} />}
+                    {!filled && partial > 0 && (
+                      <div className="absolute inset-0" style={{ backgroundColor: phaseColor, opacity: partial }} />
+                    )}
+                  </div>
+                )
+              })}
             </div>
+
             {daysLeft !== null && (
               <div className="flex justify-between">
-                <p className="text-[#555555] font-mono text-xs">{Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24))} días transcurridos</p>
-                <p className="text-[#888888] font-mono text-xs">{daysLeft} días restantes</p>
+                <p className="text-[#555555] font-mono text-[10px]">▶ {Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24))} días transcurridos</p>
+                <p className="font-mono text-[10px]" style={{ color: phaseColor, opacity: 0.7 }}>{daysLeft} días restantes ◄</p>
               </div>
             )}
           </div>

@@ -2,7 +2,7 @@ export default function Button({ children, onClick, type = 'button', disabled = 
   const base = 'group relative font-mono font-bold tracking-widest transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none w-full overflow-hidden rounded-sm'
 
   const variants = {
-    primary:   'h-14 bg-[#c8f500] text-[#0a0a0a] border border-[#c8f500] hover:bg-[#deff33] text-base btn-glow',
+    primary:   'h-14 bg-[#c8f500] text-[#0a0a0a] border border-[#c8f500] hover:bg-[#deff33] text-base btn-glow text-center justify-center',
     secondary: 'h-13 bg-transparent text-[#999999] border border-[#252525] hover:border-[#c8f500] hover:text-[#c8f500] text-sm text-left px-5',
     ghost:     'bg-transparent text-[#555555] border-none hover:text-[#c8f500] h-auto font-normal text-xs tracking-normal',
   }

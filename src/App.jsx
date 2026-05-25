@@ -23,141 +23,55 @@ import DexaReports from './pages/DexaReports'
 import BodyMeasurements from './pages/BodyMeasurements'
 import ParticleBackground from './components/ParticleBackground'
 
-function ScanTransition({ onDone }) {
-  const canvasRef = useRef(null)
+// ── Transición entre páginas ────────────────────────────────────────────────
+// Fade out la página actual, línea horizontal verde que cruza, fade in la nueva
+function PageTransition({ phase, onMidpoint, onDone }) {
+  const lineRef = useRef(null)
 
   useEffect(() => {
-    const cvs = canvasRef.current
-    if (!cvs) return
-    const dpr = window.devicePixelRatio || 1
-    const W = window.innerWidth
-    const H = window.innerHeight
-    cvs.width  = W * dpr
-    cvs.height = H * dpr
-    cvs.style.width  = W + 'px'
-    cvs.style.height = H + 'px'
-    const ctx = cvs.getContext('2d')
-    ctx.scale(dpr, dpr)
-
-    const start = performance.now()
-    const dur = 500
-
-    // partículas emitidas desde la línea de scan
-    const particles = []
-
-    let raf
-    function frame(now) {
-      const t = Math.min((now - start) / dur, 1)
-      const scanY = t * (H + 60) - 30
-      ctx.clearRect(0, 0, W, H)
-
-      // ── grid de cuadrados dinámico ──────────────────────────────────
-      const cellSize = 28
-      const cols = Math.ceil(W / cellSize)
-      const rows = Math.ceil(H / cellSize)
-      for (let row = 0; row < rows; row++) {
-        const cellY = row * cellSize
-        const distToScan = Math.abs(cellY - scanY)
-        // intensidad según distancia al scan
-        let a = 0.04 // base muy sutil
-        if (distToScan < 200) {
-          a = 0.04 + (1 - distToScan / 200) * 0.5
-        }
-        // pulso aleatorio en algunas celdas cerca del scan
-        for (let col = 0; col < cols; col++) {
-          const cellX = col * cellSize
-          let cellA = a
-          // celdas brillantes aleatorias dentro del rango del scanner
-          if (distToScan < 100 && Math.random() > 0.92) {
-            cellA = 0.9
-            ctx.fillStyle = `rgba(200,245,0,0.15)`
-            ctx.fillRect(cellX, cellY, cellSize, cellSize)
-          }
-          ctx.strokeStyle = `rgba(200,245,0,${cellA})`
-          ctx.lineWidth = 0.5
-          ctx.strokeRect(cellX, cellY, cellSize, cellSize)
-        }
-      }
-
-      // ── aberración cromática suave ──────────────────────────────────
-      for (let i = 0; i < 5; i++) {
-        const by = scanY - 2 - i * 3
-        const a = (1 - i / 5) * 0.2
-        ctx.fillStyle = `rgba(0,200,255,${a})`
-        ctx.fillRect(-4, by, W + 8, 1.5)
-        ctx.fillStyle = `rgba(255,0,80,${a})`
-        ctx.fillRect(4, by, W + 8, 1.5)
-      }
-
-      // ── beam glow ───────────────────────────────────────────────────
-      const grad = ctx.createLinearGradient(0, scanY - 50, 0, scanY + 10)
-      grad.addColorStop(0,    'rgba(200,245,0,0)')
-      grad.addColorStop(0.5,  'rgba(200,245,0,0.25)')
-      grad.addColorStop(0.85, 'rgba(255,255,255,0.95)')
-      grad.addColorStop(1,    'rgba(200,245,0,0.3)')
-      ctx.fillStyle = grad
-      ctx.fillRect(0, scanY - 50, W, 60)
-
-      // ── línea principal nítida ──────────────────────────────────────
-      ctx.fillStyle = 'rgba(255,255,255,1)'
-      ctx.fillRect(0, scanY, W, 1)
-      ctx.fillStyle = 'rgba(220,255,100,1)'
-      ctx.fillRect(0, scanY + 1, W, 2)
-
-      // ── partículas emitidas ─────────────────────────────────────────
-      if (Math.random() > 0.4) {
-        for (let i = 0; i < 3; i++) {
-          particles.push({
-            x: Math.random() * W,
-            y: scanY,
-            vx: (Math.random() - 0.5) * 3,
-            vy: 1 + Math.random() * 4,
-            life: 1,
-            decay: 0.04,
-            size: 1 + Math.random() * 2,
-            color: Math.random() > 0.4 ? '200,245,0' : '255,255,255',
-          })
-        }
-      }
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i]
-        p.life -= p.decay
-        p.x += p.vx; p.y += p.vy
-        p.vy += 0.1
-        if (p.life > 0) {
-          ctx.fillStyle = `rgba(${p.color},${p.life})`
-          ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2); ctx.fill()
-        } else {
-          particles.splice(i, 1)
-        }
-      }
-
-      // ── edge glow lateral ───────────────────────────────────────────
-      const edgeA = 0.15 * (1 - Math.abs(t - 0.5) * 2)
-      const eg = ctx.createLinearGradient(0, 0, W, 0)
-      eg.addColorStop(0,    `rgba(200,245,0,${edgeA})`)
-      eg.addColorStop(0.06, 'rgba(200,245,0,0)')
-      eg.addColorStop(0.94, 'rgba(200,245,0,0)')
-      eg.addColorStop(1,    `rgba(200,245,0,${edgeA})`)
-      ctx.fillStyle = eg
-      ctx.fillRect(0, 0, W, H)
-
-      if (t < 1) {
-        raf = requestAnimationFrame(frame)
-      } else {
-        ctx.clearRect(0, 0, W, H)
-        onDone()
-      }
+    if (phase === 'out') {
+      // Fade out dura 180ms, luego notificamos el midpoint
+      const timer = setTimeout(() => {
+        onMidpoint()
+      }, 180)
+      return () => clearTimeout(timer)
     }
-    raf = requestAnimationFrame(frame)
-    return () => cancelAnimationFrame(raf)
-  }, [])
+    if (phase === 'in') {
+      // Fade in dura 280ms, luego terminamos
+      const timer = setTimeout(() => {
+        onDone()
+      }, 280)
+      return () => clearTimeout(timer)
+    }
+  }, [phase])
 
   return (
-    <canvas
-      ref={canvasRef}
-      style={{ position: 'fixed', top: 0, left: 0, zIndex: 9999, pointerEvents: 'none' }}
-    />
+    <>
+      {/* Línea horizontal que cruza durante la transición */}
+      <div
+        className="fixed left-0 right-0 h-[2px] pointer-events-none"
+        style={{
+          top: '50%',
+          zIndex: 9999,
+          background: 'linear-gradient(90deg, transparent 0%, #c8f500 30%, #ffffff 50%, #c8f500 70%, transparent 100%)',
+          opacity: phase === 'out' ? 1 : 0,
+          transform: phase === 'out' ? 'scaleX(1)' : 'scaleX(0)',
+          transition: 'transform 200ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms ease',
+          transformOrigin: 'left',
+          boxShadow: '0 0 20px rgba(200, 245, 0, 0.6), 0 0 40px rgba(200, 245, 0, 0.3)',
+        }}
+      />
+      {/* Flash sutil verde */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          zIndex: 9998,
+          background: 'radial-gradient(ellipse at center, rgba(200, 245, 0, 0.04) 0%, transparent 70%)',
+          opacity: phase === 'out' ? 1 : 0,
+          transition: 'opacity 200ms ease',
+        }}
+      />
+    </>
   )
 }
 
@@ -193,22 +107,31 @@ export default function App() {
   const [pageData, setPageData]   = useState(null)
   const [nextPage, setNextPage]   = useState(null)
   const [nextData, setNextData]   = useState(null)
-  const [transitioning, setTransitioning] = useState(false)
+  // 'idle' | 'out' | 'in'
+  const [transitionPhase, setTransitionPhase] = useState('idle')
 
   function navigate(newPage, data = null) {
-    if (transitioning) return
+    if (transitionPhase !== 'idle') return
     window.history.pushState({ page: newPage, data }, '', '')
     setNextPage(newPage)
     setNextData(data)
-    setTransitioning(true)
+    setTransitionPhase('out')
+  }
+
+  function handleMidpoint() {
+    // Swap pages at the midpoint (screen is faded out)
+    setPage(nextPage)
+    setPageData(nextData)
+    setNextPage(null)
+    setNextData(null)
+    // Scroll to top
+    window.scrollTo(0, 0)
+    // Start fade in
+    setTransitionPhase('in')
   }
 
   function handleTransitionDone() {
-    setPage(nextPage)
-    setPageData(nextData)
-    setTransitioning(false)
-    setNextPage(null)
-    setNextData(null)
+    setTransitionPhase('idle')
   }
 
   function handleLogout() {
@@ -226,6 +149,17 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
+  // Page container opacity based on transition phase
+  const pageStyle = {
+    opacity: transitionPhase === 'out' ? 0 : 1,
+    transform: transitionPhase === 'out' ? 'translateY(-6px)' : transitionPhase === 'in' ? 'translateY(0)' : 'translateY(0)',
+    transition: transitionPhase === 'out'
+      ? 'opacity 180ms ease-out, transform 180ms ease-out'
+      : transitionPhase === 'in'
+        ? 'opacity 280ms ease-out, transform 280ms cubic-bezier(0.16, 1, 0.3, 1)'
+        : 'none',
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] relative">
       <ParticleBackground />
@@ -234,8 +168,16 @@ export default function App() {
           <Auth onLogin={() => { setAuth(true); window.history.replaceState({ page: 'home', data: null }, '', '') }} />
         ) : (
           <>
-            {renderPage(page, pageData, navigate, handleLogout)}
-            {transitioning && <ScanTransition onDone={handleTransitionDone} />}
+            <div style={pageStyle}>
+              {renderPage(page, pageData, navigate, handleLogout)}
+            </div>
+            {transitionPhase !== 'idle' && (
+              <PageTransition
+                phase={transitionPhase}
+                onMidpoint={handleMidpoint}
+                onDone={handleTransitionDone}
+              />
+            )}
           </>
         )}
       </div>

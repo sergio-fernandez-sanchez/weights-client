@@ -5,6 +5,7 @@ import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 import Button from '../components/Button'
 import Input from '../components/Input'
+import Toast from '../components/Toast'
 
 const CATEGORY_LABELS = {
   push: 'EMPUJE',
@@ -257,7 +258,7 @@ export default function Gym({ onNavigate }) {
           </div>
           <Input label="PESO (kg) — opcional" type="number" step="0.5" value={weight} onChange={e => setWeight(e.target.value)} placeholder="100" />
           <Input label="REPETICIONES — opcional" type="number" value={reps} onChange={e => setReps(e.target.value)} placeholder="5" />
-          {msg && <p className={`font-mono text-sm animate-slide-down ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
+          {msg && <Toast message={msg} type={msg.startsWith('✓') ? 'success' : 'error'} onDone={() => setMsg('')} />}
           <Button type="submit" disabled={submitting}>{submitting ? '...' : 'AÑADIR'}</Button>
         </form>
         <button onClick={() => setMode('new-exercise')}
@@ -290,7 +291,7 @@ export default function Gym({ onNavigate }) {
         <form onSubmit={handleEdit} className="flex flex-col gap-4">
           <Input label="NUEVO PESO (kg)" type="number" step="0.5" value={weight} onChange={e => setWeight(e.target.value)} placeholder="100" />
           <Input label="NUEVAS REPETICIONES" type="number" value={reps} onChange={e => setReps(e.target.value)} placeholder="5" />
-          {msg && <p className={`font-mono text-sm animate-slide-down ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
+          {msg && <Toast message={msg} type={msg.startsWith('✓') ? 'success' : 'error'} onDone={() => setMsg('')} />}
           <Button type="submit" disabled={submitting}>{submitting ? '...' : 'GUARDAR'}</Button>
         </form>
         <Separator className="mt-8 mb-4" />
@@ -306,7 +307,7 @@ export default function Gym({ onNavigate }) {
         <PageHeader title="NUEVO EJERCICIO" />
         <form onSubmit={handleNewExercise} className="flex flex-col gap-4">
           <Input label="NOMBRE DEL EJERCICIO" type="text" value={newExerciseName} onChange={e => setNewExerciseName(e.target.value)} placeholder="Mi ejercicio" required />
-          {msg && <p className={`font-mono text-sm animate-slide-down ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
+          {msg && <Toast message={msg} type={msg.startsWith('✓') ? 'success' : 'error'} onDone={() => setMsg('')} />}
           <Button type="submit" disabled={submitting}>{submitting ? '...' : 'CREAR EJERCICIO'}</Button>
         </form>
         <Separator className="mt-8 mb-4" />

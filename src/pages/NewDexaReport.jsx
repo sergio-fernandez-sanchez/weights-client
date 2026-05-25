@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { postDexaReport } from '../api/client'
-import PageWrapper from '../components/PageWrapper'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import Input from '../components/Input'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 import Tabs from '../components/Tabs'
+import Toast from '../components/Toast'
 
 const FIELDS = [
   ['fat_mass_kg',          'MASA GRASA TOTAL (kg)'],
@@ -21,7 +21,7 @@ export default function NewDexaReport({ onNavigate }) {
   const [dateMode, setDateMode] = useState('today')
   const [manualDate, setManualDate] = useState('')
   const [values, setValues] = useState(Object.fromEntries(FIELDS.map(([key]) => [key, ''])))
-  const [msg, setMsg] = useState('')
+  const [toast, setToast] = useState(null)
   const [loading, setLoading] = useState(false)
 
   function handleChange(key, val) {
@@ -38,17 +38,17 @@ export default function NewDexaReport({ onNavigate }) {
   async function handleSubmit(e) {
     e.preventDefault()
     setLoading(true)
-    setMsg('')
+    setToast(null)
     try {
       const data = Object.fromEntries(
         FIELDS.map(([key]) => [key, values[key] ? parseFloat(values[key].replace(',', '.')) : null])
       )
       if (dateMode === 'manual' && manualDate) data.date = parseManualDate(manualDate)
       await postDexaReport(data)
-      setMsg('✓  informe guardado')
-      setTimeout(() => onNavigate('home'), 1400)
+      setToast({ msg: '✓  informe guardado', type: 'success' })
+      setTimeout(() => onNavigate('home'), 1800)
     } catch {
-      setMsg('✗  error al guardar')
+      setToast({ msg: '✗  error al guardar', type: 'error' })
     } finally {
       setLoading(false)
     }
@@ -56,28 +56,33 @@ export default function NewDexaReport({ onNavigate }) {
 
   return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
-      <div className="w-full max-w-sm mx-auto">
-        <div className="pt-10">
-          <BackButton onClick={() => onNavigate('home')} />
-          <PageHeader title="// NUEVO DEXA" />
+      <div className="w-full max-w-sm mx-auto pt-10">
+        <BackButton onClick={() => onNavigate('newReport')} />
+        <PageHeader title="DEXA" sub="nuevo informe" />
+
+        <div className="mb-5">
+          <label className="text-[#666666] font-mono text-[10px] tracking-[0.2em] uppercase flex items-center gap-2 mb-2">
+            <span className="w-1 h-1 rounded-full bg-[#c8f500] opacity-40" />
+            FECHA
+          </label>
+          <Tabs options={[['HOY', 'today'], ['MANUAL', 'manual']]} value={dateMode} onChange={setDateMode} className="mb-0" />
+          {dateMode === 'manual' && (
+            <div className="mt-2"><Input type="text" value={manualDate} onChange={e => setManualDate(e.target.value)} placeholder="dd/mm/aa" /></div>
+          )}
         </div>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-[#888888] font-mono text-sm">FECHA</label>
-            <Tabs options={[['HOY', 'today'], ['MANUAL', 'manual']]} value={dateMode} onChange={setDateMode} className="mb-0" />
-            {dateMode === 'manual' && (
-              <Input type="text" value={manualDate} onChange={e => setManualDate(e.target.value)} placeholder="dd/mm/aa" />
-            )}
-          </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           {FIELDS.map(([key, label]) => (
-            <Input key={key} label={label} type="number" step="0.001"
-              value={values[key]} onChange={e => handleChange(key, e.target.value)} placeholder="—" />
+            <Input key={key} label={label} type="number" step="0.01" value={values[key]} onChange={e => handleChange(key, e.target.value)} />
           ))}
-          {msg && <p className={`font-mono text-sm ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
-          <Button type="submit" disabled={loading}>{loading ? '...' : 'GUARDAR'}</Button>
+          <div className="mt-2">
+            <Button type="submit" disabled={loading}>{loading ? '...' : 'GUARDAR'}</Button>
+          </div>
         </form>
-        <Separator className="mt-10 mb-4" />
-        <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
+
+        <Separator className="mt-8 mb-4" />
+        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+        {toast && <Toast message={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
       </div>
     </div>
   )

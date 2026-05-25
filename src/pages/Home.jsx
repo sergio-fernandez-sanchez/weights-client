@@ -5,6 +5,7 @@ import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
 import Input from '../components/Input'
 import Separator from '../components/Separator'
+import Toast from '../components/Toast'
 
 function getLastMondayISO() {
   const now = new Date()
@@ -237,7 +238,7 @@ export default function Home({ onNavigate, onLogout }) {
         </Button>
       </form>
 
-      {msg && <p className="text-[#c8f500] font-mono text-sm mb-3 animate-slide-down">{msg}</p>}
+      {msg && <Toast message={msg} type={msg.startsWith("✓") ? "success" : "error"} onDone={() => setMsg("")} />}
 
       {/* ── Quick Actions ── */}
       <div className="grid grid-cols-2 gap-2 mb-5 animate-fade-in-up" style={{ animationDelay: '0.25s' }}>

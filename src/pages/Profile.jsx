@@ -5,6 +5,7 @@ import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 import Input from '../components/Input'
 import Button from '../components/Button'
+import Toast from '../components/Toast'
 
 const SEX_OPTIONS = [
   { value: 'male',   label: 'Hombre' },

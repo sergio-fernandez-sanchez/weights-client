@@ -8,13 +8,13 @@ export default function NewReport({ onNavigate }) {
   return (
     <PageWrapper>
       <BackButton onClick={() => onNavigate('home')} />
-      <PageHeader title="// NUEVO INFORME" />
+      <PageHeader title="NUEVO INFORME" sub="selecciona el tipo de informe" />
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         {[
-          ['// BIOIMPEDANCIA →',   'newBioimpedance'],
-          ['// DEXA →',            'newDexa'],
-          ['// MEDIDAS CORPORALES →', 'newBodyMeasurement'],
+          ['BIOIMPEDANCIA',      'newBioimpedance'],
+          ['DEXA',               'newDexa'],
+          ['MEDIDAS CORPORALES', 'newBodyMeasurement'],
         ].map(([label, page]) => (
           <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>
             {label}
@@ -23,7 +23,7 @@ export default function NewReport({ onNavigate }) {
       </div>
 
       <Separator className="mt-8 mb-4" />
-      <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
+      <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
     </PageWrapper>
   )
 }

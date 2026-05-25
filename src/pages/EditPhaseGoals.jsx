@@ -6,6 +6,7 @@ import Button from '../components/Button'
 import Input from '../components/Input'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
+import Toast from '../components/Toast'
 
 export default function EditPhaseGoals({ onNavigate, phase }) {
   const [weightGoal, setWeightGoal] = useState(
@@ -18,18 +19,17 @@ export default function EditPhaseGoals({ onNavigate, phase }) {
         })
       : ''
   )
-  const [msg, setMsg] = useState('')
+  const [toast, setToast] = useState(null)
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
     setLoading(true)
-    setMsg('')
+    setToast(null)
     try {
       const wGoal = weightGoal ? parseFloat(weightGoal.replace(',', '.')) : null
       let dGoal = null
       if (dateGoal) {
-        // Parse dd/mm/yy
         const parts = dateGoal.split('/')
         if (parts.length === 3) {
           const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2]
@@ -37,10 +37,10 @@ export default function EditPhaseGoals({ onNavigate, phase }) {
         }
       }
       await patchPhaseGoals(wGoal, dGoal)
-      setMsg('✓  objetivos actualizados')
-      setTimeout(() => onNavigate('currentPhase'), 1400)
+      setToast({ msg: '✓  objetivos actualizados', type: 'success' })
+      setTimeout(() => onNavigate('currentPhase'), 1800)
     } catch {
-      setMsg('✗  error al actualizar')
+      setToast({ msg: '✗  error al actualizar', type: 'error' })
     } finally {
       setLoading(false)
     }
@@ -49,38 +49,24 @@ export default function EditPhaseGoals({ onNavigate, phase }) {
   return (
     <PageWrapper>
       <BackButton onClick={() => onNavigate('currentPhase')} />
-      <PageHeader title="// EDITAR OBJETIVOS" />
+      <PageHeader title="EDITAR OBJETIVOS" />
+
+      {phase && (
+        <div className="glass-card rounded-sm p-4 mb-6" style={{ borderLeft: '3px solid #c8f500' }}>
+          <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em] mb-1">FASE ACTIVA</p>
+          <p className="text-[#c8f500] font-mono text-lg font-bold uppercase">{phase.phase_type}</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <Input
-          label="NUEVO PESO OBJETIVO (kg)"
-          type="number"
-          step="0.01"
-          value={weightGoal}
-          onChange={e => setWeightGoal(e.target.value)}
-          placeholder="75.00"
-        />
-        <Input
-          label="NUEVA FECHA OBJETIVO (dd/mm/aa)"
-          type="text"
-          value={dateGoal}
-          onChange={e => setDateGoal(e.target.value)}
-          placeholder="01/09/26"
-        />
-
-        {msg && (
-          <p className={`font-mono text-sm ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>
-            {msg}
-          </p>
-        )}
-
-        <Button type="submit" disabled={loading}>
-          {loading ? '...' : 'GUARDAR CAMBIOS'}
-        </Button>
+        <Input label="PESO OBJETIVO (kg)" type="number" step="0.01" value={weightGoal} onChange={e => setWeightGoal(e.target.value)} placeholder="75.00" />
+        <Input label="FECHA OBJETIVO (dd/mm/aa)" type="text" value={dateGoal} onChange={e => setDateGoal(e.target.value)} placeholder="01/09/26" />
+        <Button type="submit" disabled={loading}>{loading ? '...' : 'GUARDAR'}</Button>
       </form>
 
       <Separator className="mt-10 mb-4" />
-      <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
+      <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+      {toast && <Toast message={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
     </PageWrapper>
   )
 }

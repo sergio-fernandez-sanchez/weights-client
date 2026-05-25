@@ -3,17 +3,13 @@ import { getCalories, getPhases } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
+import EmptyState from '../components/EmptyState'
 
 const PHASE_COLORS = {
-  bulk:        '#c8f500',
-  cut:         '#ff2d2d',
-  maintenance: '#ff9f00',
-  unknown:     '#888888',
+  bulk: '#c8f500', cut: '#ff2d2d', maintenance: '#ff9f00', unknown: '#888888',
 }
 
-function parseDate(dateStr) {
-  return new Date(dateStr + 'T00:00:00')
-}
+function parseDate(dateStr) { return new Date(dateStr + 'T00:00:00') }
 
 function fmt(d) {
   if (!d) return 'actual'
@@ -51,7 +47,7 @@ export default function CaloriesHistory({ onNavigate }) {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-[#888888] font-mono text-sm">cargando...</p>
+      <p className="text-[#555555] font-mono text-sm animate-pulse">cargando...</p>
     </div>
   )
 
@@ -59,40 +55,38 @@ export default function CaloriesHistory({ onNavigate }) {
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => onNavigate('data')} />
-        <PageHeader title="// CALORÍAS" />
+        <PageHeader title="CALORÍAS" sub="historial de objetivos calóricos" />
 
         {calories.length === 0 ? (
-          <p className="text-[#888888] font-mono text-sm">sin registros</p>
+          <EmptyState message="SIN REGISTROS DE CALORÍAS" icon="◇" />
         ) : (
-          <div className="flex flex-col gap-px">
-            <div className="flex bg-[#141414] border border-[#333333] px-4 py-2">
-              <span className="w-24 text-[#888888] font-mono text-xs">DESDE</span>
-              <span className="w-24 text-[#888888] font-mono text-xs">HASTA</span>
-              <span className="flex-1 text-right text-[#c8f500] font-mono text-xs">KCAL</span>
-            </div>
-
-            {calories.map((c, i) => {
-              const phasesInPeriod = getPhasesInPeriod(phases, c.start_date, c.end_date)
+          <div className="flex flex-col gap-2 stagger">
+            {[...calories].reverse().map((c, i) => {
+              const phaseTypes = getPhasesInPeriod(phases, c.start_date, c.end_date)
               const isActive = !c.end_date
-              const start = parseDate(c.start_date)
-              const end = c.end_date ? parseDate(c.end_date) : new Date()
-              const days = Math.floor((end - start) / (1000 * 60 * 60 * 24))
-
               return (
-                <div key={i} className={`bg-[#0f0f0f] border-b border-[#1a1a1a] px-4 py-3 ${isActive ? 'border-l-2 border-l-[#c8f500]' : ''}`}>
-                  <div className="flex items-center">
-                    <span className="w-24 text-[#888888] font-mono text-xs">{fmt(c.start_date)}</span>
-                    <span className="w-24 text-[#888888] font-mono text-xs">{fmt(c.end_date)}</span>
-                    <span className="flex-1 text-right text-[#e8e8e8] font-mono text-sm font-bold">{c.calories}</span>
-                  </div>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[#555555] font-mono text-xs">{days} días</span>
-                    {phasesInPeriod.map(phase => (
-                      <span key={phase} className="font-mono text-xs font-bold" style={{ color: PHASE_COLORS[phase] || '#888888' }}>
-                        {phase}
-                      </span>
-                    ))}
-                    {isActive && <span className="text-[#c8f500] font-mono text-xs">● activo</span>}
+                <div key={i} className="glass-card rounded-sm p-4 relative overflow-hidden">
+                  {isActive && (
+                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#c8f500] to-transparent opacity-60" />
+                  )}
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-[#c8f500] font-mono text-xl font-bold">{c.calories} <span className="text-sm opacity-60">kcal</span></p>
+                      <p className="text-[#444444] font-mono text-[10px] mt-1.5 tracking-wide">
+                        {fmt(c.start_date)} → {fmt(c.end_date)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {phaseTypes.map((pt, j) => (
+                        <span key={j} className="w-2 h-2 rounded-full" style={{ backgroundColor: PHASE_COLORS[pt] || '#888' }} />
+                      ))}
+                      {isActive && (
+                        <span className="font-mono text-[9px] tracking-widest px-2 py-0.5 rounded-sm text-[#c8f500]"
+                          style={{ backgroundColor: 'rgba(200,245,0,0.08)', border: '1px solid rgba(200,245,0,0.15)' }}>
+                          ACTIVO
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               )
@@ -101,7 +95,7 @@ export default function CaloriesHistory({ onNavigate }) {
         )}
 
         <Separator className="mt-8 mb-4" />
-        <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
+        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
       </div>
     </div>
   )

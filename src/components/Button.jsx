@@ -1,10 +1,10 @@
 export default function Button({ children, onClick, type = 'button', disabled = false, variant = 'primary' }) {
-  const base = 'group relative font-mono font-bold tracking-widest transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none w-full overflow-hidden rounded-sm'
+  const base = 'group relative font-mono font-bold tracking-widest transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none w-full overflow-hidden rounded-sm flex items-center'
 
   const variants = {
-    primary:   'h-14 bg-[#c8f500] text-[#0a0a0a] border border-[#c8f500] hover:bg-[#deff33] text-base btn-glow text-center justify-center',
-    secondary: 'h-13 bg-transparent text-[#999999] border border-[#252525] hover:border-[#c8f500] hover:text-[#c8f500] text-sm text-left px-5',
-    ghost:     'bg-transparent text-[#555555] border-none hover:text-[#c8f500] h-auto font-normal text-xs tracking-normal',
+    primary:   'h-14 bg-[#c8f500] text-[#0a0a0a] border border-[#c8f500] hover:bg-[#deff33] text-base btn-glow justify-center',
+    secondary: 'h-13 bg-transparent text-[#999999] border border-[#252525] hover:border-[#c8f500] hover:text-[#c8f500] text-sm px-5',
+    ghost:     'bg-transparent text-[#555555] border-none hover:text-[#c8f500] h-auto font-normal text-xs tracking-normal justify-center',
   }
 
   return (
@@ -29,7 +29,7 @@ export default function Button({ children, onClick, type = 'button', disabled = 
 
       <span className="relative z-10 flex items-center gap-2">
         {variant === 'secondary' && (
-          <span className="text-[#333333] group-hover:text-[#c8f500] transition-colors duration-200 ml-1">›</span>
+          <span className="text-[#333333] group-hover:text-[#c8f500] transition-colors duration-200">›</span>
         )}
         {children}
       </span>

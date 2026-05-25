@@ -72,7 +72,7 @@ export default function Profile({ onNavigate }) {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-[#888888] font-mono text-sm">cargando...</p>
+      <p className="text-[#555555] font-mono text-sm animate-pulse">cargando...</p>
     </div>
   )
 
@@ -80,30 +80,21 @@ export default function Profile({ onNavigate }) {
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => onNavigate('home')} />
-        <PageHeader title="// PERFIL" />
+        <PageHeader title="PERFIL" />
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Input
-            label="NOMBRE"
-            type="text"
-            value={form.name}
-            onChange={set('name')}
-            placeholder="Tu nombre"
-          />
+          <Input label="NOMBRE" type="text" value={form.name} onChange={set('name')} placeholder="Tu nombre" />
+          <Input label="FECHA DE NACIMIENTO" type="date" value={form.birth_date} onChange={set('birth_date')} />
 
-          <Input
-            label="FECHA DE NACIMIENTO"
-            type="date"
-            value={form.birth_date}
-            onChange={set('birth_date')}
-          />
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[#888888] font-mono text-sm">SEXO</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[#666666] font-mono text-[10px] tracking-[0.2em] uppercase flex items-center gap-2">
+              <span className="w-1 h-1 rounded-full bg-[#c8f500] opacity-40" />
+              SEXO
+            </label>
             <select
               value={form.sex}
               onChange={set('sex')}
-              className="bg-[#141414] border border-[#333333] text-[#e8e8e8] font-mono text-sm px-4 h-12 outline-none focus:border-[#c8f500] transition-colors"
+              className="bg-[#111111] border border-[#222222] text-[#e8e8e8] font-mono text-sm px-4 h-12 outline-none focus:border-[#c8f500] focus:shadow-[0_0_20px_rgba(200,245,0,0.12)] transition-all duration-300 rounded-sm"
             >
               <option value="">— selecciona —</option>
               {SEX_OPTIONS.map(o => (
@@ -112,39 +103,38 @@ export default function Profile({ onNavigate }) {
             </select>
           </div>
 
-          <Input
-            label="ALTURA (cm)"
-            type="number"
-            step="0.1"
-            value={form.height_cm}
-            onChange={set('height_cm')}
-            placeholder="175"
-          />
+          <Input label="ALTURA (cm)" type="number" step="0.1" value={form.height_cm} onChange={set('height_cm')} placeholder="175" />
 
-          <div className="flex flex-col gap-1">
-            <label className="text-[#888888] font-mono text-sm">ALERGIAS / INTOLERANCIAS</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[#666666] font-mono text-[10px] tracking-[0.2em] uppercase flex items-center gap-2">
+              <span className="w-1 h-1 rounded-full bg-[#c8f500] opacity-40" />
+              ALERGIAS / INTOLERANCIAS
+            </label>
             <textarea
               value={form.allergies}
               onChange={set('allergies')}
               placeholder="Ej: lactosa, gluten..."
               rows={3}
-              className="bg-[#141414] border border-[#333333] text-[#e8e8e8] font-mono text-sm px-4 py-3 outline-none focus:border-[#c8f500] transition-colors resize-none"
+              className="bg-[#111111] border border-[#222222] text-[#e8e8e8] font-mono text-sm px-4 py-3 outline-none focus:border-[#c8f500] focus:shadow-[0_0_20px_rgba(200,245,0,0.12)] transition-all duration-300 resize-none rounded-sm"
             />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-[#888888] font-mono text-sm">SUPLEMENTOS</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[#666666] font-mono text-[10px] tracking-[0.2em] uppercase flex items-center gap-2">
+              <span className="w-1 h-1 rounded-full bg-[#c8f500] opacity-40" />
+              SUPLEMENTOS
+            </label>
             <textarea
               value={form.supplements}
               onChange={set('supplements')}
               placeholder="Ej: creatina 5g, proteína de suero..."
               rows={3}
-              className="bg-[#141414] border border-[#333333] text-[#e8e8e8] font-mono text-sm px-4 py-3 outline-none focus:border-[#c8f500] transition-colors resize-none"
+              className="bg-[#111111] border border-[#222222] text-[#e8e8e8] font-mono text-sm px-4 py-3 outline-none focus:border-[#c8f500] focus:shadow-[0_0_20px_rgba(200,245,0,0.12)] transition-all duration-300 resize-none rounded-sm"
             />
           </div>
 
           {msg && (
-            <p className={`font-mono text-sm ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>
+            <p className={`font-mono text-sm animate-slide-down ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>
               {msg}
             </p>
           )}
@@ -155,7 +145,7 @@ export default function Profile({ onNavigate }) {
         </form>
 
         <Separator className="mt-8 mb-4" />
-        <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
+        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
       </div>
     </div>
   )

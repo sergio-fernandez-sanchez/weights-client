@@ -56,6 +56,31 @@
   100% { background-position: 200% 0; }
 }
 
+@keyframes breathe {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.7; }
+}
+
+@keyframes lineExpand {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50%      { transform: scale(1.8); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes barFill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
 /* ────────────────────────────────────────────────────────────────────────────
    UTILITIES
    ──────────────────────────────────────────────────────────────────────────── */
@@ -64,6 +89,8 @@
 .animate-fade-in    { animation: fadeIn 0.4s ease-out backwards; }
 .animate-slide-up   { animation: glitchIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
 .animate-slide-right { animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+.animate-slide-down { animation: slideDown 0.3s ease-out backwards; }
+.animate-line-expand { animation: lineExpand 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards; transform-origin: left; }
 
 .glow-text {
   animation: glow 3s ease-in-out infinite;
@@ -165,14 +192,48 @@
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
+   GLASS & DEPTH
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.glass-card {
+  background: linear-gradient(135deg, rgba(20,20,20,0.95) 0%, rgba(14,14,14,0.9) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow:
+    0 4px 24px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.glass-card-elevated {
+  background: linear-gradient(145deg, rgba(24,24,24,0.97) 0%, rgba(16,16,16,0.95) 100%);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.5),
+    0 2px 8px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* Noise texture overlay */
+.noise-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
    SCROLLBAR
    ──────────────────────────────────────────────────────────────────────────── */
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0a0a0a; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 3px;
+  background: #2a2a2a;
+  border-radius: 4px;
   transition: background 0.2s;
 }
 ::-webkit-scrollbar-thumb:hover { background: #c8f500; }
@@ -184,4 +245,18 @@
 ::selection {
   background: rgba(200, 245, 0, 0.3);
   color: #c8f500;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   CUSTOM SELECT STYLING
+   ──────────────────────────────────────────────────────────────────────────── */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23666' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+select:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23c8f500' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
 }

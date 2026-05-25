@@ -1,39 +1,38 @@
 export default function Button({ children, onClick, type = 'button', disabled = false, variant = 'primary' }) {
-  const base = 'group relative h-14 font-mono font-bold text-base tracking-widest transition-all duration-200 disabled:opacity-50 w-full overflow-hidden'
+  const base = 'group relative font-mono font-bold tracking-widest transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none w-full overflow-hidden rounded-sm'
 
   const variants = {
-    primary:   'bg-[#c8f500] text-[#0a0a0a] border border-[#c8f500] hover:bg-[#0a0a0a] hover:text-[#c8f500] btn-glow',
-    secondary: 'bg-[#141414] text-[#e8e8e8] border border-[#333333] hover:border-[#c8f500] hover:text-[#c8f500] text-left px-6',
-    ghost:     'bg-transparent text-[#888888] border-none hover:text-[#c8f500] h-auto font-normal text-xs tracking-normal',
+    primary:   'h-14 bg-[#c8f500] text-[#0a0a0a] border border-[#c8f500] hover:bg-[#deff33] text-base btn-glow',
+    secondary: 'h-13 bg-transparent text-[#999999] border border-[#252525] hover:border-[#c8f500] hover:text-[#c8f500] text-sm text-left px-5',
+    ghost:     'bg-transparent text-[#555555] border-none hover:text-[#c8f500] h-auto font-normal text-xs tracking-normal',
   }
-
-  // Corner brackets para secondary
-  const showBrackets = variant === 'secondary' && !disabled
 
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`${base} ${variants[variant]} hover-lift click-press`}
+      className={`${base} ${variants[variant]} click-press`}
     >
-      {/* Corner brackets */}
-      {showBrackets && (
-        <>
-          <span className="absolute top-0 left-0 w-2 h-2 border-l border-t border-[#c8f500] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-          <span className="absolute top-0 right-0 w-2 h-2 border-r border-t border-[#c8f500] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-          <span className="absolute bottom-0 left-0 w-2 h-2 border-l border-b border-[#c8f500] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-          <span className="absolute bottom-0 right-0 w-2 h-2 border-r border-b border-[#c8f500] opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-        </>
+      {/* Left accent bar on hover — secondary only */}
+      {variant === 'secondary' && (
+        <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#c8f500] opacity-0 group-hover:opacity-100 transition-all duration-200 rounded-r-sm" />
       )}
 
-      {/* Scan line on hover */}
+      {/* Scan line on hover — secondary */}
       {variant === 'secondary' && !disabled && (
-        <span className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#c8f500] to-transparent opacity-0 group-hover:opacity-60 transition-opacity duration-300"
-              style={{ top: '50%' }} />
+        <span
+          className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#c8f500] to-transparent opacity-0 group-hover:opacity-30 transition-opacity duration-300"
+          style={{ top: '50%' }}
+        />
       )}
 
-      <span className="relative z-10">{children}</span>
+      <span className="relative z-10 flex items-center gap-2">
+        {variant === 'secondary' && (
+          <span className="text-[#333333] group-hover:text-[#c8f500] transition-colors duration-200 ml-1">›</span>
+        )}
+        {children}
+      </span>
     </button>
   )
 }

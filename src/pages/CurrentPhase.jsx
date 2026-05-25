@@ -11,6 +11,7 @@ const PHASE_COLORS = {
   maintenance: '#ff9f00',
   unknown:     '#888888',
 }
+const PHASE_LABELS = { bulk: 'VOLUMEN', cut: 'DEFINICIÓN', maintenance: 'MANTENIMIENTO' }
 
 function parseDate(dateStr) {
   return new Date(dateStr + 'T00:00:00')
@@ -28,8 +29,8 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
 
   if (!data.length) return null
 
-  const W = 320, H = 140
-  const PAD = { top: 10, right: 10, bottom: 16, left: 36 }
+  const W = 320, H = 160
+  const PAD = { top: 16, right: 12, bottom: 20, left: 38 }
   const chartW = W - PAD.left - PAD.right
   const chartH = H - PAD.top - PAD.bottom
 
@@ -47,55 +48,75 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
   })
 
   const points = data.map((d, i) => `${xPos(i)},${yPos(d.weight)}`).join(' ')
+  const areaPoints = `${xPos(0)},${PAD.top + chartH} ${points} ${xPos(data.length - 1)},${PAD.top + chartH}`
   const goalY = weightGoal ? yPos(weightGoal) : null
 
   function handleMouseMove(e) {
     const svg = svgRef.current
     if (!svg) return
     const rect = svg.getBoundingClientRect()
-    const x = e.clientX - rect.left - PAD.left
+    const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left - PAD.left
     const idx = Math.max(0, Math.min(data.length - 1, Math.round((x / chartW) * (data.length - 1))))
     const d = data[idx]
     setTooltip({ x: xPos(idx), y: yPos(d.weight), weight: d.weight, date: parseDate(d.date).toLocaleDateString('es-ES') })
   }
 
+  const gradId = `area-grad-${phaseColor.replace('#', '')}`
+
   return (
-    <div className="bg-[#141414] border border-[#333333] p-4 mb-4 relative">
-      <p className="text-[#888888] font-mono text-xs mb-3">EVOLUCIÓN EN ESTA FASE</p>
+    <div className="glass-card rounded-sm p-4 mb-4 relative overflow-hidden">
+      <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em] mb-3">EVOLUCIÓN EN ESTA FASE</p>
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
-        onMouseMove={handleMouseMove} onMouseLeave={() => setTooltip(null)}>
+        onMouseMove={handleMouseMove} onTouchMove={handleMouseMove} onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)}>
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={phaseColor} stopOpacity="0.25" />
+            <stop offset="100%" stopColor={phaseColor} stopOpacity="0" />
+          </linearGradient>
+        </defs>
         {ticks.map((t, i) => (
           <g key={i}>
-            <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#1f1f1f" strokeWidth="1" />
-            <text x={PAD.left - 4} y={t.y + 4} textAnchor="end" fill="#666" fontSize="9" fontFamily="Courier New">
+            <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#1a1a1a" strokeWidth="1" />
+            <text x={PAD.left - 6} y={t.y + 4} textAnchor="end" fill="#444" fontSize="9" fontFamily="monospace">
               {t.val.toFixed(1)}
             </text>
           </g>
         ))}
         {goalY && (
           <line x1={PAD.left} y1={goalY} x2={W - PAD.right} y2={goalY}
-            stroke={phaseColor} strokeWidth="1" strokeDasharray="4,4" strokeOpacity="0.5" />
+            stroke={phaseColor} strokeWidth="1" strokeDasharray="4,4" strokeOpacity="0.4" />
         )}
+        {/* Area fill */}
+        <polygon points={areaPoints} fill={`url(#${gradId})`} />
+        {/* Line */}
         <polyline points={points} fill="none" stroke={phaseColor} strokeWidth="2"
           strokeLinejoin="round" strokeLinecap="round" />
+        {/* Data points */}
+        {data.length <= 30 && data.map((d, i) => (
+          <circle key={i} cx={xPos(i)} cy={yPos(d.weight)} r="2" fill={phaseColor} opacity="0.4" />
+        ))}
         {tooltip && (
           <>
             <line x1={tooltip.x} y1={PAD.top} x2={tooltip.x} y2={H - PAD.bottom}
-              stroke="#333" strokeWidth="1" strokeDasharray="3,3" />
-            <circle cx={tooltip.x} cy={tooltip.y} r="4" fill={phaseColor} />
+              stroke={phaseColor} strokeWidth="1" strokeDasharray="3,3" strokeOpacity="0.3" />
+            <circle cx={tooltip.x} cy={tooltip.y} r="5" fill="none" stroke={phaseColor} strokeWidth="2" />
+            <circle cx={tooltip.x} cy={tooltip.y} r="2.5" fill={phaseColor} />
           </>
         )}
       </svg>
       {tooltip && (
-        <div className="absolute top-10 right-4 bg-[#0a0a0a] border border-[#333333] px-3 py-2 font-mono text-xs pointer-events-none">
-          <p className="text-[#888888]">{tooltip.date}</p>
-          <p className="font-bold" style={{ color: phaseColor }}>{tooltip.weight.toFixed(2)} kg</p>
+        <div className="absolute top-10 right-4 glass-card-elevated rounded-sm px-3 py-2 font-mono text-xs pointer-events-none border-none shadow-lg">
+          <p className="text-[#666666]">{tooltip.date}</p>
+          <p className="font-bold text-sm" style={{ color: phaseColor }}>{tooltip.weight.toFixed(2)} kg</p>
         </div>
       )}
       {weightGoal && (
-        <p className="text-[#888888] font-mono text-xs mt-1 opacity-60">
-          — — objetivo: {parseFloat(weightGoal).toFixed(2)} kg
-        </p>
+        <div className="flex items-center gap-2 mt-2">
+          <span className="w-4 h-0 border-t border-dashed" style={{ borderColor: phaseColor, opacity: 0.5 }} />
+          <p className="text-[#555555] font-mono text-[10px]">
+            objetivo: {parseFloat(weightGoal).toFixed(2)} kg
+          </p>
+        </div>
       )}
     </div>
   )
@@ -132,7 +153,6 @@ function calcProgress(allLogs, exerciseTypeId, phaseStartDate, phaseEndDate) {
     .sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
   if (history.length < 2) return { phase: null, noData: true }
 
-  // Para fases pasadas, current = último log antes del fin de la fase
   const logsUntilEnd = history.filter(l => parseDate(l.start_date) <= phaseEnd)
   if (logsUntilEnd.length < 1) return { phase: null, noData: true }
   const current = logsUntilEnd[logsUntilEnd.length - 1]
@@ -179,7 +199,7 @@ export default function CurrentPhase({ onNavigate }) {
         setWeights(weightData)
         setGymLogs(gymData)
         setActiveGymLogs(activeGymData)
-        setPhaseIndex(sorted.length - 1) // empezar en la fase más reciente
+        setPhaseIndex(sorted.length - 1)
       } catch {}
       finally { setLoading(false) }
     }
@@ -188,7 +208,7 @@ export default function CurrentPhase({ onNavigate }) {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-[#888888] font-mono text-sm">cargando...</p>
+      <p className="text-[#555555] font-mono text-sm animate-pulse">cargando...</p>
     </div>
   )
 
@@ -196,8 +216,8 @@ export default function CurrentPhase({ onNavigate }) {
     <div className="min-h-screen px-6 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => onNavigate('data')} />
-        <PageHeader title="// FASES" />
-        <p className="text-[#888888] font-mono text-sm">no hay fases registradas</p>
+        <PageHeader title="FASES" />
+        <p className="text-[#555555] font-mono text-sm">no hay fases registradas</p>
       </div>
     </div>
   )
@@ -236,7 +256,6 @@ export default function CurrentPhase({ onNavigate }) {
   const impliedWeeklyGoal = isActive && weightGoal && startWeight && totalWeeks ? ((weightGoal - parseFloat(startWeight)) / totalWeeks) : null
   const weeklyStats = calcWeeklyStats(phaseWeights)
 
-  // Gym progress — para fases pasadas usar logs hasta el fin de la fase
   const logsForGym = isActive ? activeGymLogs : [...new Map(
     gymLogs
       .filter(l => parseDate(l.start_date) <= phaseEnd)
@@ -283,44 +302,51 @@ export default function CurrentPhase({ onNavigate }) {
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => onNavigate('data')} />
-        <PageHeader title="// FASES" />
+        <PageHeader title="FASES" />
 
-        {/* Banner de fase con scanlines */}
-        <div className="relative bg-[#0f0f0f] mb-4 overflow-hidden"
-             style={{ borderTop: `2px solid ${phaseColor}`, borderBottom: `2px solid ${phaseColor}` }}>
-          {/* Scanlines verticales */}
-          <div className="absolute inset-0 pointer-events-none"
-               style={{ backgroundImage: `repeating-linear-gradient(90deg, transparent 0, transparent 18px, ${phaseColor}0a 18px, ${phaseColor}0a 19px)` }} />
+        {/* Phase Banner */}
+        <div className="relative glass-card-elevated rounded-sm mb-5 overflow-hidden">
+          {/* Top + bottom accent */}
+          <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ backgroundColor: phaseColor }} />
+          <div className="absolute bottom-0 left-0 right-0 h-[2px] opacity-30" style={{ backgroundColor: phaseColor }} />
 
-          <div className="relative flex items-center justify-between p-4">
+          {/* Subtle vertical grid */}
+          <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
+               style={{ backgroundImage: `repeating-linear-gradient(90deg, transparent 0, transparent 20px, ${phaseColor} 20px, ${phaseColor} 21px)` }} />
+
+          <div className="relative flex items-center justify-between p-5">
             <button
               onClick={() => setPhaseIndex(i => Math.max(0, i - 1))}
               disabled={phaseIndex === 0}
-              className="text-[#888888] font-mono text-xl hover:text-[#c8f500] disabled:opacity-20 transition-colors px-2 z-10"
+              className="w-8 h-8 flex items-center justify-center text-[#555555] font-mono text-lg hover:text-[#c8f500] disabled:opacity-20 transition-colors rounded-sm hover:bg-white/5"
             >←</button>
 
             <div className="text-center flex-1">
-              <p className="text-[#555555] font-mono text-[10px] tracking-[0.3em] mb-1">FASE ACTIVA</p>
-              <p className="font-mono text-2xl font-bold tracking-[0.25em] leading-none" style={{ color: phaseColor }}>
-                {phase.phase_type.toUpperCase()}
+              <p className="font-mono text-2xl font-bold tracking-[0.3em] leading-none" style={{ color: phaseColor }}>
+                {(PHASE_LABELS[phase.phase_type] || phase.phase_type).toUpperCase()}
               </p>
-              <p className="text-[#666666] font-mono text-[10px] mt-2">
-                ▶ {phaseStart.toLocaleDateString('es-ES')} → {phase.end_date ? parseDate(phase.end_date).toLocaleDateString('es-ES') : 'hoy'}
+              <p className="text-[#555555] font-mono text-[10px] mt-2 tracking-wide">
+                {phaseStart.toLocaleDateString('es-ES')} → {phase.end_date ? parseDate(phase.end_date).toLocaleDateString('es-ES') : 'hoy'}
               </p>
               {isActive && (
-                <p className="font-mono text-[10px] tracking-widest mt-1" style={{ color: phaseColor }}>● ACTIVA</p>
+                <span className="inline-flex items-center gap-1.5 mt-2 font-mono text-[10px] tracking-widest px-2 py-0.5 rounded-sm"
+                  style={{ color: phaseColor, backgroundColor: `${phaseColor}10`, border: `1px solid ${phaseColor}20` }}>
+                  <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: phaseColor }} />
+                  ACTIVA
+                </span>
               )}
             </div>
 
             <button
               onClick={() => setPhaseIndex(i => Math.min(phases.length - 1, i + 1))}
               disabled={phaseIndex === phases.length - 1}
-              className="text-[#888888] font-mono text-xl hover:text-[#c8f500] disabled:opacity-20 transition-colors px-2 z-10"
+              className="w-8 h-8 flex items-center justify-center text-[#555555] font-mono text-lg hover:text-[#c8f500] disabled:opacity-20 transition-colors rounded-sm hover:bg-white/5"
             >→</button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-2 gap-2 mb-4">
           <MetricCard label="PESO INICIO" value={startWeight ? `${parseFloat(startWeight).toFixed(2)} kg` : '—'} />
           <MetricCard label={isActive ? 'PESO ACTUAL' : 'PESO FINAL'} value={currentWeight ? `${parseFloat(currentWeight).toFixed(2)} kg` : '—'} />
           <MetricCard
@@ -328,79 +354,68 @@ export default function CurrentPhase({ onNavigate }) {
             value={gained ? `${gained > 0 ? '+' : ''}${gained} kg` : '—'}
             valueColor={gainedColor()}
           />
-          <MetricCard label="DURACIÓN" value={`${daysElapsed} días`} />
+          <MetricCard label="DURACIÓN" value={`${daysElapsed} días`} valueColor="#888888" />
           {isActive && weightGoal && (
             <MetricCard label="OBJETIVO" value={`${weightGoal.toFixed(2)} kg`} />
           )}
           {isActive && diff && (
             <MetricCard label="DIFERENCIA" value={`${diff > 0 ? '+' : ''}${diff} kg`} sub="para el objetivo" />
           )}
-
         </div>
 
-        {/* Barra de progreso segmentada — solo fase activa */}
+        {/* Progress bar */}
         {progress !== null && (
-          <div className="bg-[#141414] border border-[#333333] p-4 mb-4 relative">
-            <span className="absolute top-0 left-0 w-1.5 h-1.5 border-l border-t border-[#444444]" />
-            <span className="absolute top-0 right-0 w-1.5 h-1.5 border-r border-t border-[#444444]" />
-            <span className="absolute bottom-0 left-0 w-1.5 h-1.5 border-l border-b border-[#444444]" />
-            <span className="absolute bottom-0 right-0 w-1.5 h-1.5 border-r border-b border-[#444444]" />
-
+          <div className="glass-card rounded-sm p-4 mb-4">
             <div className="flex justify-between items-baseline mb-3">
-              <p className="text-[#666666] font-mono text-[10px] tracking-widest">PROGRESO TEMPORAL</p>
+              <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em]">PROGRESO TEMPORAL</p>
               <p className="font-mono text-sm font-bold" style={{ color: phaseColor }}>{Math.round(progress * 100)}%</p>
             </div>
 
-            {/* Segmentos */}
-            <div className="flex gap-[2px] mb-3">
-              {Array.from({ length: 20 }).map((_, i) => {
-                const segProgress = progress * 20
-                const filled = i < Math.floor(segProgress)
-                const partial = i === Math.floor(segProgress) ? segProgress - Math.floor(segProgress) : 0
-                return (
-                  <div key={i} className="flex-1 h-2 bg-[#1a1a1a] relative overflow-hidden">
-                    {filled && <div className="absolute inset-0" style={{ backgroundColor: phaseColor }} />}
-                    {!filled && partial > 0 && (
-                      <div className="absolute inset-0" style={{ backgroundColor: phaseColor, opacity: partial }} />
-                    )}
-                  </div>
-                )
-              })}
+            <div className="relative h-2 bg-[#1a1a1a] rounded-full overflow-hidden mb-3">
+              <div
+                className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                style={{
+                  width: `${progress * 100}%`,
+                  backgroundColor: phaseColor,
+                  boxShadow: `0 0 12px ${phaseColor}40`,
+                }}
+              />
             </div>
 
             {daysLeft !== null && (
               <div className="flex justify-between">
-                <p className="text-[#555555] font-mono text-[10px]">▶ {Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24))} días transcurridos</p>
-                <p className="font-mono text-[10px]" style={{ color: phaseColor, opacity: 0.7 }}>{daysLeft} días restantes ◄</p>
+                <p className="text-[#444444] font-mono text-[10px]">{Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24))}d transcurridos</p>
+                <p className="font-mono text-[10px]" style={{ color: phaseColor, opacity: 0.7 }}>{daysLeft}d restantes</p>
               </div>
             )}
           </div>
         )}
 
-        {/* Rendimiento gym */}
-        <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
-          <p className="text-[#888888] font-mono text-xs mb-1">RENDIMIENTO EN GYM</p>
-          <p className="text-[#555555] font-mono text-xs mb-3">1RM estimado (Epley)</p>
+        {/* Gym performance */}
+        <div className="glass-card rounded-sm p-4 mb-4">
+          <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em] mb-1">RENDIMIENTO EN GYM</p>
+          <p className="text-[#333333] font-mono text-[10px] mb-3">1RM estimado (Epley)</p>
           {gymProgress.length === 0 ? (
-            <p className="text-[#555555] font-mono text-xs">sin datos suficientes</p>
+            <p className="text-[#444444] font-mono text-xs">sin datos suficientes</p>
           ) : (
             <>
               {avgStrength !== null && (
-                <div className="flex items-end gap-3 mb-3">
+                <div className="flex items-end gap-3 mb-4">
                   <p className="font-mono text-3xl font-bold" style={{ color: progressColor(avgStrength) }}>
                     {avgStrength > 0 ? '+' : ''}{avgStrength.toFixed(1)}%
                   </p>
-                  <p className="text-[#888888] font-mono text-xs mb-1">media fase</p>
+                  <p className="text-[#555555] font-mono text-xs mb-1">media fase</p>
                 </div>
               )}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
                 {gymProgress.map((ex, i) => {
                   const phasePct  = ex.progress.noData ? null : ex.progress.phase
                   const displayPct = phasePct ?? 0
+                  const color = progressColor(displayPct)
                   return (
-                    <div key={i} className="flex justify-between items-center">
-                      <span className="text-[#555555] font-mono text-xs uppercase truncate mr-2">{ex.name}</span>
-                      <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color: progressColor(displayPct) }}>
+                    <div key={i} className="flex justify-between items-center py-1">
+                      <span className="text-[#555555] font-mono text-xs uppercase truncate mr-3">{ex.name}</span>
+                      <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color }}>
                         {phasePct !== null ? `${phasePct > 0 ? '+' : ''}${phasePct.toFixed(1)}%` : '0.0%'}
                       </span>
                     </div>
@@ -411,43 +426,43 @@ export default function CurrentPhase({ onNavigate }) {
           )}
         </div>
 
-        {/* Ritmo semanal */}
+        {/* Weekly stats */}
         {weeklyStats && (
-          <div className="bg-[#141414] border border-[#333333] p-4 mb-4">
-            <p className="text-[#888888] font-mono text-xs mb-3">RITMO SEMANAL</p>
+          <div className="glass-card rounded-sm p-4 mb-4">
+            <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em] mb-4">RITMO SEMANAL</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-[#888888] font-mono text-xs mb-1">MEDIA SEMANAL</p>
+                <p className="text-[#444444] font-mono text-[10px] tracking-widest mb-1">MEDIA SEMANAL</p>
                 <p className="font-mono text-xl font-bold"
                   style={{ color: impliedWeeklyGoal ? weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) : '#c8f500' }}>
                   {weeklyStats.avgChange > 0 ? '+' : ''}{weeklyStats.avgChange.toFixed(2)} kg
                 </p>
                 {impliedWeeklyGoal && (
-                  <p className="text-[#888888] font-mono text-xs mt-1">
+                  <p className="text-[#444444] font-mono text-[10px] mt-1">
                     objetivo: {impliedWeeklyGoal > 0 ? '+' : ''}{impliedWeeklyGoal.toFixed(2)} kg
                   </p>
                 )}
               </div>
               <div>
-                <p className="text-[#888888] font-mono text-xs mb-1">CONSISTENCIA</p>
+                <p className="text-[#444444] font-mono text-[10px] tracking-widest mb-1">CONSISTENCIA</p>
                 <p className="font-mono text-xl font-bold" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
                   σ {weeklyStats.stdDev.toFixed(2)}
                 </p>
-                <p className="font-mono text-xs mt-1" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
+                <p className="font-mono text-[10px] mt-1" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
                   {consistencyLabel(weeklyStats.stdDev)}
                 </p>
               </div>
             </div>
             {isActive && impliedWeeklyGoal && (
-              <div className="mt-3">
-                <div className="flex justify-between mb-1">
-                  <p className="text-[#888888] font-mono text-xs">RITMO VS OBJETIVO</p>
-                  <p className="font-mono text-xs" style={{ color: weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) }}>
+              <div className="mt-4">
+                <div className="flex justify-between mb-1.5">
+                  <p className="text-[#444444] font-mono text-[10px] tracking-widest">RITMO VS OBJETIVO</p>
+                  <p className="font-mono text-xs font-bold" style={{ color: weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) }}>
                     {((Math.abs(weeklyStats.avgChange) / Math.abs(impliedWeeklyGoal)) * 100).toFixed(0)}%
                   </p>
                 </div>
-                <div className="w-full bg-[#333333] h-1.5">
-                  <div className="h-1.5 transition-all"
+                <div className="relative h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+                  <div className="absolute inset-y-0 left-0 rounded-full transition-all"
                     style={{
                       width: `${Math.min(100, (Math.abs(weeklyStats.avgChange) / Math.abs(impliedWeeklyGoal)) * 100)}%`,
                       backgroundColor: weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal))
@@ -463,18 +478,17 @@ export default function CurrentPhase({ onNavigate }) {
           <PhaseChart data={chartData} phaseColor={phaseColor} weightGoal={isActive ? weightGoal : null} />
         )}
 
-        {/* Botón editar objetivos — solo fase activa */}
         {isActive && (
           <button
             onClick={() => onNavigate('editPhaseGoals', phase)}
-            className="w-full h-10 bg-transparent border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors mb-4"
+            className="w-full h-10 glass-card rounded-sm text-[#555555] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mb-4"
           >
-            // EDITAR OBJETIVOS
+            EDITAR OBJETIVOS
           </button>
         )}
 
         <Separator className="mt-2 mb-4" />
-        <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
+        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
       </div>
     </div>
   )

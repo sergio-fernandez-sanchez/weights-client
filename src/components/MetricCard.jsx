@@ -1,20 +1,29 @@
-// MetricCard con estética cyberpunk: label arriba, valor grande, sub opcional, accent vertical
-export default function MetricCard({ label, value, sub, valueColor = '#c8f500' }) {
+export default function MetricCard({ label, value, sub, valueColor = '#c8f500', icon = null }) {
   return (
-    <div className="relative bg-[#141414] border border-[#333333] p-4 transition-all duration-200 hover:border-[#444444]">
-      {/* Corner brackets sutiles */}
-      <span className="absolute top-0 left-0 w-1.5 h-1.5 border-l border-t border-[#444444]" />
-      <span className="absolute top-0 right-0 w-1.5 h-1.5 border-r border-t border-[#444444]" />
-      <span className="absolute bottom-0 left-0 w-1.5 h-1.5 border-l border-b border-[#444444]" />
-      <span className="absolute bottom-0 right-0 w-1.5 h-1.5 border-r border-b border-[#444444]" />
+    <div className="relative glass-card rounded-sm p-4 group hover:border-[#333333] transition-all duration-300 overflow-hidden">
+      {/* Top accent line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[2px] opacity-60 group-hover:opacity-100 transition-opacity"
+        style={{
+          background: `linear-gradient(90deg, ${valueColor}, transparent)`,
+        }}
+      />
 
-      {/* Barra lateral con color del valor */}
-      <div className="absolute top-2 bottom-2 left-0 w-px" style={{ backgroundColor: valueColor, opacity: 0.4 }} />
+      {/* Ambient glow on hover */}
+      <div
+        className="absolute -top-8 -left-8 w-24 h-24 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl"
+        style={{ backgroundColor: valueColor }}
+      />
 
-      <div className="pl-2">
-        <p className="text-[#666666] font-mono text-[10px] tracking-widest mb-1">{label}</p>
-        <p className="font-mono text-xl font-bold leading-none" style={{ color: valueColor }}>{value}</p>
-        {sub && <p className="text-[#666666] font-mono text-xs mt-2">{sub}</p>}
+      <div className="relative z-10">
+        <div className="flex items-center gap-1.5 mb-2">
+          {icon && <span className="text-xs opacity-50">{icon}</span>}
+          <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em] uppercase">{label}</p>
+        </div>
+        <p className="font-mono text-xl font-bold leading-none tracking-tight" style={{ color: valueColor }}>
+          {value}
+        </p>
+        {sub && <p className="text-[#555555] font-mono text-[10px] mt-2 leading-relaxed">{sub}</p>}
       </div>
     </div>
   )

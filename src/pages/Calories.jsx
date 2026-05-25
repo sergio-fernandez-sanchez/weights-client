@@ -31,12 +31,13 @@ export default function Calories({ onNavigate, currentCalories }) {
   return (
     <PageWrapper>
       <BackButton onClick={() => onNavigate('home')} />
-      <PageHeader title="// CALORÍAS" />
+      <PageHeader title="CALORÍAS" />
 
       {currentCalories && (
-        <p className="text-[#888888] font-mono text-sm mb-6">
-          actual: <span className="text-[#c8f500]">{currentCalories} kcal</span>
-        </p>
+        <div className="glass-card rounded-sm p-4 mb-6">
+          <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em] mb-1">OBJETIVO ACTUAL</p>
+          <p className="text-[#c8f500] font-mono text-2xl font-bold">{currentCalories} <span className="text-sm opacity-60">kcal</span></p>
+        </div>
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -50,7 +51,7 @@ export default function Calories({ onNavigate, currentCalories }) {
         />
 
         {msg && (
-          <p className={`font-mono text-sm ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>
+          <p className={`font-mono text-sm animate-slide-down ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>
             {msg}
           </p>
         )}
@@ -61,7 +62,7 @@ export default function Calories({ onNavigate, currentCalories }) {
       </form>
 
       <Separator className="mt-10 mb-4" />
-      <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
+      <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
     </PageWrapper>
   )
 }

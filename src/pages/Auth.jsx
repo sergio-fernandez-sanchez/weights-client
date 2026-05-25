@@ -39,7 +39,7 @@ export default function Auth({ onLogin }) {
 
   return (
     <PageWrapper>
-      <PageHeader title="// W E I G H T S" blink />
+      <PageHeader title="W E I G H T S" blink sub="tracking de peso & rendimiento" />
 
       <Tabs options={[['INICIAR SESIÓN', 'login'], ['REGISTRARSE', 'register']]} value={mode} onChange={(m) => { setMode(m); setError(''); setSuccess('') }} className="mb-6" />
 
@@ -47,8 +47,8 @@ export default function Auth({ onLogin }) {
         <Input required label="EMAIL" type="email" value={email} onChange={e => setEmail(e.target.value)} />
         <Input required label="CONTRASEÑA" type="password" value={password} onChange={e => setPassword(e.target.value)} />
 
-        {error && <p className="text-[#ff4444] font-mono text-sm">{error}</p>}
-        {success && <p className="text-[#c8f500] font-mono text-sm">{success}</p>}
+        {error && <p className="text-[#ff4444] font-mono text-sm animate-slide-down">{error}</p>}
+        {success && <p className="text-[#c8f500] font-mono text-sm animate-slide-down">{success}</p>}
 
         <Button type="submit" disabled={loading}>
           {loading ? '...' : mode === 'login' ? 'ENTRAR' : 'CREAR CUENTA'}
@@ -56,7 +56,7 @@ export default function Auth({ onLogin }) {
       </form>
 
       <Separator className="mt-12 mb-4" />
-      <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
+      <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
     </PageWrapper>
   )
 }

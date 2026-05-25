@@ -15,14 +15,14 @@ export default function ParticleBackground() {
     resize()
     window.addEventListener('resize', resize)
 
-    const particleCount = window.innerWidth < 600 ? 50 : 90
+    const particleCount = window.innerWidth < 600 ? 35 : 60
     const particles = Array.from({ length: particleCount }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      size: Math.random() * 1.5 + 0.6,
-      opacity: Math.random() * 0.6 + 0.25,
+      vx: (Math.random() - 0.5) * 0.2,
+      vy: (Math.random() - 0.5) * 0.2,
+      size: Math.random() * 1.2 + 0.4,
+      opacity: Math.random() * 0.4 + 0.1,
     }))
 
     function animate() {
@@ -49,12 +49,12 @@ export default function ParticleBackground() {
           const dx = particles[i].x - particles[j].x
           const dy = particles[i].y - particles[j].y
           const dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist < 140) {
+          if (dist < 120) {
             ctx.beginPath()
             ctx.moveTo(particles[i].x, particles[i].y)
             ctx.lineTo(particles[j].x, particles[j].y)
-            ctx.strokeStyle = `rgba(200, 245, 0, ${0.18 * (1 - dist / 140)})`
-            ctx.lineWidth = 0.6
+            ctx.strokeStyle = `rgba(200, 245, 0, ${0.08 * (1 - dist / 120)})`
+            ctx.lineWidth = 0.5
             ctx.stroke()
           }
         }

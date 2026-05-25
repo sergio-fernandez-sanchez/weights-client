@@ -4,22 +4,24 @@ import Button from '../components/Button'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 
+const ITEMS = [
+  ['PESO',           'weightHistory',      '⬡'],
+  ['FASES',          'currentPhase',       '◈'],
+  ['BIOIMPEDANCIA',  'bioimpedanceReports', '◎'],
+  ['DEXA',           'dexaReports',        '⬢'],
+  ['MEDIDAS',        'bodyMeasurements',   '▣'],
+  ['GYM',            'gymHistory',         '◆'],
+  ['CALORÍAS',       'caloriesHistory',    '◇'],
+]
+
 export default function DataMenu({ onNavigate }) {
   return (
     <PageWrapper>
       <BackButton onClick={() => onNavigate('home')} />
-      <PageHeader title="// DATOS" />
+      <PageHeader title="DATOS" sub="historial y métricas" />
 
-      <div className="flex flex-col gap-3">
-        {[
-          ['// PESO →',            'weightHistory'],
-          ['// FASES →',           'currentPhase'],
-          ['// BIOIMPEDANCIA →',   'bioimpedanceReports'],
-          ['// DEXA →',            'dexaReports'],
-          ['// MEDIDAS →',         'bodyMeasurements'],
-          ['// GYM →',             'gymHistory'],
-          ['// CALORÍAS →',        'caloriesHistory'],
-        ].map(([label, page]) => (
+      <div className="flex flex-col gap-2">
+        {ITEMS.map(([label, page, icon], i) => (
           <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>
             {label}
           </Button>
@@ -27,7 +29,7 @@ export default function DataMenu({ onNavigate }) {
       </div>
 
       <Separator className="mt-8 mb-4" />
-      <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
+      <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
     </PageWrapper>
   )
 }

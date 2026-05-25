@@ -25,10 +25,11 @@ function fmtWeekFromISO(isoDate) {
   const monday = new Date(y, m - 1, d)
   const sunday = new Date(y, m - 1, d + 6)
   const fmt = date => `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}`
-  return `${fmt(monday)}-${fmt(sunday)}`
+  return `${fmt(monday)} – ${fmt(sunday)}`
 }
 
 const PHASE_COLORS = { bulk: '#c8f500', cut: '#ff2d2d', maintenance: '#ff9f00' }
+const PHASE_LABELS = { bulk: 'VOLUMEN', cut: 'DEFINICIÓN', maintenance: 'MANTEN.' }
 
 export default function Home({ onNavigate, onLogout }) {
   const [lastWeight, setLastWeight]         = useState(null)
@@ -133,59 +134,95 @@ export default function Home({ onNavigate, onLogout }) {
     }
   }
 
+  const phaseDays = activePhase
+    ? Math.floor((new Date() - new Date(activePhase.start_date + 'T00:00:00')) / (1000*60*60*24))
+    : null
+
   return (
     <PageWrapper>
-      <PageHeader title="// W E I G H T S" blink />
+      <PageHeader title="W E I G H T S" blink />
 
-      <div className="flex items-start justify-between mb-6 gap-3">
-        <div className="flex-1">
-          {lastWeight && (
+      {/* ── Status Banner ── */}
+      {lastWeight && (
+        <div className="glass-card rounded-sm p-4 mb-5 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          {/* Weight display */}
+          <div className="flex items-end justify-between mb-3">
             <div>
-              <p className="text-[#c8f500] font-mono text-sm">
-                {todayLogged
-                  ? `✓  ${lastWeight.weight} kg registrado hoy`
-                  : `último: ${lastWeight.weight} kg — ${lastWeight.date}`}
+              <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em] mb-1">
+                {todayLogged ? 'HOY' : 'ÚLTIMO REGISTRO'}
               </p>
-              <div className="flex gap-3 mt-1 flex-wrap">
-                {activePhase && (
-                  <span className="font-mono text-xs" style={{ color: PHASE_COLORS[activePhase.phase_type] || '#888888' }}>
-                    {activePhase.phase_type} · {Math.floor((new Date() - new Date(activePhase.start_date + 'T00:00:00')) / (1000*60*60*24))}d
-                  </span>
-                )}
-                {weeklyTrend !== null && (
-                  <span className="font-mono text-xs" style={{ color: weeklyTrend > 0 ? '#4a9eff' : weeklyTrend < 0 ? '#ff2d2d' : '#888888' }}>
-                    {weeklyTrend > 0 ? '↑' : weeklyTrend < 0 ? '↓' : '→'} {Math.abs(weeklyTrend)} kg (7d)
-                  </span>
-                )}
-                {bestOneRM && (
-                  <span className="text-[#555555] font-mono text-xs">
-                    1RM {bestOneRM.name.toLowerCase()} {bestOneRM.rm}kg
-                  </span>
-                )}
-              </div>
+              <p className="text-[#c8f500] font-mono text-3xl font-bold leading-none tracking-tight">
+                {lastWeight.weight}<span className="text-lg ml-1 opacity-60">kg</span>
+              </p>
             </div>
+            {todayLogged && (
+              <span className="flex items-center gap-1.5 text-[#c8f500] font-mono text-[10px] tracking-widest bg-[#c8f500]/8 px-2.5 py-1 rounded-sm border border-[#c8f500]/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#c8f500] animate-pulse" />
+                REGISTRADO
+              </span>
+            )}
+          </div>
+
+          {/* Stats row */}
+          <div className="flex gap-3 flex-wrap">
+            {activePhase && (
+              <span className="font-mono text-[11px] flex items-center gap-1.5 px-2 py-0.5 rounded-sm"
+                style={{
+                  color: PHASE_COLORS[activePhase.phase_type] || '#888',
+                  backgroundColor: `${PHASE_COLORS[activePhase.phase_type] || '#888'}10`,
+                  border: `1px solid ${PHASE_COLORS[activePhase.phase_type] || '#888'}20`,
+                }}>
+                <span className="w-1 h-1 rounded-full" style={{ backgroundColor: PHASE_COLORS[activePhase.phase_type] }} />
+                {PHASE_LABELS[activePhase.phase_type] || activePhase.phase_type.toUpperCase()} · {phaseDays}d
+              </span>
+            )}
+            {weeklyTrend !== null && (
+              <span className="font-mono text-[11px] flex items-center gap-1" style={{ color: weeklyTrend > 0 ? '#4a9eff' : weeklyTrend < 0 ? '#ff2d2d' : '#666' }}>
+                {weeklyTrend > 0 ? '↑' : weeklyTrend < 0 ? '↓' : '→'} {Math.abs(weeklyTrend)} kg/7d
+              </span>
+            )}
+            {bestOneRM && (
+              <span className="text-[#444444] font-mono text-[11px]">
+                1RM {bestOneRM.name.toLowerCase()} {bestOneRM.rm}kg
+              </span>
+            )}
+          </div>
+
+          {!todayLogged && lastWeight.date && (
+            <p className="text-[#444444] font-mono text-[10px] mt-2">{lastWeight.date}</p>
           )}
         </div>
+      )}
 
-        {weekFilled !== null && (
-          <button
-            onClick={() => onNavigate('weeklyReport', lastMondayISO)}
-            className="flex-shrink-0 px-3 py-2 border font-mono text-xs transition-all active:scale-95"
-            style={{
-              backgroundColor: weekFilled ? 'rgba(200,245,0,0.08)' : 'rgba(255,45,45,0.06)',
-              borderColor:     weekFilled ? '#c8f500' : '#ff2d2d',
-              color:           weekFilled ? '#c8f500' : '#ff2d2d',
-              boxShadow:       weekFilled ? '0 0 12px rgba(200,245,0,0.15)' : '0 0 12px rgba(255,45,45,0.1)',
-            }}
-          >
-            <p className="font-mono text-xs opacity-50 tracking-widest mb-1">SEMANA</p>
-            <p className="font-bold tracking-wide">{fmtWeekFromISO(lastMondayISO)}</p>
-            <p className="text-xs mt-1 font-bold">{weekFilled ? '✓ relleno' : '✗ pendiente'}</p>
-          </button>
-        )}
-      </div>
+      {/* ── Weekly Report Banner ── */}
+      {weekFilled !== null && (
+        <button
+          onClick={() => onNavigate('weeklyReport', lastMondayISO)}
+          className="w-full glass-card rounded-sm p-3 mb-5 flex items-center justify-between group hover:border-[#333333] transition-all duration-300 animate-fade-in-up"
+          style={{ animationDelay: '0.15s' }}
+        >
+          <div className="flex items-center gap-3">
+            <span
+              className="w-8 h-8 rounded-sm flex items-center justify-center text-base font-mono border"
+              style={{
+                borderColor: weekFilled ? '#c8f500' : '#ff2d2d',
+                color: weekFilled ? '#c8f500' : '#ff2d2d',
+                backgroundColor: weekFilled ? 'rgba(200,245,0,0.06)' : 'rgba(255,45,45,0.06)',
+              }}
+            >
+              {weekFilled ? '✓' : '!'}
+            </span>
+            <div className="text-left">
+              <p className="text-[#888888] font-mono text-[10px] tracking-[0.15em]">INFORME SEMANAL</p>
+              <p className="text-[#e8e8e8] font-mono text-xs font-bold">{fmtWeekFromISO(lastMondayISO)}</p>
+            </div>
+          </div>
+          <span className="text-[#333333] group-hover:text-[#c8f500] transition-colors font-mono">›</span>
+        </button>
+      )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3 mb-2">
+      {/* ── Weight Input ── */}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 mb-5 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
         <Input
           label={todayLogged ? 'ACTUALIZAR PESO (kg)' : 'PESO DE HOY (kg)'}
           type="number"
@@ -200,31 +237,37 @@ export default function Home({ onNavigate, onLogout }) {
         </Button>
       </form>
 
-      {msg && <p className="text-[#c8f500] font-mono text-sm mb-2">{msg}</p>}
+      {msg && <p className="text-[#c8f500] font-mono text-sm mb-3 animate-slide-down">{msg}</p>}
 
-      <div className="flex gap-2 mt-2 mb-2">
+      {/* ── Quick Actions ── */}
+      <div className="grid grid-cols-2 gap-2 mb-5 animate-fade-in-up" style={{ animationDelay: '0.25s' }}>
         <button
           onClick={() => onNavigate('calories', activeCalories)}
-          className="flex-1 h-10 bg-[#141414] border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors"
+          className="glass-card rounded-sm h-14 flex flex-col items-center justify-center group hover:border-[#333333] transition-all duration-300"
         >
-          {activeCalories ? `${activeCalories} kcal` : '// CALORÍAS'}
+          <span className="text-[#555555] font-mono text-[9px] tracking-[0.2em] group-hover:text-[#888888] transition-colors">CALORÍAS</span>
+          <span className="text-[#c8f500] font-mono text-sm font-bold group-hover:text-[#deff33] transition-colors">
+            {activeCalories ? `${activeCalories}` : '—'}
+          </span>
         </button>
         <button
           onClick={() => onNavigate('gym')}
-          className="flex-1 h-10 bg-[#141414] border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors"
+          className="glass-card rounded-sm h-14 flex flex-col items-center justify-center group hover:border-[#333333] transition-all duration-300"
         >
-          // GYM →
+          <span className="text-[#555555] font-mono text-[9px] tracking-[0.2em] group-hover:text-[#888888] transition-colors">GYM</span>
+          <span className="text-[#c8f500] font-mono text-sm font-bold group-hover:text-[#deff33] transition-colors">→</span>
         </button>
       </div>
 
-      <Separator className="my-6" />
+      <Separator className="my-5" />
 
-      <div className="flex flex-col gap-3">
+      {/* ── Navigation ── */}
+      <div className="flex flex-col gap-2 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
         {[
-          ['// VER DATOS →',        'data'],
-          ['// NUEVA FASE →',       'phase'],
-          ['// NUEVO INFORME →',    'newReport'],
-          ['// DATOS PERSONALES →', 'profile'],
+          ['VER DATOS',        'data'],
+          ['NUEVA FASE',       'phase'],
+          ['NUEVO INFORME',    'newReport'],
+          ['DATOS PERSONALES', 'profile'],
         ].map(([label, page]) => (
           <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>
             {label}
@@ -232,17 +275,25 @@ export default function Home({ onNavigate, onLogout }) {
         ))}
       </div>
 
-      <Separator className="mt-8 mb-4" />
+      <Separator className="my-5" />
+
+      {/* ── AI Report Button ── */}
       <button
         onClick={() => onNavigate('aiReport')}
-        className="w-full h-14 bg-[#141414] border border-[#1f2a00] text-[#6a8000] font-mono text-base text-left px-6 hover:bg-[#1a2200] hover:text-[#c8f500] hover:border-[#c8f500] transition-colors mb-3"
+        className="w-full h-14 glass-card-elevated rounded-sm border-[#1f2a00] text-[#6a8000] font-mono text-sm font-bold tracking-widest text-left px-5 hover:text-[#c8f500] hover:border-[#c8f500]/40 transition-all duration-300 group relative overflow-hidden mb-4"
       >
-        // GENERAR INFORME IA →
+        <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-[#c8f500] to-transparent opacity-0 group-hover:opacity-60 transition-opacity duration-300 rounded-r-sm" />
+        <span className="relative z-10 flex items-center gap-2">
+          <span className="text-[#333333] group-hover:text-[#c8f500] transition-colors">◆</span>
+          GENERAR INFORME IA
+        </span>
       </button>
+
       <Button variant="ghost" onClick={() => { logout(); onLogout() }}>
-        // CERRAR SESIÓN
+        CERRAR SESIÓN
       </Button>
-      <p className="text-[#333333] font-mono text-xs mt-3">sergio / weights v0.1</p>
+
+      <p className="text-[#222222] font-mono text-[10px] mt-4 text-center tracking-widest">weights v0.1</p>
     </PageWrapper>
   )
 }

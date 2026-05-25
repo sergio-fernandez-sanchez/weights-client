@@ -58,13 +58,13 @@ function calcProgress(allLogs, exerciseTypeId, phaseStartDate) {
   return { phase: phasePct, total: totalPct, noData: false }
 }
 
-function ProgressCard({ label, value, noData }) {
+function ProgressPill({ label, value, noData }) {
   const displayValue = noData ? 0 : value
+  const color = progressColor(displayValue)
   return (
-    <div className="flex-1 bg-[#0a0a0a] border border-[#1e1e1e] px-3 py-2 relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-px" style={{ backgroundColor: progressColor(displayValue) }} />
-      <p className="text-[#3a3a3a] font-mono text-xs tracking-widest mb-1">{label}</p>
-      <p className="font-mono text-base font-bold" style={{ color: progressColor(displayValue) }}>
+    <div className="flex-1 rounded-sm px-2.5 py-1.5 relative overflow-hidden" style={{ backgroundColor: `${color}08`, border: `1px solid ${color}15` }}>
+      <p className="text-[#444444] font-mono text-[9px] tracking-[0.15em] mb-0.5">{label}</p>
+      <p className="font-mono text-xs font-bold" style={{ color }}>
         {noData ? '0.0%' : progressLabel(value)}
       </p>
     </div>
@@ -162,7 +162,7 @@ export default function Gym({ onNavigate }) {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-[#888888] font-mono text-sm">cargando...</p>
+      <p className="text-[#555555] font-mono text-sm animate-pulse">cargando...</p>
     </div>
   )
 
@@ -170,41 +170,47 @@ export default function Gym({ onNavigate }) {
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => onNavigate('home')} />
-        <PageHeader title="// GYM" />
-        <p className="text-[#555555] font-mono text-xs mb-4">progreso en 1RM estimado (Epley)</p>
+        <PageHeader title="GYM" sub="progreso en 1RM estimado (Epley)" />
 
         {logs.length === 0 ? (
-          <p className="text-[#888888] font-mono text-sm mb-6">no hay ejercicios añadidos</p>
+          <p className="text-[#555555] font-mono text-sm mb-6">no hay ejercicios añadidos</p>
         ) : (
           Object.entries(grouped).map(([cat, catLogs]) => (
             <div key={cat} className="mb-5">
-              <p className="text-[#333333] font-mono text-xs mb-2 tracking-widest">── {CATEGORY_LABELS[cat] || cat.toUpperCase()}</p>
-              <div className="flex flex-col gap-px">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="h-px flex-1 bg-[#1a1a1a]" />
+                <span className="text-[#333333] font-mono text-[10px] tracking-[0.2em]">{CATEGORY_LABELS[cat] || cat.toUpperCase()}</span>
+                <span className="h-px flex-1 bg-[#1a1a1a]" />
+              </div>
+              <div className="flex flex-col gap-2">
                 {catLogs.map(log => {
                   const progress = calcProgress(allLogs, log.exercise_type_id, activePhase?.start_date)
                   const rm = oneRM(log)
                   return (
-                    <div key={log.id} className="flex items-stretch bg-[#141414] border-b border-[#1a1a1a] hover:bg-[#181818] transition-colors group">
-                      <div className="w-0.5 flex-shrink-0 bg-[#c8f500] opacity-30 group-hover:opacity-80 transition-opacity" />
-                      <div className="flex-1 px-4 py-3 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <div className="min-w-0">
-                            <p className="text-[#e8e8e8] font-mono text-sm font-bold tracking-wide truncate uppercase">{log.name}</p>
-                            <p className="text-[#c8f500] font-mono text-xs mt-0.5">
-                              {log.weight ? `${log.weight} kg` : '—'}
-                              {log.weight && log.reps ? ` × ${log.reps} reps` : ''}
-                              {rm && log.reps ? <span className="text-[#555555]"> · 1RM ~{rm.toFixed(1)} kg</span> : ''}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-1.5 ml-3 flex-shrink-0">
-                            <button onClick={() => startEdit(log)} className="px-2 h-6 border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors">EDIT</button>
-                            <button onClick={() => handleDelete(log)} className="w-6 h-6 border border-[#333333] text-[#444444] font-mono text-xs hover:border-[#ff2d2d] hover:text-[#ff2d2d] transition-colors flex items-center justify-center">✕</button>
-                          </div>
+                    <div key={log.id} className="glass-card rounded-sm p-3 group hover:border-[#333333] transition-all duration-200">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="min-w-0">
+                          <p className="text-[#e8e8e8] font-mono text-sm font-bold tracking-wide truncate uppercase">{log.name}</p>
+                          <p className="text-[#c8f500] font-mono text-xs mt-0.5">
+                            {log.weight ? `${log.weight} kg` : '—'}
+                            {log.weight && log.reps ? ` × ${log.reps} reps` : ''}
+                            {rm && log.reps ? <span className="text-[#444444]"> · 1RM ~{rm.toFixed(1)}</span> : ''}
+                          </p>
                         </div>
-                        <div className="flex gap-2 mt-2">
-                          <ProgressCard label="FASE" value={progress.phase} noData={progress.noData || progress.phase === null} />
-                          <ProgressCard label="TOTAL" value={progress.total} noData={progress.noData} />
+                        <div className="flex items-center gap-1.5 ml-3 flex-shrink-0">
+                          <button onClick={() => startEdit(log)}
+                            className="px-2 h-6 rounded-sm border border-[#222222] text-[#555555] font-mono text-[10px] hover:border-[#c8f500] hover:text-[#c8f500] transition-colors">
+                            EDIT
+                          </button>
+                          <button onClick={() => handleDelete(log)}
+                            className="w-6 h-6 rounded-sm border border-[#222222] text-[#444444] font-mono text-xs hover:border-[#ff2d2d] hover:text-[#ff2d2d] transition-colors flex items-center justify-center">
+                            ✕
+                          </button>
                         </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <ProgressPill label="FASE" value={progress.phase} noData={progress.noData || progress.phase === null} />
+                        <ProgressPill label="TOTAL" value={progress.total} noData={progress.noData} />
                       </div>
                     </div>
                   )
@@ -214,11 +220,12 @@ export default function Gym({ onNavigate }) {
           ))
         )}
 
-        <button onClick={() => setMode('add')} className="w-full h-11 bg-transparent border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors mt-4 mb-4">
+        <button onClick={() => setMode('add')}
+          className="w-full h-11 glass-card rounded-sm text-[#555555] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mt-4 mb-4">
           + AÑADIR EJERCICIO
         </button>
         <Separator className="mt-2 mb-4" />
-        <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
+        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
       </div>
     </div>
   )
@@ -227,12 +234,15 @@ export default function Gym({ onNavigate }) {
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => setMode('list')} />
-        <PageHeader title="// AÑADIR EJERCICIO" />
+        <PageHeader title="AÑADIR EJERCICIO" />
         <form onSubmit={handleAdd} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-[#888888] font-mono text-sm">EJERCICIO</label>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[#666666] font-mono text-[10px] tracking-[0.2em] uppercase flex items-center gap-2">
+              <span className="w-1 h-1 rounded-full bg-[#c8f500] opacity-40" />
+              EJERCICIO
+            </label>
             <select value={selectedExerciseId} onChange={e => setSelectedExerciseId(e.target.value)}
-              className="bg-[#141414] border border-[#333333] text-[#e8e8e8] font-mono text-sm px-4 h-12 outline-none focus:border-[#c8f500] transition-colors" required>
+              className="bg-[#111111] border border-[#222222] text-[#e8e8e8] font-mono text-sm px-4 h-12 outline-none focus:border-[#c8f500] focus:shadow-[0_0_20px_rgba(200,245,0,0.12)] transition-all duration-300 rounded-sm" required>
               <option value="">— selecciona —</option>
               {['push', 'pull', 'legs', 'custom'].map(cat => {
                 const opts = availableTypes.filter(t => t.category === cat)
@@ -247,14 +257,15 @@ export default function Gym({ onNavigate }) {
           </div>
           <Input label="PESO (kg) — opcional" type="number" step="0.5" value={weight} onChange={e => setWeight(e.target.value)} placeholder="100" />
           <Input label="REPETICIONES — opcional" type="number" value={reps} onChange={e => setReps(e.target.value)} placeholder="5" />
-          {msg && <p className={`font-mono text-sm ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
+          {msg && <p className={`font-mono text-sm animate-slide-down ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
           <Button type="submit" disabled={submitting}>{submitting ? '...' : 'AÑADIR'}</Button>
         </form>
-        <button onClick={() => setMode('new-exercise')} className="w-full h-10 mt-4 bg-transparent border border-[#333333] text-[#888888] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-colors">
+        <button onClick={() => setMode('new-exercise')}
+          className="w-full h-10 mt-4 glass-card rounded-sm text-[#555555] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200">
           + CREAR EJERCICIO PERSONALIZADO
         </button>
         <Separator className="mt-8 mb-4" />
-        <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
+        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
       </div>
     </div>
   )
@@ -263,27 +274,27 @@ export default function Gym({ onNavigate }) {
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => setMode('list')} />
-        <PageHeader title="// ACTUALIZAR" />
-        <div className="border-l-2 border-[#c8f500] pl-4 mb-6">
-          <p className="text-[#888888] font-mono text-xs mb-1">EJERCICIO</p>
+        <PageHeader title="ACTUALIZAR" />
+        <div className="glass-card rounded-sm p-4 mb-6" style={{ borderLeft: '3px solid #c8f500' }}>
+          <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em] mb-1">EJERCICIO</p>
           <p className="text-[#e8e8e8] font-mono text-xl font-bold uppercase">{editingLog?.name}</p>
-          <p className="text-[#888888] font-mono text-xs mt-1">
+          <p className="text-[#555555] font-mono text-xs mt-1.5">
             actual: <span className="text-[#c8f500]">
               {editingLog?.weight ? `${editingLog.weight} kg` : '—'}
               {editingLog?.weight && editingLog?.reps ? ` × ${editingLog.reps} reps` : ''}
             </span>
             {editingLog && oneRM(editingLog) && editingLog.reps &&
-              <span className="text-[#555555]"> · 1RM ~{oneRM(editingLog).toFixed(1)} kg</span>}
+              <span className="text-[#444444]"> · 1RM ~{oneRM(editingLog).toFixed(1)} kg</span>}
           </p>
         </div>
         <form onSubmit={handleEdit} className="flex flex-col gap-4">
           <Input label="NUEVO PESO (kg)" type="number" step="0.5" value={weight} onChange={e => setWeight(e.target.value)} placeholder="100" />
           <Input label="NUEVAS REPETICIONES" type="number" value={reps} onChange={e => setReps(e.target.value)} placeholder="5" />
-          {msg && <p className={`font-mono text-sm ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
+          {msg && <p className={`font-mono text-sm animate-slide-down ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
           <Button type="submit" disabled={submitting}>{submitting ? '...' : 'GUARDAR'}</Button>
         </form>
         <Separator className="mt-8 mb-4" />
-        <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
+        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
       </div>
     </div>
   )
@@ -292,14 +303,14 @@ export default function Gym({ onNavigate }) {
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => setMode('add')} />
-        <PageHeader title="// NUEVO EJERCICIO" />
+        <PageHeader title="NUEVO EJERCICIO" />
         <form onSubmit={handleNewExercise} className="flex flex-col gap-4">
           <Input label="NOMBRE DEL EJERCICIO" type="text" value={newExerciseName} onChange={e => setNewExerciseName(e.target.value)} placeholder="Mi ejercicio" required />
-          {msg && <p className={`font-mono text-sm ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
+          {msg && <p className={`font-mono text-sm animate-slide-down ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>}
           <Button type="submit" disabled={submitting}>{submitting ? '...' : 'CREAR EJERCICIO'}</Button>
         </form>
         <Separator className="mt-8 mb-4" />
-        <p className="text-[#333333] font-mono text-xs">sergio / weights v0.1</p>
+        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
       </div>
     </div>
   )

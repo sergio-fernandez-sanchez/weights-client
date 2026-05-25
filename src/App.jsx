@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { isAuthenticated } from './api/client'
 import Auth from './pages/Auth'
 import Home from './pages/Home'
@@ -23,55 +23,114 @@ import DexaReports from './pages/DexaReports'
 import BodyMeasurements from './pages/BodyMeasurements'
 import ParticleBackground from './components/ParticleBackground'
 
-// ── Transición entre páginas ────────────────────────────────────────────────
-// Fade out la página actual, línea horizontal verde que cruza, fade in la nueva
-function PageTransition({ phase, onMidpoint, onDone }) {
-  const lineRef = useRef(null)
+// ── Glitch Slice Transition ─────────────────────────────────────────────────
+function GlitchTransition({ onMidpoint, onDone }) {
+  const overlayRef = useRef(null)
+  const midpointFired = useRef(false)
 
   useEffect(() => {
-    if (phase === 'out') {
-      // Fade out dura 180ms, luego notificamos el midpoint
-      const timer = setTimeout(() => {
-        onMidpoint()
-      }, 180)
-      return () => clearTimeout(timer)
-    }
-    if (phase === 'in') {
-      // Fade in dura 280ms, luego terminamos
-      const timer = setTimeout(() => {
+    const el = overlayRef.current
+    if (!el) return
+
+    const SLICES = 6
+    const STEPS = 5
+    const STEP_DUR = 80
+    let step = 0
+    let raf
+
+    // Pre-create slice elements
+    const slices = Array.from({ length: SLICES }, () => {
+      const div = document.createElement('div')
+      div.style.cssText = 'position:absolute;left:0;right:0;pointer-events:none;'
+      el.appendChild(div)
+      return div
+    })
+
+    function tick() {
+      step++
+
+      if (step <= 3) {
+        // Glitch phase: random horizontal offsets + colored slices
+        const pageEl = el.parentElement.querySelector('[data-page-content]')
+        if (pageEl) {
+          const offset = (Math.random() - 0.5) * 24
+          pageEl.style.transform = `translateX(${offset}px)`
+          pageEl.style.opacity = step === 3 ? '0.4' : String(1 - step * 0.15)
+        }
+
+        slices.forEach((s, i) => {
+          const top = (i / SLICES) * 100
+          const h = (1 / SLICES) * 100
+          const xShift = (Math.random() - 0.5) * 40
+          const isGreen = Math.random() > 0.5
+          s.style.top = `${top}%`
+          s.style.height = `${h}%`
+          s.style.transform = `translateX(${xShift}px)`
+          s.style.background = isGreen
+            ? `rgba(200,245,0,${0.03 + Math.random() * 0.08})`
+            : `rgba(255,255,255,${0.01 + Math.random() * 0.03})`
+          s.style.borderTop = Math.random() > 0.7 ? '1px solid rgba(200,245,0,0.15)' : 'none'
+        })
+      } else if (step === 4) {
+        // Midpoint: swap pages
+        if (!midpointFired.current) {
+          midpointFired.current = true
+          const pageEl = el.parentElement.querySelector('[data-page-content]')
+          if (pageEl) {
+            pageEl.style.transform = ''
+            pageEl.style.opacity = '0'
+          }
+          onMidpoint()
+        }
+        // Brief flash
+        slices.forEach(s => {
+          s.style.transform = 'translateX(0)'
+          s.style.background = 'rgba(200,245,0,0.04)'
+          s.style.borderTop = 'none'
+        })
+      } else if (step === 5) {
+        // Reveal: new page fades in
+        const pageEl = el.parentElement.querySelector('[data-page-content]')
+        if (pageEl) {
+          pageEl.style.transition = 'opacity 200ms ease-out, transform 200ms cubic-bezier(0.16, 1, 0.3, 1)'
+          pageEl.style.opacity = '1'
+          pageEl.style.transform = 'translateY(0)'
+        }
+        slices.forEach(s => {
+          s.style.background = 'transparent'
+          s.style.borderTop = 'none'
+        })
+      } else {
+        // Cleanup
+        slices.forEach(s => s.remove())
+        const pageEl = el.parentElement.querySelector('[data-page-content]')
+        if (pageEl) {
+          pageEl.style.transition = ''
+          pageEl.style.transform = ''
+          pageEl.style.opacity = ''
+        }
         onDone()
-      }, 280)
-      return () => clearTimeout(timer)
+        return
+      }
+
+      setTimeout(tick, STEP_DUR)
     }
-  }, [phase])
+
+    // Start after a microtask to ensure mount
+    raf = requestAnimationFrame(() => tick())
+    return () => cancelAnimationFrame(raf)
+  }, [])
 
   return (
-    <>
-      {/* Línea horizontal que cruza durante la transición */}
-      <div
-        className="fixed left-0 right-0 h-[2px] pointer-events-none"
-        style={{
-          top: '50%',
-          zIndex: 9999,
-          background: 'linear-gradient(90deg, transparent 0%, #c8f500 30%, #ffffff 50%, #c8f500 70%, transparent 100%)',
-          opacity: phase === 'out' ? 1 : 0,
-          transform: phase === 'out' ? 'scaleX(1)' : 'scaleX(0)',
-          transition: 'transform 200ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms ease',
-          transformOrigin: 'left',
-          boxShadow: '0 0 20px rgba(200, 245, 0, 0.6), 0 0 40px rgba(200, 245, 0, 0.3)',
-        }}
-      />
-      {/* Flash sutil verde */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          zIndex: 9998,
-          background: 'radial-gradient(ellipse at center, rgba(200, 245, 0, 0.04) 0%, transparent 70%)',
-          opacity: phase === 'out' ? 1 : 0,
-          transition: 'opacity 200ms ease',
-        }}
-      />
-    </>
+    <div
+      ref={overlayRef}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        pointerEvents: 'none',
+      }}
+    />
   )
 }
 
@@ -107,32 +166,27 @@ export default function App() {
   const [pageData, setPageData]   = useState(null)
   const [nextPage, setNextPage]   = useState(null)
   const [nextData, setNextData]   = useState(null)
-  // 'idle' | 'out' | 'in'
-  const [transitionPhase, setTransitionPhase] = useState('idle')
+  const [transitioning, setTransitioning] = useState(false)
 
   function navigate(newPage, data = null) {
-    if (transitionPhase !== 'idle') return
+    if (transitioning) return
     window.history.pushState({ page: newPage, data }, '', '')
     setNextPage(newPage)
     setNextData(data)
-    setTransitionPhase('out')
+    setTransitioning(true)
   }
 
-  function handleMidpoint() {
-    // Swap pages at the midpoint (screen is faded out)
+  const handleMidpoint = useCallback(() => {
     setPage(nextPage)
     setPageData(nextData)
     setNextPage(null)
     setNextData(null)
-    // Scroll to top
     window.scrollTo(0, 0)
-    // Start fade in
-    setTransitionPhase('in')
-  }
+  }, [nextPage, nextData])
 
-  function handleTransitionDone() {
-    setTransitionPhase('idle')
-  }
+  const handleDone = useCallback(() => {
+    setTransitioning(false)
+  }, [])
 
   function handleLogout() {
     setAuth(false)
@@ -149,17 +203,6 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
-  // Page container opacity based on transition phase
-  const pageStyle = {
-    opacity: transitionPhase === 'out' ? 0 : 1,
-    transform: transitionPhase === 'out' ? 'translateY(-6px)' : transitionPhase === 'in' ? 'translateY(0)' : 'translateY(0)',
-    transition: transitionPhase === 'out'
-      ? 'opacity 180ms ease-out, transform 180ms ease-out'
-      : transitionPhase === 'in'
-        ? 'opacity 280ms ease-out, transform 280ms cubic-bezier(0.16, 1, 0.3, 1)'
-        : 'none',
-  }
-
   return (
     <div className="min-h-screen bg-[#0a0a0a] relative">
       <ParticleBackground />
@@ -168,14 +211,13 @@ export default function App() {
           <Auth onLogin={() => { setAuth(true); window.history.replaceState({ page: 'home', data: null }, '', '') }} />
         ) : (
           <>
-            <div style={pageStyle}>
+            <div data-page-content>
               {renderPage(page, pageData, navigate, handleLogout)}
             </div>
-            {transitionPhase !== 'idle' && (
-              <PageTransition
-                phase={transitionPhase}
+            {transitioning && (
+              <GlitchTransition
                 onMidpoint={handleMidpoint}
-                onDone={handleTransitionDone}
+                onDone={handleDone}
               />
             )}
           </>

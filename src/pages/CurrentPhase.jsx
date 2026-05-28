@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { getPhases, getWeights, getGymLogs, getActiveGymLogs } from '../api/client'
+import { getPhases, getWeights, getGymLogs } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
@@ -65,7 +65,7 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
 
   return (
     <div className="glass-card rounded-sm p-4 mb-4 relative overflow-hidden">
-      <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em] mb-3">EVOLUCIÓN EN ESTA FASE</p>
+      <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-3">EVOLUCIÓN EN ESTA FASE</p>
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
         onMouseMove={handleMouseMove} onTouchMove={handleMouseMove} onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)}>
         <defs>
@@ -105,7 +105,7 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
         )}
       </svg>
       {tooltip && (
-        <div className="absolute top-10 right-4 glass-card-elevated rounded-sm px-3 py-2 font-mono text-xs pointer-events-none border-none shadow-lg">
+        <div className="absolute top-10 right-4 glass-card-elevated rounded-sm px-3 py-2 font-sans text-xs pointer-events-none border-none shadow-lg">
           <p className="text-[#666666]">{tooltip.date}</p>
           <p className="font-bold text-sm" style={{ color: phaseColor }}>{tooltip.weight.toFixed(2)} kg</p>
         </div>
@@ -113,7 +113,7 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
       {weightGoal && (
         <div className="flex items-center gap-2 mt-2">
           <span className="w-4 h-0 border-t border-dashed" style={{ borderColor: phaseColor, opacity: 0.5 }} />
-          <p className="text-[#555555] font-mono text-[10px]">
+          <p className="text-[#555555] font-sans text-[10px]">
             objetivo: {parseFloat(weightGoal).toFixed(2)} kg
           </p>
         </div>
@@ -184,21 +184,19 @@ export default function CurrentPhase({ onNavigate }) {
   const [phases, setPhases]         = useState([])
   const [weights, setWeights]       = useState([])
   const [gymLogs, setGymLogs]       = useState([])
-  const [activeGymLogs, setActiveGymLogs] = useState([])
   const [phaseIndex, setPhaseIndex] = useState(null)
   const [loading, setLoading]       = useState(true)
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [phasesData, weightData, gymData, activeGymData] = await Promise.all([
-          getPhases(), getWeights(), getGymLogs(), getActiveGymLogs()
+        const [phasesData, weightData, gymData] = await Promise.all([
+          getPhases(), getWeights(), getGymLogs()
         ])
         const sorted = [...phasesData].sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
         setPhases(sorted)
         setWeights(weightData)
         setGymLogs(gymData)
-        setActiveGymLogs(activeGymData)
         setPhaseIndex(sorted.length - 1)
       } catch {}
       finally { setLoading(false) }
@@ -208,7 +206,7 @@ export default function CurrentPhase({ onNavigate }) {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-[#555555] font-mono text-sm animate-pulse">cargando...</p>
+      <p className="text-[#555555] font-sans text-sm animate-pulse">cargando...</p>
     </div>
   )
 
@@ -217,7 +215,7 @@ export default function CurrentPhase({ onNavigate }) {
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => onNavigate('data')} />
         <PageHeader title="FASES" />
-        <p className="text-[#555555] font-mono text-sm">no hay fases registradas</p>
+        <p className="text-[#555555] font-sans text-sm">no hay fases registradas</p>
       </div>
     </div>
   )
@@ -256,14 +254,21 @@ export default function CurrentPhase({ onNavigate }) {
   const impliedWeeklyGoal = isActive && weightGoal && startWeight && totalWeeks ? ((weightGoal - parseFloat(startWeight)) / totalWeeks) : null
   const weeklyStats = calcWeeklyStats(phaseWeights)
 
-  const logsForGym = isActive ? activeGymLogs : [...new Map(
-    gymLogs
-      .filter(l => parseDate(l.start_date) <= phaseEnd)
+  // For any phase (active or past): find exercises that have at least one log 
+  // within the phase period, and use the latest log in that period as the "current" value
+  const phaseGymLogs = gymLogs.filter(l => {
+    const d = parseDate(l.start_date)
+    return d >= phaseStart && d <= phaseEnd && l.weight
+  })
+
+  // Get unique exercises that have logs IN this phase
+  const exercisesInPhase = [...new Map(
+    [...phaseGymLogs]
       .sort((a, b) => parseDate(b.start_date) - parseDate(a.start_date))
       .map(l => [l.exercise_type_id, l])
   ).values()]
 
-  const gymProgress = logsForGym.map(log => {
+  const gymProgress = exercisesInPhase.map(log => {
     const p = calcProgress(gymLogs, log.exercise_type_id, phase.start_date, phase.end_date)
     return { name: log.name, progress: p }
   })
@@ -318,18 +323,18 @@ export default function CurrentPhase({ onNavigate }) {
             <button
               onClick={() => setPhaseIndex(i => Math.max(0, i - 1))}
               disabled={phaseIndex === 0}
-              className="w-8 h-8 flex items-center justify-center text-[#555555] font-mono text-lg hover:text-[#c8f500] disabled:opacity-20 transition-colors rounded-sm hover:bg-white/5"
+              className="w-8 h-8 flex items-center justify-center text-[#555555] font-sans text-lg hover:text-[#c8f500] disabled:opacity-20 transition-colors rounded-sm hover:bg-white/5"
             >←</button>
 
             <div className="text-center flex-1">
               <p className="font-mono text-2xl font-bold tracking-[0.3em] leading-none" style={{ color: phaseColor }}>
                 {(PHASE_LABELS[phase.phase_type] || phase.phase_type).toUpperCase()}
               </p>
-              <p className="text-[#555555] font-mono text-[10px] mt-2 tracking-wide">
+              <p className="text-[#555555] font-sans text-[10px] mt-2 tracking-wide">
                 {phaseStart.toLocaleDateString('es-ES')} → {phase.end_date ? parseDate(phase.end_date).toLocaleDateString('es-ES') : 'hoy'}
               </p>
               {isActive && (
-                <span className="inline-flex items-center gap-1.5 mt-2 font-mono text-[10px] tracking-widest px-2 py-0.5 rounded-sm"
+                <span className="inline-flex items-center gap-1.5 mt-2 font-sans text-[10px] tracking-widest px-2 py-0.5 rounded-sm"
                   style={{ color: phaseColor, backgroundColor: `${phaseColor}10`, border: `1px solid ${phaseColor}20` }}>
                   <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: phaseColor }} />
                   ACTIVA
@@ -340,7 +345,7 @@ export default function CurrentPhase({ onNavigate }) {
             <button
               onClick={() => setPhaseIndex(i => Math.min(phases.length - 1, i + 1))}
               disabled={phaseIndex === phases.length - 1}
-              className="w-8 h-8 flex items-center justify-center text-[#555555] font-mono text-lg hover:text-[#c8f500] disabled:opacity-20 transition-colors rounded-sm hover:bg-white/5"
+              className="w-8 h-8 flex items-center justify-center text-[#555555] font-sans text-lg hover:text-[#c8f500] disabled:opacity-20 transition-colors rounded-sm hover:bg-white/5"
             >→</button>
           </div>
         </div>
@@ -367,8 +372,8 @@ export default function CurrentPhase({ onNavigate }) {
         {progress !== null && (
           <div className="glass-card rounded-sm p-4 mb-4">
             <div className="flex justify-between items-baseline mb-3">
-              <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em]">PROGRESO TEMPORAL</p>
-              <p className="font-mono text-sm font-bold" style={{ color: phaseColor }}>{Math.round(progress * 100)}%</p>
+              <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em]">PROGRESO TEMPORAL</p>
+              <p className="font-sans text-sm font-bold" style={{ color: phaseColor }}>{Math.round(progress * 100)}%</p>
             </div>
 
             <div className="relative h-2 bg-[#1a1a1a] rounded-full overflow-hidden mb-3">
@@ -384,8 +389,8 @@ export default function CurrentPhase({ onNavigate }) {
 
             {daysLeft !== null && (
               <div className="flex justify-between">
-                <p className="text-[#444444] font-mono text-[10px]">{Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24))}d transcurridos</p>
-                <p className="font-mono text-[10px]" style={{ color: phaseColor, opacity: 0.7 }}>{daysLeft}d restantes</p>
+                <p className="text-[#444444] font-sans text-[10px]">{Math.floor((today - phaseStart) / (1000 * 60 * 60 * 24))}d transcurridos</p>
+                <p className="font-sans text-[10px]" style={{ color: phaseColor, opacity: 0.7 }}>{daysLeft}d restantes</p>
               </div>
             )}
           </div>
@@ -393,10 +398,10 @@ export default function CurrentPhase({ onNavigate }) {
 
         {/* Gym performance */}
         <div className="glass-card rounded-sm p-4 mb-4">
-          <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em] mb-1">RENDIMIENTO EN GYM</p>
-          <p className="text-[#333333] font-mono text-[10px] mb-3">1RM estimado (Epley)</p>
+          <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-1">RENDIMIENTO EN GYM</p>
+          <p className="text-[#333333] font-sans text-[10px] mb-3">1RM estimado (Epley)</p>
           {gymProgress.length === 0 ? (
-            <p className="text-[#444444] font-mono text-xs">sin datos suficientes</p>
+            <p className="text-[#444444] font-sans text-xs">sin datos suficientes</p>
           ) : (
             <>
               {avgStrength !== null && (
@@ -404,7 +409,7 @@ export default function CurrentPhase({ onNavigate }) {
                   <p className="font-mono text-3xl font-bold" style={{ color: progressColor(avgStrength) }}>
                     {avgStrength > 0 ? '+' : ''}{avgStrength.toFixed(1)}%
                   </p>
-                  <p className="text-[#555555] font-mono text-xs mb-1">media fase</p>
+                  <p className="text-[#555555] font-sans text-xs mb-1">media fase</p>
                 </div>
               )}
               <div className="flex flex-col gap-2">
@@ -414,8 +419,8 @@ export default function CurrentPhase({ onNavigate }) {
                   const color = progressColor(displayPct)
                   return (
                     <div key={i} className="flex justify-between items-center py-1">
-                      <span className="text-[#555555] font-mono text-xs uppercase truncate mr-3">{ex.name}</span>
-                      <span className="font-mono text-xs font-bold flex-shrink-0" style={{ color }}>
+                      <span className="text-[#555555] font-sans text-xs uppercase truncate mr-3">{ex.name}</span>
+                      <span className="font-sans text-xs font-bold flex-shrink-0" style={{ color }}>
                         {phasePct !== null ? `${phasePct > 0 ? '+' : ''}${phasePct.toFixed(1)}%` : '0.0%'}
                       </span>
                     </div>
@@ -429,26 +434,26 @@ export default function CurrentPhase({ onNavigate }) {
         {/* Weekly stats */}
         {weeklyStats && (
           <div className="glass-card rounded-sm p-4 mb-4">
-            <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em] mb-4">RITMO SEMANAL</p>
+            <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-4">RITMO SEMANAL</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-[#444444] font-mono text-[10px] tracking-widest mb-1">MEDIA SEMANAL</p>
+                <p className="text-[#444444] font-sans text-[10px] tracking-widest mb-1">MEDIA SEMANAL</p>
                 <p className="font-mono text-xl font-bold"
                   style={{ color: impliedWeeklyGoal ? weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) : '#c8f500' }}>
                   {weeklyStats.avgChange > 0 ? '+' : ''}{weeklyStats.avgChange.toFixed(2)} kg
                 </p>
                 {impliedWeeklyGoal && (
-                  <p className="text-[#444444] font-mono text-[10px] mt-1">
+                  <p className="text-[#444444] font-sans text-[10px] mt-1">
                     objetivo: {impliedWeeklyGoal > 0 ? '+' : ''}{impliedWeeklyGoal.toFixed(2)} kg
                   </p>
                 )}
               </div>
               <div>
-                <p className="text-[#444444] font-mono text-[10px] tracking-widest mb-1">CONSISTENCIA</p>
+                <p className="text-[#444444] font-sans text-[10px] tracking-widest mb-1">CONSISTENCIA</p>
                 <p className="font-mono text-xl font-bold" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
                   σ {weeklyStats.stdDev.toFixed(2)}
                 </p>
-                <p className="font-mono text-[10px] mt-1" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
+                <p className="font-sans text-[10px] mt-1" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
                   {consistencyLabel(weeklyStats.stdDev)}
                 </p>
               </div>
@@ -456,8 +461,8 @@ export default function CurrentPhase({ onNavigate }) {
             {isActive && impliedWeeklyGoal && (
               <div className="mt-4">
                 <div className="flex justify-between mb-1.5">
-                  <p className="text-[#444444] font-mono text-[10px] tracking-widest">RITMO VS OBJETIVO</p>
-                  <p className="font-mono text-xs font-bold" style={{ color: weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) }}>
+                  <p className="text-[#444444] font-sans text-[10px] tracking-widest">RITMO VS OBJETIVO</p>
+                  <p className="font-sans text-xs font-bold" style={{ color: weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) }}>
                     {((Math.abs(weeklyStats.avgChange) / Math.abs(impliedWeeklyGoal)) * 100).toFixed(0)}%
                   </p>
                 </div>
@@ -481,7 +486,7 @@ export default function CurrentPhase({ onNavigate }) {
         {isActive && (
           <button
             onClick={() => onNavigate('editPhaseGoals', phase)}
-            className="w-full h-10 glass-card rounded-sm text-[#555555] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mb-4"
+            className="w-full h-10 glass-card rounded-sm text-[#555555] font-sans text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mb-4"
           >
             EDITAR OBJETIVOS
           </button>

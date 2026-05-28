@@ -402,7 +402,6 @@ export default function Home({ onNavigate, onLogout }) {
           ['VER DATOS',        'data'],
           ['NUEVA FASE',       'phase'],
           ['NUEVO INFORME',    'newReport'],
-          ['INFORMES SEMANALES', 'weeklyReportHistory'],
           ['DATOS PERSONALES', 'profile'],
         ].map(([label, page]) => (
           <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>

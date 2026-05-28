@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getLastWeight, getActivePhase, getActiveGymLogs, getActiveCalories, getBioimpedanceReports, getDexaReports, getBodyMeasurements } from '../api/client'
+import { getLastWeight, getActiveGymLogs, getActiveCalories, getBioimpedanceReports, getDexaReports, getBodyMeasurements, getWeeklyReports } from '../api/client'
 import { usePhase, PHASE_COLORS } from '../context/PhaseContext'
 import PageWrapper from '../components/PageWrapper'
 import PageHeader from '../components/PageHeader'
@@ -42,13 +42,14 @@ export default function DataMenu({ onNavigate }) {
   useEffect(() => {
     async function fetchPreviews() {
       try {
-        const [weight, gym, cal, bio, dexa, body] = await Promise.all([
+        const [weight, gym, cal, bio, dexa, body, weekly] = await Promise.all([
           getLastWeight().catch(() => null),
           getActiveGymLogs().catch(() => []),
           getActiveCalories().catch(() => null),
           getBioimpedanceReports().catch(() => []),
           getDexaReports().catch(() => []),
           getBodyMeasurements().catch(() => []),
+          getWeeklyReports().catch(() => []),
         ])
         const bestRM = gym?.length > 0
           ? gym.reduce((best, log) => {
@@ -68,6 +69,7 @@ export default function DataMenu({ onNavigate }) {
           dexaCount: dexa?.length || 0,
           bodyCount: body?.length || 0,
           gymCount: gym?.length || 0,
+          weeklyCount: weekly?.length || 0,
         })
       } catch {}
       finally { setLoading(false) }
@@ -131,6 +133,12 @@ export default function DataMenu({ onNavigate }) {
             preview={s.bodyCount > 0 ? `${s.bodyCount}` : null}
             sub={s.bodyCount > 0 ? `registro${s.bodyCount > 1 ? 's' : ''}` : null}
             onClick={() => onNavigate('bodyMeasurements')}
+          />
+          <DataItem
+            label="INFORMES SEMANALES"
+            preview={s.weeklyCount > 0 ? `${s.weeklyCount}` : null}
+            sub={s.weeklyCount > 0 ? `semana${s.weeklyCount > 1 ? 's' : ''}` : null}
+            onClick={() => onNavigate('weeklyReportHistory')}
           />
         </div>
       )}

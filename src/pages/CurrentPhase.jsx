@@ -273,6 +273,51 @@ export default function CurrentPhase({ onNavigate }) {
     : null
   const weeklyStats = calcWeeklyStats(phaseWeights)
 
+  // ETA: estimated arrival date based on current weekly rate
+  const eta = (() => {
+    if (!isActive || !weeklyStats || !currentWeight || !weightGoal) return null
+    const remaining = weightGoal - parseFloat(currentWeight)
+    // If already at or past goal
+    if ((weeklyStats.avgChange > 0 && remaining <= 0) || (weeklyStats.avgChange < 0 && remaining >= 0)) {
+      return { reached: true }
+    }
+    // If moving in wrong direction or no movement
+    if (Math.abs(weeklyStats.avgChange) < 0.01) return { reachable: false, reason: 'sin cambio semanal' }
+    if ((remaining > 0 && weeklyStats.avgChange < 0) || (remaining < 0 && weeklyStats.avgChange > 0)) {
+      return { reachable: false, reason: 'dirección contraria' }
+    }
+    const weeksToGoal = remaining / weeklyStats.avgChange
+    const etaDate = new Date()
+    etaDate.setDate(etaDate.getDate() + Math.round(weeksToGoal * 7))
+    // Compare with date goal
+    let vsGoal = null
+    if (dateGoal) {
+      const diffDays = Math.round((etaDate - dateGoal) / (1000 * 60 * 60 * 24))
+      const diffWeeks = Math.round(diffDays / 7)
+      vsGoal = { diffDays, diffWeeks }
+    }
+    return { reachable: true, date: etaDate, vsGoal }
+  })()
+
+  // ETA: estimated arrival date based on current weekly rate
+  const etaDate = (() => {
+    if (!isActive || !weeklyStats || !currentWeight || !weightGoal) return null
+    const remaining = weightGoal - parseFloat(currentWeight)
+    if (Math.abs(weeklyStats.avgChange) < 0.01) return null // no movement
+    // Check direction: if avgChange goes opposite direction to remaining, it'll never arrive
+    if ((remaining > 0 && weeklyStats.avgChange <= 0) || (remaining < 0 && weeklyStats.avgChange >= 0)) return 'never'
+    const weeksNeeded = remaining / weeklyStats.avgChange
+    const eta = new Date()
+    eta.setDate(eta.getDate() + Math.round(weeksNeeded * 7))
+    return eta
+  })()
+
+  const etaDiffWeeks = (() => {
+    if (!etaDate || etaDate === 'never' || !dateGoal) return null
+    const diffMs = etaDate.getTime() - dateGoal.getTime()
+    return parseFloat((diffMs / (1000 * 60 * 60 * 24 * 7)).toFixed(1))
+  })()
+
   // Get ALL unique exercises from the full gym history
   const allExercises = [...new Map(
     [...gymLogs]
@@ -510,6 +555,48 @@ export default function CurrentPhase({ onNavigate }) {
               </div>
             </div>
 
+            {/* ETA — estimated arrival */}
+            {isActive && weightGoal && (
+              <div className="rounded-sm p-3 mb-3 relative overflow-hidden"
+                style={{ backgroundColor: '#ffffff03', border: '1px solid #ffffff08' }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[#444444] font-sans text-[9px] tracking-[0.15em] mb-0.5">FECHA ESTIMADA DE LLEGADA</p>
+                    <p className="text-[#444444] font-sans text-[9px]">al ritmo actual</p>
+                  </div>
+                  {etaDate === 'never' ? (
+                    <div className="text-right">
+                      <p className="font-sans text-sm font-bold text-[#ff2d2d]">∞</p>
+                      <p className="text-[#ff2d2d] font-sans text-[9px]">ritmo contrario</p>
+                    </div>
+                  ) : etaDate ? (
+                    <div className="text-right">
+                      <p className="font-mono text-sm font-bold" style={{ color: phaseColor }}>
+                        {etaDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                      </p>
+                      {etaDiffWeeks !== null && (
+                        <p className="font-sans text-[9px] mt-0.5" style={{
+                          color: Math.abs(etaDiffWeeks) < 1 ? '#4caf50' : etaDiffWeeks > 0 ? '#ff2d2d' : '#4caf50'
+                        }}>
+                          {Math.abs(etaDiffWeeks) < 1
+                            ? 'en plazo'
+                            : etaDiffWeeks > 0
+                              ? `${Math.abs(etaDiffWeeks)} sem. por detrás`
+                              : `${Math.abs(etaDiffWeeks)} sem. por delante`
+                          }
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-right">
+                      <p className="font-mono text-sm font-bold text-[#2a2a2a]">—</p>
+                      <p className="text-[#333333] font-sans text-[9px]">datos insuficientes</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Consistency */}
             {weeklyStats && (
               <div className="flex items-center justify-between mb-3">
@@ -542,6 +629,41 @@ export default function CurrentPhase({ onNavigate }) {
                     }}
                   />
                 </div>
+              </div>
+            )}
+
+            {/* ETA — estimated date of arrival to goal */}
+            {eta && (
+              <div className="mt-4 rounded-sm p-3 relative overflow-hidden"
+                style={{
+                  backgroundColor: eta.reached ? '#c8f50008' : eta.reachable ? `${phaseColor}06` : '#ff2d2d06',
+                  border: `1px solid ${eta.reached ? '#c8f50015' : eta.reachable ? `${phaseColor}12` : '#ff2d2d12'}`,
+                }}>
+                <div className="absolute top-0 left-0 right-0 h-[1px]"
+                  style={{ backgroundColor: eta.reached ? '#c8f500' : eta.reachable ? phaseColor : '#ff2d2d', opacity: 0.2 }} />
+                <p className="text-[#444444] font-sans text-[9px] tracking-[0.15em] mb-2">ESTIMACIÓN DE LLEGADA</p>
+                {eta.reached ? (
+                  <p className="text-[#c8f500] font-sans text-sm font-bold">✓ Objetivo alcanzado</p>
+                ) : eta.reachable ? (
+                  <div>
+                    <p className="font-mono text-lg font-bold" style={{ color: phaseColor }}>
+                      {eta.date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </p>
+                    {eta.vsGoal && (
+                      <p className="font-sans text-[11px] mt-1.5"
+                        style={{ color: eta.vsGoal.diffDays <= 0 ? '#c8f500' : eta.vsGoal.diffDays <= 14 ? '#ff9f00' : '#ff2d2d' }}>
+                        {eta.vsGoal.diffDays <= 0
+                          ? `${Math.abs(eta.vsGoal.diffWeeks)} semana${Math.abs(eta.vsGoal.diffWeeks) !== 1 ? 's' : ''} por delante del plan`
+                          : `${eta.vsGoal.diffWeeks} semana${eta.vsGoal.diffWeeks !== 1 ? 's' : ''} por detrás del plan`}
+                      </p>
+                    )}
+                    {!eta.vsGoal && (
+                      <p className="text-[#444444] font-sans text-[10px] mt-1">al ritmo actual de {weeklyStats.avgChange > 0 ? '+' : ''}{weeklyStats.avgChange.toFixed(2)} kg/sem</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-[#ff2d2d] font-sans text-xs">{eta.reason}</p>
+                )}
               </div>
             )}
           </div>
@@ -639,11 +761,18 @@ export default function CurrentPhase({ onNavigate }) {
         {isActive && (
           <button
             onClick={() => onNavigate('editPhaseGoals', phase)}
-            className="w-full h-10 glass-card rounded-sm text-[#555555] font-sans text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mb-4"
+            className="w-full h-10 glass-card rounded-sm text-[#555555] font-sans text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mb-2"
           >
             EDITAR OBJETIVOS
           </button>
         )}
+
+        <button
+          onClick={() => onNavigate('phaseComparison')}
+          className="w-full h-10 glass-card rounded-sm text-[#555555] font-sans text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mb-4"
+        >
+          COMPARAR FASES
+        </button>
 
         <Separator className="mt-2 mb-4" />
         <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>

@@ -275,6 +275,48 @@ export default function Home({ onNavigate, onLogout }) {
           )}
         </div>
 
+        {/* ─ Sparkline — last 14 days ─ */}
+        {(() => {
+          const sorted = [...allWeights]
+            .sort((a, b) => parseDate(a.date) - parseDate(b.date))
+          const cutoff = new Date()
+          cutoff.setDate(cutoff.getDate() - 14)
+          const recent = sorted.filter(w => parseDate(w.date) >= cutoff).map(w => parseFloat(w.weight))
+          if (recent.length < 3) return null
+
+          const min = Math.min(...recent), max = Math.max(...recent)
+          const range = max - min || 0.1
+          const W = 280, H = 32
+          const points = recent.map((w, i) => {
+            const x = (i / (recent.length - 1)) * W
+            const y = H - 2 - ((w - min) / range) * (H - 4)
+            return `${x},${y}`
+          }).join(' ')
+          const area = `0,${H} ${points} ${W},${H}`
+
+          return (
+            <div className="px-4 pt-3">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-[#333333] font-sans text-[9px] tracking-[0.2em]">14 DÍAS</p>
+                <p className="text-[#333333] font-sans text-[9px]">
+                  {min.toFixed(1)} – {max.toFixed(1)} kg
+                </p>
+              </div>
+              <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: '32px' }}>
+                <defs>
+                  <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={phaseColor} stopOpacity="0.15" />
+                    <stop offset="100%" stopColor={phaseColor} stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <polygon points={area} fill="url(#spark-fill)" />
+                <polyline points={points} fill="none" stroke={phaseColor} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+                <circle cx={(recent.length - 1) / (recent.length - 1) * W} cy={H - 2 - ((recent[recent.length - 1] - min) / range) * (H - 4)} r="2.5" fill={phaseColor} />
+              </svg>
+            </div>
+          )
+        })()}
+
         {/* ─ Separator ─ */}
         <div className="mx-4 mt-3 mb-0 h-px bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" />
 

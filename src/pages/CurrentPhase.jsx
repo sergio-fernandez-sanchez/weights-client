@@ -148,28 +148,43 @@ function calcWeeklyStats(phaseWeights) {
 
 function calcProgress(allLogs, exerciseTypeId, phaseStartDate, phaseEndDate) {
   const phaseEnd = phaseEndDate ? parseDate(phaseEndDate) : new Date()
+  const phaseStart = parseDate(phaseStartDate)
+
   const history = allLogs
     .filter(l => l.exercise_type_id === exerciseTypeId && l.weight)
     .sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
-  if (history.length < 2) return { phase: null, noData: true }
 
-  const logsUntilEnd = history.filter(l => parseDate(l.start_date) <= phaseEnd)
-  if (logsUntilEnd.length < 1) return { phase: null, noData: true }
-  const current = logsUntilEnd[logsUntilEnd.length - 1]
+  if (history.length === 0) return { phase: 0, noData: false }
 
-  const phaseStart = parseDate(phaseStartDate)
-  const phaseHistory = logsUntilEnd.filter(l => parseDate(l.start_date) >= phaseStart)
-  const beforePhase  = history.filter(l => parseDate(l.start_date) < phaseStart)
+  // Logs within the phase period
+  const phaseHistory = history.filter(l => {
+    const d = parseDate(l.start_date)
+    return d >= phaseStart && d <= phaseEnd
+  })
 
+  // Logs before the phase
+  const beforePhase = history.filter(l => parseDate(l.start_date) < phaseStart)
+
+  // If no logs during this phase: 0% change
+  if (phaseHistory.length === 0) return { phase: 0, noData: false }
+
+  // Current = last log in the phase
+  const current = phaseHistory[phaseHistory.length - 1]
+
+  // Base = first log in the phase, OR last log before the phase if only 1 log in phase
   let baseLog = null
-  if (phaseHistory.length >= 2) baseLog = phaseHistory[0]
-  else if (phaseHistory.length === 1 && beforePhase.length > 0) baseLog = beforePhase[beforePhase.length - 1]
+  if (phaseHistory.length >= 2) {
+    baseLog = phaseHistory[0]
+  } else if (beforePhase.length > 0) {
+    baseLog = beforePhase[beforePhase.length - 1]
+  }
 
-  if (!baseLog || baseLog.id === current.id) return { phase: null, noData: true }
+  // Only 1 log in phase and nothing before it: 0% (no comparison possible)
+  if (!baseLog || baseLog.id === current.id) return { phase: 0, noData: false }
 
   const rmBase = oneRM(baseLog)
   const rmCurr = oneRM(current)
-  if (!rmBase || !rmCurr) return { phase: null, noData: true }
+  if (!rmBase || !rmCurr) return { phase: 0, noData: false }
 
   return { phase: ((rmCurr - rmBase) / rmBase) * 100, noData: false }
 }
@@ -254,25 +269,19 @@ export default function CurrentPhase({ onNavigate }) {
   const impliedWeeklyGoal = isActive && weightGoal && startWeight && totalWeeks ? ((weightGoal - parseFloat(startWeight)) / totalWeeks) : null
   const weeklyStats = calcWeeklyStats(phaseWeights)
 
-  // For any phase (active or past): find exercises that have at least one log 
-  // within the phase period, and use the latest log in that period as the "current" value
-  const phaseGymLogs = gymLogs.filter(l => {
-    const d = parseDate(l.start_date)
-    return d >= phaseStart && d <= phaseEnd && l.weight
-  })
-
-  // Get unique exercises that have logs IN this phase
-  const exercisesInPhase = [...new Map(
-    [...phaseGymLogs]
+  // Get ALL unique exercises from the full gym history
+  const allExercises = [...new Map(
+    [...gymLogs]
+      .filter(l => l.weight)
       .sort((a, b) => parseDate(b.start_date) - parseDate(a.start_date))
       .map(l => [l.exercise_type_id, l])
   ).values()]
 
-  const gymProgress = exercisesInPhase.map(log => {
+  const gymProgress = allExercises.map(log => {
     const p = calcProgress(gymLogs, log.exercise_type_id, phase.start_date, phase.end_date)
     return { name: log.name, progress: p }
   })
-  const validPcts  = gymProgress.filter(e => !e.progress.noData && e.progress.phase !== null).map(e => e.progress.phase)
+  const validPcts  = gymProgress.filter(e => e.progress.phase !== 0).map(e => e.progress.phase)
   const avgStrength = validPcts.length > 0 ? validPcts.reduce((a, b) => a + b, 0) / validPcts.length : null
 
   function gainedColor() {
@@ -414,14 +423,13 @@ export default function CurrentPhase({ onNavigate }) {
               )}
               <div className="flex flex-col gap-2">
                 {gymProgress.map((ex, i) => {
-                  const phasePct  = ex.progress.noData ? null : ex.progress.phase
-                  const displayPct = phasePct ?? 0
-                  const color = progressColor(displayPct)
+                  const phasePct = ex.progress.phase
+                  const color = progressColor(phasePct)
                   return (
                     <div key={i} className="flex justify-between items-center py-1">
                       <span className="text-[#555555] font-sans text-xs uppercase truncate mr-3">{ex.name}</span>
                       <span className="font-sans text-xs font-bold flex-shrink-0" style={{ color }}>
-                        {phasePct !== null ? `${phasePct > 0 ? '+' : ''}${phasePct.toFixed(1)}%` : '0.0%'}
+                        {phasePct > 0 ? '+' : ''}{phasePct.toFixed(1)}%
                       </span>
                     </div>
                   )

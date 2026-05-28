@@ -267,6 +267,10 @@ export default function CurrentPhase({ onNavigate }) {
   const diff   = currentWeight && weightGoal ? (weightGoal - parseFloat(currentWeight)).toFixed(2) : null
   const gained = currentWeight && startWeight ? (parseFloat(currentWeight) - parseFloat(startWeight)).toFixed(2) : null
   const impliedWeeklyGoal = isActive && weightGoal && startWeight && totalWeeks ? ((weightGoal - parseFloat(startWeight)) / totalWeeks) : null
+  const weeksLeft = daysLeft ? daysLeft / 7 : null
+  const requiredWeeklyRate = isActive && currentWeight && weightGoal && weeksLeft && weeksLeft > 0
+    ? (weightGoal - parseFloat(currentWeight)) / weeksLeft
+    : null
   const weeklyStats = calcWeeklyStats(phaseWeights)
 
   // Get ALL unique exercises from the full gym history
@@ -440,34 +444,90 @@ export default function CurrentPhase({ onNavigate }) {
         </div>
 
         {/* Weekly stats */}
-        {weeklyStats && (
+        {isActive && (
           <div className="glass-card rounded-sm p-4 mb-4">
             <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-4">RITMO SEMANAL</p>
-            <div className="grid grid-cols-2 gap-3">
+
+            {/* Main grid: actual rate + required rate */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              {/* Actual weekly rate */}
               <div>
-                <p className="text-[#444444] font-sans text-[10px] tracking-widest mb-1">MEDIA SEMANAL</p>
-                <p className="font-mono text-xl font-bold"
-                  style={{ color: impliedWeeklyGoal ? weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) : '#c8f500' }}>
-                  {weeklyStats.avgChange > 0 ? '+' : ''}{weeklyStats.avgChange.toFixed(2)} kg
-                </p>
-                {impliedWeeklyGoal && (
-                  <p className="text-[#444444] font-sans text-[10px] mt-1">
-                    objetivo: {impliedWeeklyGoal > 0 ? '+' : ''}{impliedWeeklyGoal.toFixed(2)} kg
-                  </p>
+                <p className="text-[#444444] font-sans text-[10px] tracking-widest mb-1">RITMO ACTUAL</p>
+                {weeklyStats ? (
+                  <>
+                    <p className="font-mono text-xl font-bold"
+                      style={{ color: impliedWeeklyGoal ? weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) : '#c8f500' }}>
+                      {weeklyStats.avgChange > 0 ? '+' : ''}{weeklyStats.avgChange.toFixed(2)} <span className="text-xs font-normal opacity-50">kg</span>
+                    </p>
+                    <p className="text-[#333333] font-sans text-[9px] mt-1">media semanal</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-mono text-xl font-bold text-[#2a2a2a]">—</p>
+                    <p className="text-[#333333] font-sans text-[9px] mt-1">datos insuficientes</p>
+                  </>
                 )}
               </div>
+
+              {/* Required weekly rate from START to reach goal */}
               <div>
-                <p className="text-[#444444] font-sans text-[10px] tracking-widest mb-1">CONSISTENCIA</p>
-                <p className="font-mono text-xl font-bold" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
-                  σ {weeklyStats.stdDev.toFixed(2)}
-                </p>
-                <p className="font-sans text-[10px] mt-1" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
-                  {consistencyLabel(weeklyStats.stdDev)}
-                </p>
+                <p className="text-[#444444] font-sans text-[10px] tracking-widest mb-1">RITMO NECESARIO</p>
+                {impliedWeeklyGoal ? (
+                  <>
+                    <p className="font-mono text-xl font-bold" style={{ color: phaseColor }}>
+                      {impliedWeeklyGoal > 0 ? '+' : ''}{impliedWeeklyGoal.toFixed(2)} <span className="text-xs font-normal opacity-50">kg</span>
+                    </p>
+                    <p className="text-[#333333] font-sans text-[9px] mt-1">desde inicio a objetivo</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-mono text-xl font-bold text-[#2a2a2a]">—</p>
+                    <p className="text-[#333333] font-sans text-[9px] mt-1">{!weightGoal ? 'sin peso objetivo' : !startWeight ? 'sin peso inicial' : !totalWeeks ? 'sin fecha objetivo' : 'datos insuficientes'}</p>
+                  </>
+                )}
               </div>
             </div>
-            {isActive && impliedWeeklyGoal && (
-              <div className="mt-4">
+
+            {/* Required rate from CURRENT weight (remaining) */}
+            <div className="rounded-sm p-3 mb-3 relative overflow-hidden"
+              style={{ backgroundColor: `${phaseColor}06`, border: `1px solid ${phaseColor}12` }}>
+              <div className="absolute top-0 left-0 right-0 h-[1px]" style={{ backgroundColor: phaseColor, opacity: 0.2 }} />
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[#444444] font-sans text-[9px] tracking-[0.15em] mb-0.5">RITMO NECESARIO RESTANTE</p>
+                  <p className="text-[#444444] font-sans text-[9px]">desde peso actual al objetivo</p>
+                </div>
+                {requiredWeeklyRate !== null ? (
+                  <p className="font-mono text-lg font-bold" style={{ color: phaseColor }}>
+                    {requiredWeeklyRate > 0 ? '+' : ''}{requiredWeeklyRate.toFixed(2)} <span className="text-[10px] font-normal opacity-50">kg/sem</span>
+                  </p>
+                ) : (
+                  <div className="text-right">
+                    <p className="font-mono text-lg font-bold text-[#2a2a2a]">—</p>
+                    <p className="text-[#333333] font-sans text-[9px]">{!currentWeight ? 'sin peso actual' : !weightGoal ? 'sin objetivo' : 'sin fecha límite'}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Consistency */}
+            {weeklyStats && (
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <p className="text-[#444444] font-sans text-[10px] tracking-widest mb-0.5">CONSISTENCIA</p>
+                  <p className="font-sans text-[10px]" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
+                    {consistencyLabel(weeklyStats.stdDev)}
+                  </p>
+                </div>
+                <p className="font-mono text-lg font-bold" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
+                  σ {weeklyStats.stdDev.toFixed(2)}
+                </p>
+              </div>
+            )}
+
+            {/* Progress bar: actual vs planned rate */}
+            {weeklyStats && impliedWeeklyGoal && (
+              <div>
                 <div className="flex justify-between mb-1.5">
                   <p className="text-[#444444] font-sans text-[10px] tracking-widest">RITMO VS OBJETIVO</p>
                   <p className="font-sans text-xs font-bold" style={{ color: weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) }}>

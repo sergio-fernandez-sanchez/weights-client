@@ -54,15 +54,22 @@ export default function Home({ onNavigate, onLogout }) {
   const [activePhase, setActivePhase]       = useState(null)
   const [allWeights, setAllWeights]         = useState([])
   const [gymAvgStrength, setGymAvgStrength] = useState(null)
+  const [refreshing, setRefreshing]         = useState(true)
 
   const lastMondayISO = getLastMondayISO()
 
-  useEffect(() => {
-    fetchLastWeight()
-    fetchCalories()
-    fetchWeeklyStatus()
-    fetchExtraStats()
-  }, [])
+  async function refreshAll() {
+    setRefreshing(true)
+    await Promise.all([
+      fetchLastWeight(),
+      fetchCalories(),
+      fetchWeeklyStatus(),
+      fetchExtraStats(),
+    ])
+    setRefreshing(false)
+  }
+
+  useEffect(() => { refreshAll() }, [])
 
   async function fetchLastWeight() {
     try {
@@ -210,6 +217,17 @@ export default function Home({ onNavigate, onLogout }) {
       <div className="glass-card-elevated rounded-sm mb-5 animate-fade-in-up relative overflow-hidden" style={{ animationDelay: '0.1s' }}>
         {/* Top accent line — phase color */}
         <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${phaseColor}, transparent)`, opacity: 0.7 }} />
+
+        {/* Refresh shimmer */}
+        {refreshing && (
+          <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden" style={{ zIndex: 2 }}>
+            <div className="h-full w-full" style={{
+              background: `linear-gradient(90deg, transparent, ${phaseColor}, transparent)`,
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.2s linear infinite',
+            }} />
+          </div>
+        )}
 
         {/* ─ Weight + Phase row ─ */}
         <div className="p-4 pb-0">
@@ -365,9 +383,7 @@ export default function Home({ onNavigate, onLogout }) {
           className="glass-card rounded-sm h-14 flex flex-col items-center justify-center group hover:border-[#333333] transition-all duration-300"
         >
           <span className="text-[#555555] font-sans text-[9px] tracking-[0.2em] group-hover:text-[#888888] transition-colors">CALORÍAS</span>
-          <span className="text-[#c8f500] font-mono text-sm font-bold group-hover:text-[#deff33] transition-colors">
-            {activeCalories ? `${activeCalories}` : '—'}
-          </span>
+          <span className="text-[#c8f500] font-mono text-sm font-bold group-hover:text-[#deff33] transition-colors">→</span>
         </button>
         <button
           onClick={() => onNavigate('gym')}
@@ -386,6 +402,7 @@ export default function Home({ onNavigate, onLogout }) {
           ['VER DATOS',        'data'],
           ['NUEVA FASE',       'phase'],
           ['NUEVO INFORME',    'newReport'],
+          ['INFORMES SEMANALES', 'weeklyReportHistory'],
           ['DATOS PERSONALES', 'profile'],
         ].map(([label, page]) => (
           <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { isAuthenticated } from './api/client'
+import { PhaseProvider, usePhase } from './context/PhaseContext'
 import Auth from './pages/Auth'
 import Home from './pages/Home'
 import Phase from './pages/Phase'
@@ -14,6 +15,7 @@ import GymHistory from './pages/GymHistory'
 import CaloriesHistory from './pages/CaloriesHistory'
 import Profile from './pages/Profile'
 import WeeklyReport from './pages/WeeklyReport'
+import WeeklyReportHistory from './pages/WeeklyReportHistory'
 import NewReport from './pages/NewReport'
 import NewBioimpedanceReport from './pages/NewBioimpedanceReport'
 import NewDexaReport from './pages/NewDexaReport'
@@ -23,8 +25,7 @@ import DexaReports from './pages/DexaReports'
 import BodyMeasurements from './pages/BodyMeasurements'
 import ParticleBackground from './components/ParticleBackground'
 
-// ── Glitch Slice Transition ─────────────────────────────────────────────────
-function GlitchTransition({ onMidpoint, onDone }) {
+function GlitchTransition({ onMidpoint, onDone, color }) {
   const overlayRef = useRef(null)
   const midpointFired = useRef(false)
 
@@ -33,12 +34,9 @@ function GlitchTransition({ onMidpoint, onDone }) {
     if (!el) return
 
     const SLICES = 6
-    const STEPS = 5
     const STEP_DUR = 80
     let step = 0
-    let raf
 
-    // Pre-create slice elements
     const slices = Array.from({ length: SLICES }, () => {
       const div = document.createElement('div')
       div.style.cssText = 'position:absolute;left:0;right:0;pointer-events:none;'
@@ -48,90 +46,61 @@ function GlitchTransition({ onMidpoint, onDone }) {
 
     function tick() {
       step++
-
       if (step <= 3) {
-        // Glitch phase: random horizontal offsets + colored slices
         const pageEl = el.parentElement.querySelector('[data-page-content]')
         if (pageEl) {
           const offset = (Math.random() - 0.5) * 24
           pageEl.style.transform = `translateX(${offset}px)`
           pageEl.style.opacity = step === 3 ? '0.4' : String(1 - step * 0.15)
         }
-
         slices.forEach((s, i) => {
           const top = (i / SLICES) * 100
           const h = (1 / SLICES) * 100
           const xShift = (Math.random() - 0.5) * 40
-          const isGreen = Math.random() > 0.5
+          const isAccent = Math.random() > 0.5
           s.style.top = `${top}%`
           s.style.height = `${h}%`
           s.style.transform = `translateX(${xShift}px)`
-          s.style.background = isGreen
-            ? `rgba(200,245,0,${0.03 + Math.random() * 0.08})`
+          s.style.background = isAccent
+            ? `${color}${Math.floor((0.03 + Math.random() * 0.08) * 255).toString(16).padStart(2, '0')}`
             : `rgba(255,255,255,${0.01 + Math.random() * 0.03})`
-          s.style.borderTop = Math.random() > 0.7 ? '1px solid rgba(200,245,0,0.15)' : 'none'
+          s.style.borderTop = Math.random() > 0.7 ? `1px solid ${color}25` : 'none'
         })
       } else if (step === 4) {
-        // Midpoint: swap pages
         if (!midpointFired.current) {
           midpointFired.current = true
           const pageEl = el.parentElement.querySelector('[data-page-content]')
-          if (pageEl) {
-            pageEl.style.transform = ''
-            pageEl.style.opacity = '0'
-          }
+          if (pageEl) { pageEl.style.transform = ''; pageEl.style.opacity = '0' }
           onMidpoint()
         }
-        // Brief flash
         slices.forEach(s => {
           s.style.transform = 'translateX(0)'
-          s.style.background = 'rgba(200,245,0,0.04)'
+          s.style.background = `${color}0a`
           s.style.borderTop = 'none'
         })
       } else if (step === 5) {
-        // Reveal: new page fades in
         const pageEl = el.parentElement.querySelector('[data-page-content]')
         if (pageEl) {
           pageEl.style.transition = 'opacity 200ms ease-out, transform 200ms cubic-bezier(0.16, 1, 0.3, 1)'
           pageEl.style.opacity = '1'
           pageEl.style.transform = 'translateY(0)'
         }
-        slices.forEach(s => {
-          s.style.background = 'transparent'
-          s.style.borderTop = 'none'
-        })
+        slices.forEach(s => { s.style.background = 'transparent'; s.style.borderTop = 'none' })
       } else {
-        // Cleanup
         slices.forEach(s => s.remove())
         const pageEl = el.parentElement.querySelector('[data-page-content]')
-        if (pageEl) {
-          pageEl.style.transition = ''
-          pageEl.style.transform = ''
-          pageEl.style.opacity = ''
-        }
+        if (pageEl) { pageEl.style.transition = ''; pageEl.style.transform = ''; pageEl.style.opacity = '' }
         onDone()
         return
       }
-
       setTimeout(tick, STEP_DUR)
     }
 
-    // Start after a microtask to ensure mount
-    raf = requestAnimationFrame(() => tick())
+    const raf = requestAnimationFrame(() => tick())
     return () => cancelAnimationFrame(raf)
   }, [])
 
-  return (
-    <div
-      ref={overlayRef}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        pointerEvents: 'none',
-      }}
-    />
-  )
+  return <div ref={overlayRef} style={{ position: 'fixed', inset: 0, zIndex: 9999, pointerEvents: 'none' }} />
 }
 
 function renderPage(page, pageData, navigate, handleLogout) {
@@ -149,6 +118,7 @@ function renderPage(page, pageData, navigate, handleLogout) {
     case 'caloriesHistory':     return <CaloriesHistory      onNavigate={navigate} />
     case 'profile':             return <Profile              onNavigate={navigate} />
     case 'weeklyReport':        return <WeeklyReport         onNavigate={navigate} initialWeekStart={pageData} />
+    case 'weeklyReportHistory': return <WeeklyReportHistory  onNavigate={navigate} />
     case 'newReport':           return <NewReport            onNavigate={navigate} />
     case 'newBioimpedance':     return <NewBioimpedanceReport onNavigate={navigate} />
     case 'newDexa':             return <NewDexaReport        onNavigate={navigate} />
@@ -160,13 +130,14 @@ function renderPage(page, pageData, navigate, handleLogout) {
   }
 }
 
-export default function App() {
+function AppInner() {
   const [auth, setAuth]           = useState(isAuthenticated())
   const [page, setPage]           = useState('home')
   const [pageData, setPageData]   = useState(null)
   const [nextPage, setNextPage]   = useState(null)
   const [nextData, setNextData]   = useState(null)
   const [transitioning, setTransitioning] = useState(false)
+  const { phaseColor } = usePhase()
 
   function navigate(newPage, data = null) {
     if (transitioning) return
@@ -184,9 +155,7 @@ export default function App() {
     window.scrollTo(0, 0)
   }, [nextPage, nextData])
 
-  const handleDone = useCallback(() => {
-    setTransitioning(false)
-  }, [])
+  const handleDone = useCallback(() => { setTransitioning(false) }, [])
 
   function handleLogout() {
     setAuth(false)
@@ -215,14 +184,19 @@ export default function App() {
               {renderPage(page, pageData, navigate, handleLogout)}
             </div>
             {transitioning && (
-              <GlitchTransition
-                onMidpoint={handleMidpoint}
-                onDone={handleDone}
-              />
+              <GlitchTransition onMidpoint={handleMidpoint} onDone={handleDone} color={phaseColor} />
             )}
           </>
         )}
       </div>
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <PhaseProvider>
+      <AppInner />
+    </PhaseProvider>
   )
 }

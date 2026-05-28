@@ -487,6 +487,91 @@ export default function CurrentPhase({ onNavigate }) {
           </div>
         )}
 
+        {/* Weekly weight history — last 4 weeks */}
+        {(() => {
+          // Build weekly averages from phase weights (Mon-Sun)
+          const byWeek = {}
+          phaseWeights.forEach(w => {
+            const d = parseDate(w.date)
+            const monday = new Date(d)
+            const day = d.getDay()
+            monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1))
+            monday.setHours(0, 0, 0, 0)
+            const key = monday.toISOString().split('T')[0]
+            if (!byWeek[key]) byWeek[key] = []
+            byWeek[key].push(parseFloat(w.weight))
+          })
+
+          const weekKeys = Object.keys(byWeek).sort()
+          if (weekKeys.length < 2) return null
+
+          const weeklyAvgs = weekKeys.map(k => ({
+            key: k,
+            avg: byWeek[k].reduce((a, b) => a + b, 0) / byWeek[k].length,
+            count: byWeek[k].length,
+          }))
+
+          // Calculate deltas between consecutive weeks
+          const deltas = []
+          for (let i = 1; i < weeklyAvgs.length; i++) {
+            const delta = weeklyAvgs[i].avg - weeklyAvgs[i - 1].avg
+            const monday = parseDate(weeklyAvgs[i].key)
+            const sunday = new Date(monday)
+            sunday.setDate(monday.getDate() + 6)
+            deltas.push({
+              label: `${monday.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })} – ${sunday.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}`,
+              delta: parseFloat(delta.toFixed(2)),
+              count: weeklyAvgs[i].count,
+            })
+          }
+
+          // Take last 4
+          const recent = deltas.slice(-4)
+          if (recent.length === 0) return null
+
+          const maxAbs = Math.max(...recent.map(d => Math.abs(d.delta)), 0.1)
+
+          function barColor(d) {
+            if (d > 0.2) return '#c8f500'
+            if (d < -0.2) return '#ff2d2d'
+            return '#ff9f00'
+          }
+
+          return (
+            <div className="glass-card rounded-sm p-4 mb-4">
+              <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-4">HISTORIAL SEMANAL</p>
+              <div className="flex flex-col gap-3">
+                {recent.map((w, i) => {
+                  const color = barColor(w.delta)
+                  const widthPct = Math.max(4, (Math.abs(w.delta) / maxAbs) * 100)
+                  const isPositive = w.delta >= 0
+                  return (
+                    <div key={i}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[#555555] font-sans text-[10px]">{w.label}</span>
+                        <span className="font-mono text-xs font-bold" style={{ color }}>
+                          {w.delta > 0 ? '+' : ''}{w.delta.toFixed(2)} kg
+                        </span>
+                      </div>
+                      <div className="relative h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+                        <div
+                          className="absolute inset-y-0 rounded-full transition-all duration-500"
+                          style={{
+                            width: `${widthPct}%`,
+                            backgroundColor: color,
+                            boxShadow: `0 0 8px ${color}30`,
+                            ...(isPositive ? { left: 0 } : { right: 0 }),
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
+
         {chartData.length > 1 && (
           <PhaseChart data={chartData} phaseColor={phaseColor} weightGoal={isActive ? weightGoal : null} />
         )}

@@ -367,6 +367,24 @@ export default function CurrentPhase({ onNavigate }) {
         <BackButton onClick={() => onNavigate('data')} />
         <PageHeader title="FASES" />
 
+        {/* Compare phases button — prominent */}
+        <button
+          onClick={() => onNavigate('phaseComparison')}
+          className="w-full glass-card rounded-sm p-3 mb-5 flex items-center justify-between group hover:border-[#333333] transition-all duration-200"
+        >
+          <div className="flex items-center gap-3">
+            <span className="w-8 h-8 rounded-sm flex items-center justify-center border border-[#252525] group-hover:border-[#c8f500] transition-colors"
+              style={{ backgroundColor: `${phaseColor}08` }}>
+              <span className="font-mono text-sm" style={{ color: phaseColor }}>◈</span>
+            </span>
+            <div className="text-left">
+              <p className="text-[#999999] font-sans text-xs font-bold tracking-[0.1em] group-hover:text-[#c8f500] transition-colors">COMPARAR FASES</p>
+              <p className="text-[#333333] font-sans text-[10px]">{phases.length} fase{phases.length !== 1 ? 's' : ''} registrada{phases.length !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
+          <span className="text-[#333333] group-hover:text-[#c8f500] transition-colors">›</span>
+        </button>
+
         {/* Phase Banner */}
         <div className="relative glass-card-elevated rounded-sm mb-5 overflow-hidden">
           {/* Top + bottom accent */}
@@ -761,18 +779,11 @@ export default function CurrentPhase({ onNavigate }) {
         {isActive && (
           <button
             onClick={() => onNavigate('editPhaseGoals', phase)}
-            className="w-full h-10 glass-card rounded-sm text-[#555555] font-sans text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mb-2"
+            className="w-full h-10 glass-card rounded-sm text-[#555555] font-sans text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mb-4"
           >
             EDITAR OBJETIVOS
           </button>
         )}
-
-        <button
-          onClick={() => onNavigate('phaseComparison')}
-          className="w-full h-10 glass-card rounded-sm text-[#555555] font-sans text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mb-4"
-        >
-          COMPARAR FASES
-        </button>
 
         <Separator className="mt-2 mb-4" />
         <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>

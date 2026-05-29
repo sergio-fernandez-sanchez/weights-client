@@ -470,7 +470,7 @@ export default function Home({ onNavigate, onLogout }) {
         CERRAR SESIÓN
       </Button>
 
-      <p className="text-[#222222] font-mono text-[10px] mt-4 text-center tracking-widest">weights v0.1</p>
+      <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] mt-4 select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
 
       {msg && <Toast message={msg} type={msg.startsWith('✓') ? 'success' : 'error'} onDone={() => setMsg('')} />}
     </PageWrapper>

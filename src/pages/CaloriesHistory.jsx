@@ -1,3 +1,4 @@
+import { SkeletonPage } from '../components/Skeleton'
 import { useState, useEffect } from 'react'
 import { getCalories, getPhases, getWeights } from '../api/client'
 import PageHeader from '../components/PageHeader'
@@ -181,9 +182,7 @@ export default function CaloriesHistory({ onNavigate }) {
   }
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-[#555555] font-sans text-sm animate-pulse">cargando...</p>
-    </div>
+    <SkeletonPage />
   )
 
   return (
@@ -291,7 +290,7 @@ export default function CaloriesHistory({ onNavigate }) {
         )}
 
         <Separator className="mt-8 mb-4" />
-        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+        <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
         {toast && <Toast message={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
       </div>
     </div>

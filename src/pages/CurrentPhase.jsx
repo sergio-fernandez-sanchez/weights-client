@@ -1,3 +1,4 @@
+import { SkeletonPage } from "../components/Skeleton"
 import { useState, useEffect, useRef } from 'react'
 import { getPhases, getWeights, getGymLogs } from '../api/client'
 import PageHeader from '../components/PageHeader'
@@ -87,13 +88,13 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
             stroke={phaseColor} strokeWidth="1" strokeDasharray="4,4" strokeOpacity="0.4" />
         )}
         {/* Area fill */}
-        <polygon points={areaPoints} fill={`url(#${gradId})`} />
+        <polygon points={areaPoints} fill={`url(#${gradId})`} className="svg-area-fade" style={{ "--area-delay": "0.6s" }} />
         {/* Line */}
         <polyline points={points} fill="none" stroke={phaseColor} strokeWidth="2"
-          strokeLinejoin="round" strokeLinecap="round" />
+          strokeLinejoin="round" strokeLinecap="round" className="svg-line-draw" style={{ "--draw-duration": "1.8s", "--line-length": "2000" }} />
         {/* Data points */}
         {data.length <= 30 && data.map((d, i) => (
-          <circle key={i} cx={xPos(i)} cy={yPos(d.weight)} r="2" fill={phaseColor} opacity="0.4" />
+          <circle key={i} cx={xPos(i)} cy={yPos(d.weight)} r="2" fill={phaseColor} className="svg-dot-pop" style={{ "--dot-delay": `${0.8 + i * 0.03}s` }} />
         ))}
         {tooltip && (
           <>
@@ -201,6 +202,7 @@ export default function CurrentPhase({ onNavigate }) {
   const [gymLogs, setGymLogs]       = useState([])
   const [phaseIndex, setPhaseIndex] = useState(null)
   const [loading, setLoading]       = useState(true)
+  const [touchStart, setTouchStart]   = useState(null)
 
   useEffect(() => {
     async function fetchData() {
@@ -220,9 +222,7 @@ export default function CurrentPhase({ onNavigate }) {
   }, [])
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-[#555555] font-sans text-sm animate-pulse">cargando...</p>
-    </div>
+    <SkeletonPage />
   )
 
   if (!phases.length) return (
@@ -386,7 +386,15 @@ export default function CurrentPhase({ onNavigate }) {
         </button>
 
         {/* Phase Banner */}
-        <div className="relative glass-card-elevated rounded-sm mb-5 overflow-hidden">
+        <div className="relative glass-card-elevated rounded-sm mb-5 overflow-hidden"
+          onTouchStart={e => setTouchStart(e.touches[0].clientX)}
+          onTouchEnd={e => {
+            if (touchStart === null) return
+            const diff = e.changedTouches[0].clientX - touchStart
+            if (diff > 60 && phaseIndex > 0) setPhaseIndex(i => i - 1)
+            if (diff < -60 && phaseIndex < phases.length - 1) setPhaseIndex(i => i + 1)
+            setTouchStart(null)
+          }}>
           {/* Top + bottom accent */}
           <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ backgroundColor: phaseColor }} />
           <div className="absolute bottom-0 left-0 right-0 h-[2px] opacity-30" style={{ backgroundColor: phaseColor }} />
@@ -786,7 +794,7 @@ export default function CurrentPhase({ onNavigate }) {
         )}
 
         <Separator className="mt-2 mb-4" />
-        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+        <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
       </div>
     </div>
   )

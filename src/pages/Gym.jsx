@@ -1,3 +1,4 @@
+import { SkeletonPage } from '../components/Skeleton'
 import { useState, useEffect } from 'react'
 import { getActiveGymLogs, getGymLogs, getExerciseTypes, getActivePhase, postGymLog, patchGymLog, deleteGymLog, postExerciseType } from '../api/client'
 import PageHeader from '../components/PageHeader'
@@ -5,6 +6,7 @@ import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 import Button from '../components/Button'
 import Input from '../components/Input'
+import RadarChart from '../components/RadarChart'
 import Toast from '../components/Toast'
 
 const CATEGORY_LABELS = {
@@ -64,8 +66,8 @@ function ProgressPill({ label, value, noData }) {
   const color = progressColor(displayValue)
   return (
     <div className="flex-1 rounded-sm px-2.5 py-1.5 relative overflow-hidden" style={{ backgroundColor: `${color}08`, border: `1px solid ${color}15` }}>
-      <p className="text-[#444444] font-mono text-[9px] tracking-[0.15em] mb-0.5">{label}</p>
-      <p className="font-mono text-xs font-bold" style={{ color }}>
+      <p className="text-[#444444] font-sans text-[9px] tracking-[0.15em] mb-0.5">{label}</p>
+      <p className="font-sans text-xs font-bold" style={{ color }}>
         {noData ? '0.0%' : progressLabel(value)}
       </p>
     </div>
@@ -86,6 +88,8 @@ export default function Gym({ onNavigate }) {
   const [newExerciseName, setNewExerciseName] = useState('')
   const [msg, setMsg] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [dragIdx, setDragIdx] = useState(null)
+  const [dragOverIdx, setDragOverIdx] = useState(null)
 
   useEffect(() => { fetchData() }, [])
 
@@ -101,6 +105,38 @@ export default function Gym({ onNavigate }) {
     } catch {}
     finally { setLoading(false) }
   }
+
+  function handleDrop(fromIdx, toIdx) {
+    if (fromIdx === toIdx) return
+    const items = [...logs]
+    const [moved] = items.splice(fromIdx, 1)
+    items.splice(toIdx, 0, moved)
+    setLogs(items)
+    setDragIdx(null)
+    setDragOverIdx(null)
+    // Save order to localStorage
+    try {
+      const order = items.map(l => l.exercise_type_id)
+      localStorage.setItem('gym_exercise_order', JSON.stringify(order))
+    } catch {}
+  }
+
+  // Apply saved order on load
+  useEffect(() => {
+    if (logs.length === 0) return
+    try {
+      const saved = JSON.parse(localStorage.getItem('gym_exercise_order') || '[]')
+      if (saved.length === 0) return
+      const ordered = []
+      saved.forEach(id => {
+        const found = logs.find(l => l.exercise_type_id === id)
+        if (found) ordered.push(found)
+      })
+      // Add any logs not in saved order
+      logs.forEach(l => { if (!ordered.find(o => o.id === l.id)) ordered.push(l) })
+      if (ordered.length === logs.length) setLogs(ordered)
+    } catch {}
+  }, [logs.length])
 
   const usedIds = new Set(logs.map(l => l.exercise_type_id))
   const availableTypes = exerciseTypes.filter(t => !usedIds.has(t.id))
@@ -162,9 +198,7 @@ export default function Gym({ onNavigate }) {
   }
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-[#555555] font-mono text-sm animate-pulse">cargando...</p>
-    </div>
+    <SkeletonPage />
   )
 
   if (mode === 'list') return (
@@ -173,26 +207,46 @@ export default function Gym({ onNavigate }) {
         <BackButton onClick={() => onNavigate('home')} />
         <PageHeader title="GYM" sub="progreso en 1RM estimado (Epley)" />
 
+        {/* Radar chart */}
+        {logs.filter(l => l.weight).length >= 3 && (
+          <div className="glass-card rounded-sm p-4 mb-5">
+            <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-2">MAPA DE FUERZA</p>
+            <RadarChart
+              data={logs.filter(l => l.weight).map(log => ({
+                label: log.name.length > 8 ? log.name.slice(0, 7) + '…' : log.name,
+                value: oneRM(log) || 0,
+              }))}
+              size={240}
+            />
+          </div>
+        )}
+
         {logs.length === 0 ? (
-          <p className="text-[#555555] font-mono text-sm mb-6">no hay ejercicios añadidos</p>
+          <p className="text-[#555555] font-sans text-sm mb-6">no hay ejercicios añadidos</p>
         ) : (
           Object.entries(grouped).map(([cat, catLogs]) => (
             <div key={cat} className="mb-5">
               <div className="flex items-center gap-2 mb-2">
                 <span className="h-px flex-1 bg-[#1a1a1a]" />
-                <span className="text-[#333333] font-mono text-[10px] tracking-[0.2em]">{CATEGORY_LABELS[cat] || cat.toUpperCase()}</span>
+                <span className="text-[#333333] font-sans text-[10px] tracking-[0.2em]">{CATEGORY_LABELS[cat] || cat.toUpperCase()}</span>
                 <span className="h-px flex-1 bg-[#1a1a1a]" />
               </div>
               <div className="flex flex-col gap-2">
-                {catLogs.map(log => {
+                {catLogs.map((log, logIdx) => {
                   const progress = calcProgress(allLogs, log.exercise_type_id, activePhase?.start_date)
                   const rm = oneRM(log)
                   return (
-                    <div key={log.id} className="glass-card rounded-sm p-3 group hover:border-[#333333] transition-all duration-200">
+                    <div key={log.id}
+                      draggable
+                      onDragStart={() => setDragIdx(logs.indexOf(log))}
+                      onDragOver={e => { e.preventDefault(); setDragOverIdx(logs.indexOf(log)) }}
+                      onDragEnd={() => { if (dragIdx !== null && dragOverIdx !== null) handleDrop(dragIdx, dragOverIdx); setDragIdx(null); setDragOverIdx(null) }}
+                      onTouchStart={e => setDragIdx(logs.indexOf(log))}
+                      className={`glass-card rounded-sm p-3 group hover:border-[#333333] transition-all duration-200 cursor-grab active:cursor-grabbing ${dragOverIdx === logs.indexOf(log) ? 'border-[#c8f500]/30 bg-[#c8f500]/3' : ''}`}>
                       <div className="flex items-start justify-between mb-2">
                         <div className="min-w-0">
-                          <p className="text-[#e8e8e8] font-mono text-sm font-bold tracking-wide truncate uppercase">{log.name}</p>
-                          <p className="text-[#c8f500] font-mono text-xs mt-0.5">
+                          <p className="text-[#e8e8e8] font-sans text-sm font-bold tracking-wide truncate uppercase">{log.name}</p>
+                          <p className="text-[#c8f500] font-sans text-xs mt-0.5">
                             {log.weight ? `${log.weight} kg` : '—'}
                             {log.weight && log.reps ? ` × ${log.reps} reps` : ''}
                             {rm && log.reps ? <span className="text-[#444444]"> · 1RM ~{rm.toFixed(1)}</span> : ''}
@@ -200,11 +254,11 @@ export default function Gym({ onNavigate }) {
                         </div>
                         <div className="flex items-center gap-1.5 ml-3 flex-shrink-0">
                           <button onClick={() => startEdit(log)}
-                            className="px-2 h-6 rounded-sm border border-[#222222] text-[#555555] font-mono text-[10px] hover:border-[#c8f500] hover:text-[#c8f500] transition-colors">
+                            className="px-2 h-6 rounded-sm border border-[#222222] text-[#555555] font-sans text-[10px] hover:border-[#c8f500] hover:text-[#c8f500] transition-colors">
                             EDIT
                           </button>
                           <button onClick={() => handleDelete(log)}
-                            className="w-6 h-6 rounded-sm border border-[#222222] text-[#444444] font-mono text-xs hover:border-[#ff2d2d] hover:text-[#ff2d2d] transition-colors flex items-center justify-center">
+                            className="w-6 h-6 rounded-sm border border-[#222222] text-[#444444] font-sans text-xs hover:border-[#ff2d2d] hover:text-[#ff2d2d] transition-colors flex items-center justify-center">
                             ✕
                           </button>
                         </div>
@@ -222,11 +276,11 @@ export default function Gym({ onNavigate }) {
         )}
 
         <button onClick={() => setMode('add')}
-          className="w-full h-11 glass-card rounded-sm text-[#555555] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mt-4 mb-4">
+          className="w-full h-11 glass-card rounded-sm text-[#555555] font-sans text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mt-4 mb-4">
           + AÑADIR EJERCICIO
         </button>
         <Separator className="mt-2 mb-4" />
-        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+        <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
       </div>
     </div>
   )
@@ -238,12 +292,12 @@ export default function Gym({ onNavigate }) {
         <PageHeader title="AÑADIR EJERCICIO" />
         <form onSubmit={handleAdd} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-[#666666] font-mono text-[10px] tracking-[0.2em] uppercase flex items-center gap-2">
+            <label className="text-[#666666] font-sans text-[10px] tracking-[0.2em] uppercase flex items-center gap-2">
               <span className="w-1 h-1 rounded-full bg-[#c8f500] opacity-40" />
               EJERCICIO
             </label>
             <select value={selectedExerciseId} onChange={e => setSelectedExerciseId(e.target.value)}
-              className="bg-[#111111] border border-[#222222] text-[#e8e8e8] font-mono text-sm px-4 h-12 outline-none focus:border-[#c8f500] focus:shadow-[0_0_20px_rgba(200,245,0,0.12)] transition-all duration-300 rounded-sm" required>
+              className="bg-[#111111] border border-[#222222] text-[#e8e8e8] font-sans text-sm px-4 h-12 outline-none focus:border-[#c8f500] focus:shadow-[0_0_20px_rgba(200,245,0,0.12)] transition-all duration-300 rounded-sm" required>
               <option value="">— selecciona —</option>
               {['push', 'pull', 'legs', 'custom'].map(cat => {
                 const opts = availableTypes.filter(t => t.category === cat)
@@ -262,11 +316,11 @@ export default function Gym({ onNavigate }) {
           <Button type="submit" disabled={submitting}>{submitting ? '...' : 'AÑADIR'}</Button>
         </form>
         <button onClick={() => setMode('new-exercise')}
-          className="w-full h-10 mt-4 glass-card rounded-sm text-[#555555] font-mono text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200">
+          className="w-full h-10 mt-4 glass-card rounded-sm text-[#555555] font-sans text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200">
           + CREAR EJERCICIO PERSONALIZADO
         </button>
         <Separator className="mt-8 mb-4" />
-        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+        <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
       </div>
     </div>
   )
@@ -277,9 +331,9 @@ export default function Gym({ onNavigate }) {
         <BackButton onClick={() => setMode('list')} />
         <PageHeader title="ACTUALIZAR" />
         <div className="glass-card rounded-sm p-4 mb-6" style={{ borderLeft: '3px solid #c8f500' }}>
-          <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em] mb-1">EJERCICIO</p>
+          <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-1">EJERCICIO</p>
           <p className="text-[#e8e8e8] font-mono text-xl font-bold uppercase">{editingLog?.name}</p>
-          <p className="text-[#555555] font-mono text-xs mt-1.5">
+          <p className="text-[#555555] font-sans text-xs mt-1.5">
             actual: <span className="text-[#c8f500]">
               {editingLog?.weight ? `${editingLog.weight} kg` : '—'}
               {editingLog?.weight && editingLog?.reps ? ` × ${editingLog.reps} reps` : ''}
@@ -295,7 +349,7 @@ export default function Gym({ onNavigate }) {
           <Button type="submit" disabled={submitting}>{submitting ? '...' : 'GUARDAR'}</Button>
         </form>
         <Separator className="mt-8 mb-4" />
-        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+        <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
       </div>
     </div>
   )
@@ -311,7 +365,7 @@ export default function Gym({ onNavigate }) {
           <Button type="submit" disabled={submitting}>{submitting ? '...' : 'CREAR EJERCICIO'}</Button>
         </form>
         <Separator className="mt-8 mb-4" />
-        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+        <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
       </div>
     </div>
   )

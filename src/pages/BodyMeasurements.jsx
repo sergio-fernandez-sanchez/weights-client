@@ -1,3 +1,4 @@
+import { SkeletonPage } from '../components/Skeleton'
 import { useState, useEffect, useRef } from 'react'
 import { getBodyMeasurements } from '../api/client'
 import PageHeader from '../components/PageHeader'
@@ -64,7 +65,7 @@ function MeasurementsChart({ reports }) {
 
   return (
     <div className="glass-card rounded-sm p-3 mb-4 relative overflow-hidden">
-      <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em] mb-2">EVOLUCIÓN</p>
+      <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-2">EVOLUCIÓN</p>
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
         onMouseMove={handleMove} onTouchMove={handleMove}
         onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)}>
@@ -100,7 +101,7 @@ function MeasurementsChart({ reports }) {
         )}
       </svg>
       {tooltip && (
-        <div className="absolute top-3 right-3 glass-card-elevated rounded-sm px-3 py-2 font-mono text-xs pointer-events-none border-none shadow-lg max-w-[160px]">
+        <div className="absolute top-3 right-3 glass-card-elevated rounded-sm px-3 py-2 font-sans text-xs pointer-events-none border-none shadow-lg max-w-[160px]">
           <p className="text-[#555555] mb-1">{tooltip.date}</p>
           {tooltip.vals.map((v, i) => (
             <p key={i} className="truncate" style={{ color: v.color }}>{v.label}: <span className="font-bold">{v.val}</span></p>
@@ -111,7 +112,7 @@ function MeasurementsChart({ reports }) {
         {METRICS.map(m => (
           <div key={m.key} className="flex items-center gap-1">
             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: m.color }} />
-            <span className="text-[#555555] font-mono text-[9px]">{m.label}</span>
+            <span className="text-[#555555] font-sans text-[9px]">{m.label}</span>
           </div>
         ))}
       </div>
@@ -139,9 +140,7 @@ export default function BodyMeasurements({ onNavigate }) {
   }, [])
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-[#555555] font-mono text-sm animate-pulse">cargando...</p>
-    </div>
+    <SkeletonPage />
   )
 
   if (reports.length === 0) return (
@@ -169,7 +168,7 @@ export default function BodyMeasurements({ onNavigate }) {
             const active = i === selectedIdx
             return (
               <button key={i} onClick={() => setSelectedIdx(i)}
-                className={`relative flex-shrink-0 px-3 h-9 font-mono text-xs font-bold rounded-sm transition-all whitespace-nowrap ${
+                className={`relative flex-shrink-0 px-3 h-9 font-sans text-xs font-bold rounded-sm transition-all whitespace-nowrap ${
                   active
                     ? 'bg-[#c8f500] text-[#0a0a0a] shadow-[0_0_12px_rgba(200,245,0,0.2)]'
                     : 'glass-card text-[#555555] hover:text-[#888888]'
@@ -195,12 +194,12 @@ export default function BodyMeasurements({ onNavigate }) {
                 <div key={m.key} className="glass-card rounded-sm p-3 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: m.color }} />
-                    <span className="text-[#888888] font-mono text-xs uppercase">{m.label}</span>
+                    <span className="text-[#888888] font-sans text-xs uppercase">{m.label}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-[#e8e8e8] font-mono text-sm font-bold">{parseFloat(val).toFixed(1)} cm</span>
+                    <span className="text-[#e8e8e8] font-sans text-sm font-bold">{parseFloat(val).toFixed(1)} cm</span>
                     {delta !== null && (
-                      <span className="font-mono text-[10px] font-bold" style={{ color: deltaColor(delta) }}>
+                      <span className="font-sans text-[10px] font-bold" style={{ color: deltaColor(delta) }}>
                         {delta > 0 ? '+' : ''}{delta.toFixed(1)}
                       </span>
                     )}
@@ -212,7 +211,7 @@ export default function BodyMeasurements({ onNavigate }) {
         )}
 
         <Separator className="mt-8 mb-4" />
-        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+        <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
       </div>
     </div>
   )

@@ -274,3 +274,64 @@ select {
 select:focus {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23c8f500' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
 }
+
+/* ────────────────────────────────────────────────────────────────────────────
+   SVG LINE DRAW ANIMATION
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.svg-draw {
+  stroke-dasharray: var(--path-length, 2000);
+  stroke-dashoffset: var(--path-length, 2000);
+  animation: svgDraw var(--draw-duration, 1.8s) cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  animation-delay: var(--draw-delay, 0.2s);
+}
+
+.svg-draw-area {
+  opacity: 0;
+  animation: svgAreaFade var(--draw-duration, 1.8s) ease forwards;
+  animation-delay: var(--draw-delay, 0.2s);
+}
+
+@keyframes svgDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes svgAreaFade {
+  0% { opacity: 0; }
+  40% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   SVG LINE DRAW
+   ──────────────────────────────────────────────────────────────────────────── */
+
+.svg-line-draw {
+  stroke-dasharray: var(--line-length, 1000);
+  stroke-dashoffset: var(--line-length, 1000);
+  animation: lineDraw var(--draw-duration, 1.5s) cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--draw-delay, 0s);
+}
+
+.svg-area-fade {
+  opacity: 0;
+  animation: fadeIn 0.6s ease forwards;
+  animation-delay: var(--area-delay, 0.8s);
+}
+
+.svg-dot-pop {
+  opacity: 0;
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: dotPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: var(--dot-delay, 1s);
+}
+
+@keyframes lineDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes dotPop {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}

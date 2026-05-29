@@ -131,7 +131,7 @@ export default function WeeklyReport({ onNavigate, initialWeekStart }) {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-[#555555] font-mono text-sm animate-pulse">cargando...</p>
+      <p className="text-[#555555] font-sans text-sm animate-pulse">cargando...</p>
     </div>
   )
 
@@ -150,22 +150,22 @@ export default function WeeklyReport({ onNavigate, initialWeekStart }) {
 
           <div className="relative flex items-center justify-between p-5">
             <button onClick={prevWeek}
-              className="w-8 h-8 flex items-center justify-center text-[#555555] font-mono text-lg hover:text-[#c8f500] transition-colors rounded-sm hover:bg-white/5">
+              className="w-8 h-8 flex items-center justify-center text-[#555555] font-sans text-lg hover:text-[#c8f500] transition-colors rounded-sm hover:bg-white/5">
               ←
             </button>
             <div className="text-center flex-1">
-              <p className="text-[#444444] font-mono text-[10px] tracking-[0.3em] mb-1">SEMANA</p>
+              <p className="text-[#444444] font-sans text-[10px] tracking-[0.3em] mb-1">SEMANA</p>
               <p className="font-mono text-xl font-bold tracking-wide leading-none text-[#e8e8e8]">
                 {fmtDate(currentMonday)} → {fmtDate(weekEnd)}
               </p>
-              <span className="inline-flex items-center gap-1.5 mt-2 font-mono text-[10px] tracking-widest px-2 py-0.5 rounded-sm"
+              <span className="inline-flex items-center gap-1.5 mt-2 font-sans text-[10px] tracking-widest px-2 py-0.5 rounded-sm"
                 style={{ color: statusColor, backgroundColor: `${statusColor}10`, border: `1px solid ${statusColor}20` }}>
                 <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusColor }} />
                 {isFilled ? 'RELLENO' : 'PENDIENTE'}
               </span>
             </div>
             <button onClick={nextWeek} disabled={!canGoNext}
-              className={`w-8 h-8 flex items-center justify-center font-mono text-lg transition-colors rounded-sm ${canGoNext ? 'text-[#555555] hover:text-[#c8f500] hover:bg-white/5' : 'text-[#222222] cursor-default'}`}>
+              className={`w-8 h-8 flex items-center justify-center font-sans text-lg transition-colors rounded-sm ${canGoNext ? 'text-[#555555] hover:text-[#c8f500] hover:bg-white/5' : 'text-[#222222] cursor-default'}`}>
               →
             </button>
           </div>
@@ -179,7 +179,7 @@ export default function WeeklyReport({ onNavigate, initialWeekStart }) {
           <Input label="AGUA (litros/día de media)" type="number" step="0.1" value={form.avg_water_liters} onChange={set('avg_water_liters')} placeholder="2.0" />
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[#666666] font-mono text-[10px] tracking-[0.2em] uppercase flex items-center gap-2">
+            <label className="text-[#666666] font-sans text-[10px] tracking-[0.2em] uppercase flex items-center gap-2">
               <span className="w-1 h-1 rounded-full bg-[#c8f500] opacity-40" />
               NOTAS
             </label>
@@ -188,12 +188,12 @@ export default function WeeklyReport({ onNavigate, initialWeekStart }) {
               onChange={set('notes')}
               placeholder="Lesiones, enfermedades, eventos especiales..."
               rows={3}
-              className="bg-[#111111] border border-[#222222] text-[#e8e8e8] font-mono text-sm px-4 py-3 outline-none focus:border-[#c8f500] focus:shadow-[0_0_20px_rgba(200,245,0,0.12)] transition-all duration-300 resize-none rounded-sm"
+              className="bg-[#111111] border border-[#222222] text-[#e8e8e8] font-sans text-sm px-4 py-3 outline-none focus:border-[#c8f500] focus:shadow-[0_0_20px_rgba(200,245,0,0.12)] transition-all duration-300 resize-none rounded-sm"
             />
           </div>
 
           {msg && (
-            <p className={`font-mono text-sm animate-slide-down ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>
+            <p className={`font-sans text-sm animate-slide-down ${msg.startsWith('✓') ? 'text-[#c8f500]' : 'text-[#ff4444]'}`}>{msg}</p>
           )}
 
           <Button type="submit" disabled={submitting}>
@@ -202,7 +202,7 @@ export default function WeeklyReport({ onNavigate, initialWeekStart }) {
         </form>
 
         <Separator className="mt-8 mb-4" />
-        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+        <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
       </div>
     </div>
   )

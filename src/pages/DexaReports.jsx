@@ -1,3 +1,4 @@
+import { SkeletonPage } from '../components/Skeleton'
 import { useState, useEffect } from 'react'
 import { getDexaReports, getWeights, getPhases } from '../api/client'
 import PageHeader from '../components/PageHeader'
@@ -5,6 +6,7 @@ import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 import MetricCard from '../components/MetricCard'
 import EmptyState from '../components/EmptyState'
+import DonutChart from '../components/DonutChart'
 
 const METRICS = [
   ['fat_mass_kg',          'MASA GRASA (kg)',    false],
@@ -73,9 +75,7 @@ export default function DexaReports({ onNavigate }) {
   }, [])
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-[#555555] font-mono text-sm animate-pulse">cargando...</p>
-    </div>
+    <SkeletonPage />
   )
 
   if (reports.length === 0) return (
@@ -105,7 +105,7 @@ export default function DexaReports({ onNavigate }) {
             const active = i === selectedIdx
             return (
               <button key={i} onClick={() => setSelectedIdx(i)}
-                className={`relative flex-shrink-0 px-3 h-9 font-mono text-xs font-bold rounded-sm transition-all whitespace-nowrap ${
+                className={`relative flex-shrink-0 px-3 h-9 font-sans text-xs font-bold rounded-sm transition-all whitespace-nowrap ${
                   active
                     ? 'bg-[#c8f500] text-[#0a0a0a] shadow-[0_0_12px_rgba(200,245,0,0.2)]'
                     : 'glass-card text-[#555555] hover:text-[#888888]'
@@ -119,18 +119,50 @@ export default function DexaReports({ onNavigate }) {
         {/* Info bar */}
         <div className="flex items-center gap-3 mb-4 flex-wrap">
           {bodyWeight && (
-            <span className="text-[#555555] font-mono text-[10px] tracking-wide">
+            <span className="text-[#555555] font-sans text-[10px] tracking-wide">
               peso: <span className="text-[#e8e8e8]">{parseFloat(bodyWeight).toFixed(1)} kg</span>
             </span>
           )}
           {phaseType && (
-            <span className="font-mono text-[10px] flex items-center gap-1.5 px-2 py-0.5 rounded-sm"
+            <span className="font-sans text-[10px] flex items-center gap-1.5 px-2 py-0.5 rounded-sm"
               style={{ color: PHASE_COLORS[phaseType], backgroundColor: `${PHASE_COLORS[phaseType]}10`, border: `1px solid ${PHASE_COLORS[phaseType]}20` }}>
               <span className="w-1 h-1 rounded-full" style={{ backgroundColor: PHASE_COLORS[phaseType] }} />
               {phaseType.toUpperCase()}
             </span>
           )}
         </div>
+
+        {/* Composition donut */}
+        {report.body_fat_pct != null && report.lean_mass_kg != null && report.fat_mass_kg != null && (
+          <div className="glass-card rounded-sm p-4 mb-4">
+            <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-3">COMPOSICIÓN CORPORAL</p>
+            <div className="flex items-center justify-center gap-6">
+              <DonutChart
+                segments={[
+                  { value: parseFloat(report.body_fat_pct), label: '% GRASA', color: '#ff6b35' },
+                  { value: 100 - parseFloat(report.body_fat_pct), label: '% MAGRA', color: '#4a9eff' },
+                ]}
+                size={130}
+                strokeWidth={16}
+              />
+              <div className="flex flex-col gap-2">
+                {[
+                  ['GRASA', `${parseFloat(report.fat_mass_kg).toFixed(1)} kg`, `${parseFloat(report.body_fat_pct).toFixed(1)}%`, '#ff6b35'],
+                  ['MAGRA', `${parseFloat(report.lean_mass_kg).toFixed(1)} kg`, `${(100 - parseFloat(report.body_fat_pct)).toFixed(1)}%`, '#4a9eff'],
+                  ...(report.muscle_mass_kg ? [['MÚSCULO', `${parseFloat(report.muscle_mass_kg).toFixed(1)} kg`, '', '#c8f500']] : []),
+                ].map(([label, val, pct, color]) => (
+                  <div key={label} className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                    <div>
+                      <span className="text-[#555555] font-sans text-[10px] block">{label}</span>
+                      <span className="font-mono text-xs font-bold" style={{ color }}>{val} {pct && <span className="text-[10px] opacity-60">{pct}</span>}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Metrics */}
         <div className="grid grid-cols-2 gap-2 stagger">
@@ -152,7 +184,7 @@ export default function DexaReports({ onNavigate }) {
         </div>
 
         <Separator className="mt-8 mb-4" />
-        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+        <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
       </div>
     </div>
   )

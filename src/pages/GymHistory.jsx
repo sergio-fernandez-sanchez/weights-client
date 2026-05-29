@@ -1,3 +1,4 @@
+import { SkeletonPage } from '../components/Skeleton'
 import { useState, useEffect, useRef } from 'react'
 import { getGymLogs, getPhases } from '../api/client'
 import PageHeader from '../components/PageHeader'
@@ -104,9 +105,9 @@ function ExerciseChart({ name, logs, phases }) {
   return (
     <div className="glass-card rounded-sm p-3 mb-3 relative overflow-hidden">
       <div className="flex items-start justify-between mb-2">
-        <p className="text-[#e8e8e8] font-mono text-xs font-bold tracking-wide uppercase">{name}</p>
+        <p className="text-[#e8e8e8] font-sans text-xs font-bold tracking-wide uppercase">{name}</p>
         {points.length >= 2 && (
-          <span className="font-mono text-[11px] font-bold" style={{ color: change > 0 ? '#4caf50' : change < 0 ? '#ff2d2d' : '#888' }}>
+          <span className="font-sans text-[11px] font-bold" style={{ color: change > 0 ? '#4caf50' : change < 0 ? '#ff2d2d' : '#888' }}>
             {change > 0 ? '+' : ''}{changePct.toFixed(1)}%
           </span>
         )}
@@ -130,8 +131,8 @@ function ExerciseChart({ name, logs, phases }) {
         ))}
         {segments.map((seg, i) => (
           <g key={i}>
-            <polygon points={seg.area} fill={`url(#gym-area-${seg.phase || 'unknown'})`} />
-            <polyline points={seg.points} fill="none" stroke={PHASE_COLORS[seg.phase] || '#888'} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+            <polygon points={seg.area} fill={`url(#gym-area-${seg.phase || 'unknown'})`} className="svg-area-fade" style={{ "--area-delay": `${i * 0.1 + 0.4}s` }} />
+            <polyline points={seg.points} fill="none" stroke={PHASE_COLORS[seg.phase] || '#888'} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" className="svg-line-draw" style={{ "--draw-duration": "1.5s", "--line-length": "2000", "--draw-delay": `${i * 0.1}s` }} />
           </g>
         ))}
         {points.length <= 20 && points.map((p, i) => (
@@ -146,7 +147,7 @@ function ExerciseChart({ name, logs, phases }) {
         )}
       </svg>
       {tooltip && (
-        <div className="absolute top-3 right-3 glass-card-elevated rounded-sm px-3 py-2 font-mono text-xs pointer-events-none border-none shadow-lg">
+        <div className="absolute top-3 right-3 glass-card-elevated rounded-sm px-3 py-2 font-sans text-xs pointer-events-none border-none shadow-lg">
           <p className="text-[#555555]">{tooltip.date}</p>
           <p className="font-bold text-sm" style={{ color: tooltip.color }}>1RM ~{tooltip.weight.toFixed(1)}</p>
           <p className="text-[#444444] text-[10px]">{tooltip.rawWeight}kg × {tooltip.reps || '—'}</p>
@@ -174,9 +175,7 @@ export default function GymHistory({ onNavigate }) {
   }, [])
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-[#555555] font-mono text-sm animate-pulse">cargando...</p>
-    </div>
+    <SkeletonPage />
   )
 
   const byExercise = {}
@@ -207,7 +206,7 @@ export default function GymHistory({ onNavigate }) {
         )}
 
         <Separator className="mt-6 mb-4" />
-        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+        <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
       </div>
     </div>
   )

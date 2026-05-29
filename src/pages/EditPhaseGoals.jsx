@@ -53,7 +53,7 @@ export default function EditPhaseGoals({ onNavigate, phase }) {
 
       {phase && (
         <div className="glass-card rounded-sm p-4 mb-6" style={{ borderLeft: '3px solid #c8f500' }}>
-          <p className="text-[#555555] font-mono text-[10px] tracking-[0.2em] mb-1">FASE ACTIVA</p>
+          <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-1">FASE ACTIVA</p>
           <p className="text-[#c8f500] font-mono text-lg font-bold uppercase">{phase.phase_type}</p>
         </div>
       )}
@@ -65,7 +65,7 @@ export default function EditPhaseGoals({ onNavigate, phase }) {
       </form>
 
       <Separator className="mt-10 mb-4" />
-      <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+      <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
       {toast && <Toast message={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
     </PageWrapper>
   )

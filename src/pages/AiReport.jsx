@@ -41,15 +41,15 @@ export default function AiReport({ onNavigate }) {
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#c8f500] to-transparent opacity-60" />
           <div className="flex items-center gap-2.5 mb-3">
             <span className="w-[3px] h-3.5 rounded-full bg-[#c8f500]" />
-            <span className="text-[#c8f500] font-mono text-sm font-bold tracking-wide">OPTIMIZADO PARA IA</span>
+            <span className="text-[#c8f500] font-sans text-sm font-bold tracking-wide">OPTIMIZADO PARA IA</span>
           </div>
-          <p className="text-[#555555] font-mono text-[10px] tracking-[0.15em] leading-relaxed mb-4">
+          <p className="text-[#555555] font-sans text-[10px] tracking-[0.15em] leading-relaxed mb-4">
             Resumen ejecutivo, fases con estadísticas, pesos semanales, calorías cruzadas con fases, gym con 1RM.
           </p>
           <button
             onClick={() => downloadReport('ai')}
             disabled={loadingAi}
-            className="w-full h-11 glass-card rounded-sm text-[#c8f500] font-mono text-xs font-bold tracking-widest hover:bg-[#c8f500] hover:text-[#0a0a0a] transition-all duration-200 disabled:opacity-40"
+            className="w-full h-11 glass-card rounded-sm text-[#c8f500] font-sans text-xs font-bold tracking-widest hover:bg-[#c8f500] hover:text-[#0a0a0a] transition-all duration-200 disabled:opacity-40"
           >
             {loadingAi ? 'generando...' : '↓  DESCARGAR JSON'}
           </button>
@@ -59,22 +59,22 @@ export default function AiReport({ onNavigate }) {
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#555555] to-transparent opacity-40" />
           <div className="flex items-center gap-2.5 mb-3">
             <span className="w-[3px] h-3.5 rounded-full bg-[#555555]" />
-            <span className="text-[#e8e8e8] font-mono text-sm font-bold tracking-wide">DATOS EN BRUTO</span>
+            <span className="text-[#e8e8e8] font-sans text-sm font-bold tracking-wide">DATOS EN BRUTO</span>
           </div>
-          <p className="text-[#555555] font-mono text-[10px] tracking-[0.15em] leading-relaxed mb-4">
+          <p className="text-[#555555] font-sans text-[10px] tracking-[0.15em] leading-relaxed mb-4">
             Todos los registros sin procesar, separados por secciones.
           </p>
           <button
             onClick={() => downloadReport('raw')}
             disabled={loadingRaw}
-            className="w-full h-11 glass-card rounded-sm text-[#888888] font-mono text-xs font-bold tracking-widest hover:bg-[#e8e8e8] hover:text-[#0a0a0a] transition-all duration-200 disabled:opacity-40"
+            className="w-full h-11 glass-card rounded-sm text-[#888888] font-sans text-xs font-bold tracking-widest hover:bg-[#e8e8e8] hover:text-[#0a0a0a] transition-all duration-200 disabled:opacity-40"
           >
             {loadingRaw ? 'generando...' : '↓  DESCARGAR JSON'}
           </button>
         </div>
 
         <Separator className="mt-8 mb-4" />
-        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+        <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
         {toast && <Toast message={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
       </div>
     </div>

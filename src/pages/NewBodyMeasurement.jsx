@@ -62,7 +62,7 @@ export default function NewBodyMeasurement({ onNavigate }) {
         <PageHeader title="MEDIDAS" sub="nuevo registro corporal" />
 
         <div className="mb-5">
-          <label className="text-[#666666] font-mono text-[10px] tracking-[0.2em] uppercase flex items-center gap-2 mb-2">
+          <label className="text-[#666666] font-sans text-[10px] tracking-[0.2em] uppercase flex items-center gap-2 mb-2">
             <span className="w-1 h-1 rounded-full bg-[#c8f500] opacity-40" />
             FECHA
           </label>
@@ -82,7 +82,7 @@ export default function NewBodyMeasurement({ onNavigate }) {
         </form>
 
         <Separator className="mt-8 mb-4" />
-        <p className="text-[#222222] font-mono text-[10px] text-center tracking-widest">weights v0.1</p>
+        <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
         {toast && <Toast message={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
       </div>
     </div>

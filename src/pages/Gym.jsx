@@ -7,6 +7,7 @@ import BackButton from '../components/BackButton'
 import Button from '../components/Button'
 import Input from '../components/Input'
 import RadarChart from '../components/RadarChart'
+import { haptic } from '../utils/haptic'
 import Toast from '../components/Toast'
 
 const CATEGORY_LABELS = {
@@ -154,6 +155,7 @@ export default function Gym({ onNavigate }) {
     setMsg('')
     try {
       await postGymLog(parseInt(selectedExerciseId), weight ? parseFloat(weight.replace(',', '.')) : null, reps ? parseInt(reps) : null)
+      haptic('success')
       setMsg('✓  ejercicio añadido')
       setSelectedExerciseId(''); setWeight(''); setReps('')
       await fetchData()
@@ -168,6 +170,7 @@ export default function Gym({ onNavigate }) {
     setMsg('')
     try {
       await patchGymLog(editingLog.id, editingLog.exercise_type_id, weight ? parseFloat(weight.replace(',', '.')) : null, reps ? parseInt(reps) : null)
+      haptic('success')
       setMsg('✓  actualizado')
       await fetchData()
       setTimeout(() => { setMode('list'); setMsg('') }, 1000)

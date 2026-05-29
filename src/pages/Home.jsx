@@ -6,6 +6,7 @@ import Button from '../components/Button'
 import Input from '../components/Input'
 import Separator from '../components/Separator'
 import Toast from '../components/Toast'
+import { haptic } from '../utils/haptic'
 import AnimatedNumber from '../components/AnimatedNumber'
 
 function parseDate(dateStr) { return new Date(dateStr + 'T00:00:00') }
@@ -260,6 +261,7 @@ export default function Home({ onNavigate, onLogout }) {
       const val = parseFloat(input.replace(',', '.'))
       await postWeight(val)
       setMsg(todayLogged ? '✓  peso actualizado' : '✓  peso añadido')
+      haptic('success')
       setCelebrating(true)
       setTimeout(() => setCelebrating(false), 1000)
       setInput('')
@@ -418,13 +420,22 @@ export default function Home({ onNavigate, onLogout }) {
                 <div className="flex flex-col gap-1.5">
                   {weeklyDeltas.map((w, i) => {
                     const color = barColor(w.delta)
-                    const widthPct = Math.max(6, (Math.abs(w.delta) / maxDeltaAbs) * 100)
+                    const widthPct = Math.max(4, (Math.abs(w.delta) / maxDeltaAbs) * 50)
+                    const isPos = w.delta >= 0
                     return (
                       <div key={i} className="flex items-center gap-2">
                         <span className="text-[#333333] font-sans text-[8px] w-[36px] flex-shrink-0">{w.label}</span>
-                        <div className="flex-1 relative h-[5px] bg-[#141414] rounded-full overflow-hidden">
-                          <div className="absolute inset-y-0 left-0 rounded-full"
-                            style={{ width: `${widthPct}%`, backgroundColor: color, boxShadow: `0 0 4px ${color}20` }} />
+                        <div className="flex-1 relative h-[5px] bg-[#111111] rounded-full overflow-hidden">
+                          {/* Center line */}
+                          <div className="absolute top-0 bottom-0 left-1/2 w-px bg-[#222222]" />
+                          {/* Bar */}
+                          <div className="absolute inset-y-0 rounded-full"
+                            style={{
+                              width: `${widthPct}%`,
+                              backgroundColor: color,
+                              boxShadow: `0 0 4px ${color}20`,
+                              ...(isPos ? { left: '50%' } : { right: '50%' }),
+                            }} />
                         </div>
                         <span className="font-mono text-[9px] font-bold w-[38px] text-right flex-shrink-0" style={{ color }}>
                           {w.delta > 0 ? '+' : ''}{w.delta.toFixed(2)}

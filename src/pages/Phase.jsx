@@ -9,6 +9,7 @@ import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 import Tabs from '../components/Tabs'
 import Toast from '../components/Toast'
+import { haptic } from '../utils/haptic'
 
 const PHASE_LABELS = { bulk: 'VOLUMEN', cut: 'DEFINICIÓN', maintenance: 'MANTENIMIENTO' }
 const PHASE_TYPES = ['bulk', 'cut', 'maintenance']
@@ -99,6 +100,7 @@ export default function Phase({ onNavigate }) {
         startDate
       )
       await refreshPhase()
+      haptic('success')
       setToast({ msg: '✓  fase iniciada', type: 'success' })
       setTimeout(() => onNavigate('home'), 1400)
     } catch {

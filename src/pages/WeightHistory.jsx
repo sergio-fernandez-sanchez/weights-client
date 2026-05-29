@@ -95,7 +95,7 @@ function WeightChart({ data }) {
     <div className="glass-card rounded-sm p-3 relative overflow-hidden chart-fade-up">
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
         onMouseMove={handleMouseMove} onTouchMove={handleMouseMove}
-        onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)} className="chart-reveal">
+        onMouseLeave={() => setTooltip(null)} className="chart-reveal">
         <defs>
           {Object.entries(PHASE_COLORS).map(([phase, color]) => (
             <linearGradient key={phase} id={`wh-area-${phase}`} x1="0" y1="0" x2="0" y2="1">

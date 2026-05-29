@@ -1,5 +1,7 @@
+import { haptic } from '../utils/haptic'
+
 export default function Button({ children, onClick, type = 'button', disabled = false, variant = 'primary' }) {
-  const base = 'group relative font-mono font-bold tracking-widest transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none w-full overflow-hidden rounded-sm flex items-center'
+  const base = 'group relative font-sans font-bold tracking-widest transition-all duration-200 disabled:opacity-40 disabled:pointer-events-none w-full overflow-hidden rounded-sm flex items-center'
 
   const variants = {
     primary:   'h-14 bg-[#c8f500] text-[#0a0a0a] border border-[#c8f500] hover:bg-[#deff33] text-base btn-glow justify-center',
@@ -10,7 +12,7 @@ export default function Button({ children, onClick, type = 'button', disabled = 
   return (
     <button
       type={type}
-      onClick={onClick}
+      onClick={e => { haptic(variant === "primary" ? "medium" : "light"); onClick?.(e) }}
       disabled={disabled}
       className={`${base} ${variants[variant]} click-press`}
     >

@@ -119,7 +119,7 @@ function PhaseChart({ data, phaseColor, weightGoal, weeklyStats }) {
     <div className="glass-card rounded-sm p-4 mb-4 relative overflow-hidden">
       <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-3">EVOLUCIÓN EN ESTA FASE</p>
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full chart-reveal"
-        onMouseMove={handleMouseMove} onTouchMove={handleMouseMove} onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)}>
+        onMouseMove={handleMouseMove} onTouchMove={handleMouseMove} onMouseLeave={() => setTooltip(null)}>
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={phaseColor} stopOpacity="0.25" />
@@ -850,8 +850,8 @@ export default function CurrentPhase({ onNavigate }) {
               <div className="flex flex-col gap-3">
                 {recent.map((w, i) => {
                   const color = barColor(w.delta)
-                  const widthPct = Math.max(4, (Math.abs(w.delta) / maxAbs) * 100)
-                  const isPositive = w.delta >= 0
+                  const widthPct = Math.max(4, (Math.abs(w.delta) / maxAbs) * 50)
+                  const isPos = w.delta >= 0
                   return (
                     <div key={i}>
                       <div className="flex items-center justify-between mb-1.5">
@@ -860,14 +860,15 @@ export default function CurrentPhase({ onNavigate }) {
                           {w.delta > 0 ? '+' : ''}{w.delta.toFixed(2)} kg
                         </span>
                       </div>
-                      <div className="relative h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+                      <div className="relative h-1.5 bg-[#141414] rounded-full overflow-hidden">
+                        <div className="absolute top-0 bottom-0 left-1/2 w-px bg-[#222222]" />
                         <div
                           className="absolute inset-y-0 rounded-full transition-all duration-500"
                           style={{
                             width: `${widthPct}%`,
                             backgroundColor: color,
                             boxShadow: `0 0 8px ${color}30`,
-                            ...(isPositive ? { left: 0 } : { right: 0 }),
+                            ...(isPos ? { left: '50%' } : { right: '50%' }),
                           }}
                         />
                       </div>

@@ -114,7 +114,7 @@ function ExerciseChart({ name, logs, phases }) {
       </div>
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
         onMouseMove={handleMove} onTouchMove={handleMove}
-        onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)} className="chart-reveal">
+        onMouseLeave={() => setTooltip(null)} className="chart-reveal">
         <defs>
           {Object.entries(PHASE_COLORS).map(([phase, color]) => (
             <linearGradient key={phase} id={`gym-area-${phase}`} x1="0" y1="0" x2="0" y2="1">

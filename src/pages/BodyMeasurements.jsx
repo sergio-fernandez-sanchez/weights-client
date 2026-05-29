@@ -68,7 +68,7 @@ function MeasurementsChart({ reports }) {
       <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-2">EVOLUCIÓN</p>
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
         onMouseMove={handleMove} onTouchMove={handleMove}
-        onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)} className="chart-reveal">
+        onMouseLeave={() => setTooltip(null)} className="chart-reveal">
         <defs>
           {METRICS.map(m => (
             <linearGradient key={m.key} id={`bm-area-${m.key}`} x1="0" y1="0" x2="0" y2="1">

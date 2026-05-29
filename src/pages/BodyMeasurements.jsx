@@ -210,6 +210,109 @@ export default function BodyMeasurements({ onNavigate }) {
           </div>
         )}
 
+        {/* Body Ratios */}
+        {report && (() => {
+          const ratios = []
+
+          if (report.waist_cm && report.hip_cm) {
+            const val = (parseFloat(report.waist_cm) / parseFloat(report.hip_cm)).toFixed(3)
+            const prevVal = prevReport?.waist_cm && prevReport?.hip_cm
+              ? (parseFloat(prevReport.waist_cm) / parseFloat(prevReport.hip_cm)).toFixed(3)
+              : null
+            ratios.push({
+              label: 'CINTURA / CADERA',
+              value: val,
+              prev: prevVal,
+              desc: 'Indicador de distribución de grasa y riesgo cardiovascular. Relaciona la grasa abdominal con la de caderas.',
+              optimal: 'Hombres: < 0.90 (ideal 0.80–0.85). Mujeres: < 0.85 (ideal 0.70–0.80).',
+              risk: 'Valores altos indican mayor acumulación de grasa visceral y riesgo metabólico.',
+              color: parseFloat(val) < 0.90 ? '#c8f500' : parseFloat(val) < 0.95 ? '#ff9f00' : '#ff2d2d',
+            })
+          }
+
+          if (report.shoulders_cm && report.waist_cm) {
+            const val = (parseFloat(report.shoulders_cm) / parseFloat(report.waist_cm)).toFixed(3)
+            const prevVal = prevReport?.shoulders_cm && prevReport?.waist_cm
+              ? (parseFloat(prevReport.shoulders_cm) / parseFloat(prevReport.waist_cm)).toFixed(3)
+              : null
+            ratios.push({
+              label: 'HOMBROS / CINTURA',
+              value: val,
+              prev: prevVal,
+              desc: 'Mide la proporción torso en V. Cuanto mayor, más ancho es el torso respecto a la cintura.',
+              optimal: 'Ratio de Adonis: 1.618 (proporción áurea). Buen rango: 1.40–1.60.',
+              risk: 'Valores < 1.30 indican poca diferencia entre hombros y cintura.',
+              color: parseFloat(val) >= 1.40 ? '#c8f500' : parseFloat(val) >= 1.30 ? '#ff9f00' : '#ff2d2d',
+            })
+          }
+
+          if (report.chest_cm && report.waist_cm) {
+            const val = (parseFloat(report.chest_cm) / parseFloat(report.waist_cm)).toFixed(3)
+            const prevVal = prevReport?.chest_cm && prevReport?.waist_cm
+              ? (parseFloat(prevReport.chest_cm) / parseFloat(prevReport.waist_cm)).toFixed(3)
+              : null
+            ratios.push({
+              label: 'PECHO / CINTURA',
+              value: val,
+              prev: prevVal,
+              desc: 'Refleja el desarrollo del torso superior respecto al abdomen.',
+              optimal: 'Buen rango: 1.15–1.35. Valores altos indican buen desarrollo pectoral con cintura estrecha.',
+              risk: 'Valores < 1.10 sugieren falta de desarrollo pectoral o cintura ancha.',
+              color: parseFloat(val) >= 1.15 ? '#c8f500' : parseFloat(val) >= 1.05 ? '#ff9f00' : '#ff2d2d',
+            })
+          }
+
+          if (report.thigh_cm && report.waist_cm) {
+            const val = (parseFloat(report.thigh_cm) / parseFloat(report.waist_cm)).toFixed(3)
+            const prevVal = prevReport?.thigh_cm && prevReport?.waist_cm
+              ? (parseFloat(prevReport.thigh_cm) / parseFloat(prevReport.waist_cm)).toFixed(3)
+              : null
+            ratios.push({
+              label: 'MUSLO / CINTURA',
+              value: val,
+              prev: prevVal,
+              desc: 'Indica el desarrollo muscular de piernas en relación al abdomen.',
+              optimal: 'Buen rango: 0.60–0.75. Valores altos indican piernas desarrolladas proporcionalmente.',
+              risk: 'Valores bajos pueden indicar desproporción entre tren superior e inferior.',
+              color: parseFloat(val) >= 0.60 ? '#c8f500' : parseFloat(val) >= 0.50 ? '#ff9f00' : '#ff2d2d',
+            })
+          }
+
+          if (ratios.length === 0) return null
+
+          return (
+            <div className="mt-5">
+              <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-3">RATIOS CORPORALES</p>
+              <div className="flex flex-col gap-3">
+                {ratios.map((r, i) => {
+                  const delta = r.prev ? (parseFloat(r.value) - parseFloat(r.prev)).toFixed(3) : null
+                  return (
+                    <div key={i} className="glass-card rounded-sm p-3.5 relative overflow-hidden">
+                      <div className="absolute top-0 left-0 right-0 h-[2px] opacity-40" style={{ background: `linear-gradient(90deg, ${r.color}, transparent)` }} />
+                      <div className="flex items-start justify-between mb-2">
+                        <p className="text-[#888888] font-sans text-[10px] tracking-[0.15em] font-bold">{r.label}</p>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-lg font-bold" style={{ color: r.color }}>{r.value}</span>
+                          {delta && (
+                            <span className="font-mono text-[10px]" style={{ color: parseFloat(delta) > 0 ? '#4a9eff' : '#ff9f00' }}>
+                              {parseFloat(delta) > 0 ? '↑' : '↓'}{Math.abs(parseFloat(delta)).toFixed(3)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-[#555555] font-sans text-[11px] leading-relaxed mb-2">{r.desc}</p>
+                      <div className="rounded-sm p-2 bg-[#0e0e0e] border border-[#1a1a1a]">
+                        <p className="text-[#c8f500] font-sans text-[10px] leading-relaxed mb-1">✦ {r.optimal}</p>
+                        <p className="text-[#555555] font-sans text-[10px] leading-relaxed">{r.risk}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
+
         <Separator className="mt-8 mb-4" />
         <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
       </div>

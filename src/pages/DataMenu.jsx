@@ -140,6 +140,12 @@ export default function DataMenu({ onNavigate }) {
             sub={s.weeklyCount > 0 ? `semana${s.weeklyCount > 1 ? 's' : ''}` : null}
             onClick={() => onNavigate('weeklyReportHistory')}
           />
+          <DataItem
+            label="RESUMEN MENSUAL"
+            preview={null}
+            sub="datos agregados por mes"
+            onClick={() => onNavigate('monthlySummary')}
+          />
         </div>
       )}
 

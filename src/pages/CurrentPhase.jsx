@@ -24,7 +24,7 @@ function oneRM(log) {
   return null
 }
 
-function PhaseChart({ data, phaseColor, weightGoal }) {
+function PhaseChart({ data, phaseColor, weightGoal, weeklyStats }) {
   const [tooltip, setTooltip] = useState(null)
   const svgRef = useRef(null)
 
@@ -35,13 +35,40 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
   const chartW = W - PAD.left - PAD.right
   const chartH = H - PAD.top - PAD.bottom
 
+  const lastWeight = data[data.length - 1].weight
+  const lastDate = parseDate(data[data.length - 1].date)
+
+  // Projection: 8 weeks ahead from last data point
+  const projectionWeeks = 8
+  const projPoints = []
+  if (weeklyStats && Math.abs(weeklyStats.avgChange) > 0.01) {
+    for (let w = 0; w <= projectionWeeks; w++) {
+      const projected = lastWeight + weeklyStats.avgChange * w
+      const upper = projected + weeklyStats.stdDev * w
+      const lower = projected - weeklyStats.stdDev * w
+      projPoints.push({ week: w, projected, upper, lower })
+    }
+  }
+
+  // Determine value range including goal and projections
   const weights = data.map(d => d.weight)
-  const allVals = weightGoal ? [...weights, weightGoal] : weights
+  const allVals = [...weights]
+  if (weightGoal) allVals.push(weightGoal)
+  if (projPoints.length > 0) {
+    allVals.push(projPoints[projPoints.length - 1].upper)
+    allVals.push(projPoints[projPoints.length - 1].lower)
+  }
   const minW = Math.min(...allVals), maxW = Math.max(...allVals)
   const range = maxW - minW || 1
 
-  function xPos(i) { return PAD.left + (i / Math.max(data.length - 1, 1)) * chartW }
+  // X positions: data takes first 70% of chart width, projection takes last 30%
+  const hasProj = projPoints.length > 0
+  const dataXRange = hasProj ? chartW * 0.7 : chartW
+  const projXStart = PAD.left + dataXRange
+
+  function xPos(i) { return PAD.left + (i / Math.max(data.length - 1, 1)) * dataXRange }
   function yPos(w) { return PAD.top + chartH - ((w - minW) / range) * chartH }
+  function projX(week) { return projXStart + (week / projectionWeeks) * (chartW - dataXRange) }
 
   const ticks = Array.from({ length: 4 }, (_, i) => {
     const val = minW + (range * i) / 3
@@ -52,73 +79,145 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
   const areaPoints = `${xPos(0)},${PAD.top + chartH} ${points} ${xPos(data.length - 1)},${PAD.top + chartH}`
   const goalY = weightGoal ? yPos(weightGoal) : null
 
+  // Projection paths
+  const projLine = projPoints.map(p => `${projX(p.week)},${yPos(p.projected)}`).join(' ')
+  const uncertaintyPath = projPoints.length > 0
+    ? projPoints.map(p => `${projX(p.week)},${yPos(p.upper)}`).join(' ') + ' ' +
+      [...projPoints].reverse().map(p => `${projX(p.week)},${yPos(p.lower)}`).join(' ')
+    : ''
+
   function handleMouseMove(e) {
     const svg = svgRef.current
     if (!svg) return
     const rect = svg.getBoundingClientRect()
     const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left - PAD.left
-    const idx = Math.max(0, Math.min(data.length - 1, Math.round((x / chartW) * (data.length - 1))))
-    const d = data[idx]
-    setTooltip({ x: xPos(idx), y: yPos(d.weight), weight: d.weight, date: parseDate(d.date).toLocaleDateString('es-ES') })
+    const scale = W / rect.width
+    const mouseX = (e.clientX || e.touches?.[0]?.clientX) - rect.left
+    const scaledX = mouseX * scale
+
+    // Only tooltip on actual data, not projection
+    if (scaledX < projXStart) {
+      const idx = Math.max(0, Math.min(data.length - 1, Math.round(((scaledX - PAD.left) / dataXRange) * (data.length - 1))))
+      const d = data[idx]
+      setTooltip({ x: xPos(idx), y: yPos(d.weight), weight: d.weight, date: parseDate(d.date).toLocaleDateString('es-ES'), type: 'data' })
+    } else if (hasProj) {
+      const weekFrac = ((scaledX - projXStart) / (chartW - dataXRange)) * projectionWeeks
+      const week = Math.max(0, Math.min(projectionWeeks, Math.round(weekFrac)))
+      const p = projPoints[week]
+      if (p) {
+        const futureDate = new Date(lastDate)
+        futureDate.setDate(futureDate.getDate() + week * 7)
+        setTooltip({ x: projX(week), y: yPos(p.projected), weight: p.projected, upper: p.upper, lower: p.lower, date: futureDate.toLocaleDateString('es-ES'), type: 'projection' })
+      }
+    }
   }
 
   const gradId = `area-grad-${phaseColor.replace('#', '')}`
+  const uncertId = `uncertainty-${phaseColor.replace('#', '')}`
 
   return (
     <div className="glass-card rounded-sm p-4 mb-4 relative overflow-hidden">
       <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-3">EVOLUCIÓN EN ESTA FASE</p>
-      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
-        onMouseMove={handleMouseMove} onTouchMove={handleMouseMove} onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)} className="chart-reveal">
+      <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full chart-reveal"
+        onMouseMove={handleMouseMove} onTouchMove={handleMouseMove} onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)}>
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={phaseColor} stopOpacity="0.25" />
             <stop offset="100%" stopColor={phaseColor} stopOpacity="0" />
           </linearGradient>
+          <linearGradient id={uncertId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={phaseColor} stopOpacity="0.06" />
+            <stop offset="100%" stopColor={phaseColor} stopOpacity="0.02" />
+          </linearGradient>
         </defs>
+
+        {/* Grid */}
         {ticks.map((t, i) => (
           <g key={i}>
             <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#1a1a1a" strokeWidth="1" />
-            <text x={PAD.left - 6} y={t.y + 4} textAnchor="end" fill="#444" fontSize="9" fontFamily="monospace">
-              {t.val.toFixed(1)}
-            </text>
+            <text x={PAD.left - 6} y={t.y + 4} textAnchor="end" fill="#444" fontSize="9" fontFamily="monospace">{t.val.toFixed(1)}</text>
           </g>
         ))}
+
+        {/* Projection separator line */}
+        {hasProj && (
+          <line x1={projXStart} y1={PAD.top} x2={projXStart} y2={H - PAD.bottom}
+            stroke="#1e1e1e" strokeWidth="1" strokeDasharray="2,4" />
+        )}
+
+        {/* Goal line */}
         {goalY && (
           <line x1={PAD.left} y1={goalY} x2={W - PAD.right} y2={goalY}
             stroke={phaseColor} strokeWidth="1" strokeDasharray="4,4" strokeOpacity="0.4" />
         )}
-        {/* Area fill */}
+
+        {/* Uncertainty zone */}
+        {uncertaintyPath && (
+          <polygon points={uncertaintyPath} fill={`url(#${uncertId})`} />
+        )}
+
+        {/* Projection line */}
+        {projLine && (
+          <polyline points={projLine} fill="none" stroke={phaseColor} strokeWidth="1.5"
+            strokeDasharray="4,3" strokeOpacity="0.5" strokeLinejoin="round" />
+        )}
+
+        {/* Actual data area */}
         <polygon points={areaPoints} fill={`url(#${gradId})`} />
-        {/* Line */}
+
+        {/* Actual data line */}
         <polyline points={points} fill="none" stroke={phaseColor} strokeWidth="2"
           strokeLinejoin="round" strokeLinecap="round" />
+
         {/* Data points */}
         {data.length <= 30 && data.map((d, i) => (
           <circle key={i} cx={xPos(i)} cy={yPos(d.weight)} r="2" fill={phaseColor} />
         ))}
+
+        {/* Connection dot between data and projection */}
+        {hasProj && (
+          <circle cx={xPos(data.length - 1)} cy={yPos(lastWeight)} r="3" fill={phaseColor} stroke="#0a0a0a" strokeWidth="1.5" />
+        )}
+
+        {/* Tooltip */}
         {tooltip && (
           <>
             <line x1={tooltip.x} y1={PAD.top} x2={tooltip.x} y2={H - PAD.bottom}
-              stroke={phaseColor} strokeWidth="1" strokeDasharray="3,3" strokeOpacity="0.3" />
-            <circle cx={tooltip.x} cy={tooltip.y} r="5" fill="none" stroke={phaseColor} strokeWidth="2" />
-            <circle cx={tooltip.x} cy={tooltip.y} r="2.5" fill={phaseColor} />
+              stroke={tooltip.type === 'projection' ? phaseColor : phaseColor} strokeWidth="1" strokeDasharray="3,3" strokeOpacity="0.3" />
+            <circle cx={tooltip.x} cy={tooltip.y} r="5" fill="none" stroke={phaseColor} strokeWidth="2" strokeOpacity={tooltip.type === 'projection' ? 0.5 : 1} />
+            <circle cx={tooltip.x} cy={tooltip.y} r="2.5" fill={phaseColor} opacity={tooltip.type === 'projection' ? 0.5 : 1} />
           </>
         )}
       </svg>
+
+      {/* Tooltip box */}
       {tooltip && (
         <div className="absolute top-10 right-4 glass-card-elevated rounded-sm px-3 py-2 font-sans text-xs pointer-events-none border-none shadow-lg">
           <p className="text-[#666666]">{tooltip.date}</p>
-          <p className="font-bold text-sm" style={{ color: phaseColor }}>{tooltip.weight.toFixed(2)} kg</p>
-        </div>
-      )}
-      {weightGoal && (
-        <div className="flex items-center gap-2 mt-2">
-          <span className="w-4 h-0 border-t border-dashed" style={{ borderColor: phaseColor, opacity: 0.5 }} />
-          <p className="text-[#555555] font-sans text-[10px]">
-            objetivo: {parseFloat(weightGoal).toFixed(2)} kg
+          <p className="font-bold text-sm" style={{ color: phaseColor, opacity: tooltip.type === 'projection' ? 0.7 : 1 }}>
+            {tooltip.weight.toFixed(2)} kg {tooltip.type === 'projection' && <span className="text-[9px] font-normal opacity-50">proyección</span>}
           </p>
+          {tooltip.type === 'projection' && tooltip.upper && (
+            <p className="text-[#444444] text-[10px]">{tooltip.lower.toFixed(1)} – {tooltip.upper.toFixed(1)} kg</p>
+          )}
         </div>
       )}
+
+      {/* Legend */}
+      <div className="flex items-center gap-3 mt-2 flex-wrap">
+        {weightGoal && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-4 h-0 border-t border-dashed" style={{ borderColor: phaseColor, opacity: 0.5 }} />
+            <p className="text-[#555555] font-sans text-[10px]">objetivo: {parseFloat(weightGoal).toFixed(2)} kg</p>
+          </div>
+        )}
+        {hasProj && (
+          <div className="flex items-center gap-1.5">
+            <span className="w-4 h-0 border-t border-dashed" style={{ borderColor: phaseColor, opacity: 0.3 }} />
+            <p className="text-[#444444] font-sans text-[10px]">proyección ± σ</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -781,7 +880,7 @@ export default function CurrentPhase({ onNavigate }) {
         })()}
 
         {chartData.length > 1 && (
-          <PhaseChart data={chartData} phaseColor={phaseColor} weightGoal={isActive ? weightGoal : null} />
+          <PhaseChart data={chartData} phaseColor={phaseColor} weightGoal={isActive ? weightGoal : null} weeklyStats={isActive ? weeklyStats : null} />
         )}
 
         {isActive && (

@@ -24,6 +24,7 @@ import BioimpedanceReports from './pages/BioimpedanceReports'
 import DexaReports from './pages/DexaReports'
 import BodyMeasurements from './pages/BodyMeasurements'
 import PhaseComparison from './pages/PhaseComparison'
+import MonthlySummary from './pages/MonthlySummary'
 import ParticleBackground from './components/ParticleBackground'
 
 function GlitchTransition({ onMidpoint, onDone, color }) {
@@ -128,6 +129,7 @@ function renderPage(page, pageData, navigate, handleLogout) {
     case 'dexaReports':         return <DexaReports          onNavigate={navigate} />
     case 'bodyMeasurements':    return <BodyMeasurements     onNavigate={navigate} />
     case 'phaseComparison':     return <PhaseComparison      onNavigate={navigate} />
+    case 'monthlySummary':      return <MonthlySummary       onNavigate={navigate} />
     default:                    return <Home                 onNavigate={navigate} onLogout={handleLogout} />
   }
 }

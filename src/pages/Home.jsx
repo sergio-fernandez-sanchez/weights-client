@@ -6,6 +6,7 @@ import Button from '../components/Button'
 import Input from '../components/Input'
 import Separator from '../components/Separator'
 import Toast from '../components/Toast'
+import AnimatedNumber from '../components/AnimatedNumber'
 
 function parseDate(dateStr) { return new Date(dateStr + 'T00:00:00') }
 
@@ -127,7 +128,8 @@ function BodySilhouette({ current, previous }) {
             {/* Delta arrow */}
             {delta && (
               <text x={textX + (isLeft ? 28 : -28)} y={bp.y + 6} textAnchor="middle"
-                fill={delta.color} fontSize="7" fontFamily="Inter, sans-serif">
+                fill={delta.color} fontSize="7" fontFamily="Inter, sans-serif"
+                className="bounce-arrow">
                 {delta.symbol}
               </text>
             )}
@@ -150,6 +152,7 @@ export default function Home({ onNavigate, onLogout }) {
   const [allWeights, setAllWeights]         = useState([])
   const [gymAvgStrength, setGymAvgStrength] = useState(null)
   const [refreshing, setRefreshing]         = useState(true)
+  const [celebrating, setCelebrating]       = useState(false)
   const [bodyData, setBodyData]             = useState({ current: null, previous: null })
 
   const lastMondayISO = getLastMondayISO()
@@ -247,6 +250,8 @@ export default function Home({ onNavigate, onLogout }) {
       const val = parseFloat(input.replace(',', '.'))
       await postWeight(val)
       setMsg(todayLogged ? '✓  peso actualizado' : '✓  peso añadido')
+      setCelebrating(true)
+      setTimeout(() => setCelebrating(false), 1000)
       setInput('')
       fetchLastWeight()
       fetchExtraStats()
@@ -311,7 +316,7 @@ export default function Home({ onNavigate, onLogout }) {
       <PageHeader title="W E I G H T S" blink />
 
       {/* ── Status Card ── */}
-      <div className="glass-card-elevated rounded-sm mb-5 animate-fade-in-up relative overflow-hidden" style={{ animationDelay: '0.1s' }}>
+      <div className={`glass-card-elevated rounded-sm mb-5 animate-fade-in-up relative overflow-hidden ${celebrating ? "celebrate-pulse" : ""}`} style={{ animationDelay: '0.1s' }}>
         {/* Top accent line */}
         <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${phaseColor}, transparent)`, opacity: 0.7 }} />
         {refreshing && (
@@ -329,7 +334,7 @@ export default function Home({ onNavigate, onLogout }) {
               </p>
               {lastWeight ? (
                 <p className="text-[#c8f500] font-mono text-4xl font-bold leading-none tracking-tight">
-                  {lastWeight.weight}<span className="text-lg ml-1 opacity-50">kg</span>
+                  <AnimatedNumber value={parseFloat(lastWeight.weight)} decimals={2} /><span className="text-lg ml-1 opacity-50">kg</span>
                 </p>
               ) : (
                 <p className="text-[#333333] font-mono text-2xl font-bold">—</p>
@@ -477,7 +482,25 @@ export default function Home({ onNavigate, onLogout }) {
 
       {/* ── Weight Input ── */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-3 mb-5 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-        <Input label={todayLogged ? 'ACTUALIZAR PESO (kg)' : 'PESO DE HOY (kg)'} type="number" step="0.01" value={input} onChange={e => setInput(e.target.value)} placeholder="00.00" required />
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[#666666] font-sans text-[10px] tracking-[0.2em] uppercase flex items-center gap-2">
+            <span className="w-1 h-1 rounded-full opacity-40" style={{ backgroundColor: phaseColor }} />
+            {todayLogged ? 'ACTUALIZAR PESO' : 'PESO DE HOY'}
+          </label>
+          <div className="relative">
+            <input
+              type="number"
+              step="0.01"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              placeholder="00.00"
+              required
+              className="w-full input-display rounded-sm h-14 px-4 pr-12 font-mono text-xl font-bold text-[#e8e8e8] outline-none"
+              style={{ '--accent-color': phaseColor }}
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#333333] font-mono text-sm">kg</span>
+          </div>
+        </div>
         <Button type="submit" disabled={loading}>{loading ? '...' : todayLogged ? 'ACTUALIZAR PESO' : 'AÑADIR PESO'}</Button>
       </form>
 

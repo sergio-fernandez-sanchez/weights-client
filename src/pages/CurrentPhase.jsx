@@ -192,7 +192,7 @@ function PhaseChart({ data, phaseColor, weightGoal, weeklyStats }) {
 
       {/* Tooltip box */}
       {tooltip && (
-        <div className="absolute top-10 right-4 glass-card-elevated rounded-sm px-3 py-2 font-sans text-xs pointer-events-none border-none shadow-lg">
+        <div className="absolute top-10 right-4 glass-tooltip rounded-sm px-3 py-2 font-sans text-xs pointer-events-none">
           <p className="text-[#666666]">{tooltip.date}</p>
           <p className="font-bold text-sm" style={{ color: phaseColor, opacity: tooltip.type === 'projection' ? 0.7 : 1 }}>
             {tooltip.weight.toFixed(2)} kg {tooltip.type === 'projection' && <span className="text-[9px] font-normal opacity-50">proyección</span>}

@@ -5,15 +5,21 @@ export default function MetricCard({ label, value, sub, valueColor = '#c8f500', 
   const isNumeric = !isNaN(numericValue) && value !== '—' && value !== null
 
   return (
-    <div className="relative glass-card rounded-sm p-4 group hover:border-[#333333] transition-all duration-300 overflow-hidden">
+    <div className="relative glass-card glass-sheen rounded-sm p-4 group card-hover overflow-hidden">
+      {/* Top accent — liquid gradient */}
       <div
-        className="absolute top-0 left-0 right-0 h-[2px] opacity-60 group-hover:opacity-100 transition-opacity"
-        style={{ background: `linear-gradient(90deg, ${valueColor}, transparent)` }}
+        className="absolute top-0 left-0 right-0 h-[2px] opacity-50 group-hover:opacity-80 transition-opacity"
+        style={{
+          background: `linear-gradient(90deg, ${valueColor}, ${valueColor}40, transparent)`,
+        }}
       />
+
+      {/* Ambient hover glow */}
       <div
-        className="absolute -top-8 -left-8 w-24 h-24 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl"
+        className="absolute -top-10 -left-10 w-28 h-28 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-3xl"
         style={{ backgroundColor: valueColor }}
       />
+
       <div className="relative z-10">
         <div className="flex items-center gap-1.5 mb-2">
           {icon && <span className="text-xs opacity-50">{icon}</span>}

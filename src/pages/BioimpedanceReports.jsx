@@ -137,7 +137,7 @@ function BioChart({ reports }) {
         )}
       </svg>
       {tooltip && (
-        <div className="absolute top-3 right-3 glass-card-elevated rounded-sm px-3 py-2 font-sans text-xs pointer-events-none border-none shadow-lg">
+        <div className="absolute top-3 right-3 glass-tooltip rounded-sm px-3 py-2 font-sans text-xs pointer-events-none">
           <p className="text-[#555555] mb-1">{tooltip.date}</p>
           {tooltip.vals.map((v, i) => (
             <p key={i} style={{ color: v.color }}>{v.label}: <span className="font-bold">{v.val}</span></p>

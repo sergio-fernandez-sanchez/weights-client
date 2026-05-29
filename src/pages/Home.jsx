@@ -328,7 +328,7 @@ export default function Home({ onNavigate, onLogout }) {
       <PageHeader title="W E I G H T S" blink />
 
       {/* ── Status Card ── */}
-      <div className={`glass-card-elevated rounded-sm mb-5 animate-fade-in-up relative overflow-hidden ${celebrating ? "celebrate-pulse" : ""}`} style={{ animationDelay: '0.1s' }}>
+      <div className={`glass-card-elevated glass-sheen rounded-sm mb-5 animate-fade-in-up relative overflow-hidden ${celebrating ? "celebrate-pulse" : ""}`} style={{ animationDelay: '0.1s' }}>
         {/* Top accent line */}
         <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${phaseColor}, transparent)`, opacity: 0.7 }} />
         {refreshing && (
@@ -516,7 +516,7 @@ export default function Home({ onNavigate, onLogout }) {
               onChange={e => setInput(e.target.value)}
               placeholder="00.00"
               required
-              className="w-full input-display rounded-sm h-14 px-4 pr-12 font-mono text-xl font-bold text-[#e8e8e8] outline-none"
+              className="w-full input-frosted rounded-sm h-14 px-4 pr-12 font-mono text-xl font-bold text-[#e8e8e8] outline-none"
               style={{ '--accent-color': phaseColor }}
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#333333] font-mono text-sm">kg</span>
@@ -528,12 +528,12 @@ export default function Home({ onNavigate, onLogout }) {
       {/* ── Quick Actions ── */}
       <div className="grid grid-cols-2 gap-2 mb-5 animate-fade-in-up" style={{ animationDelay: '0.25s' }}>
         <button onClick={() => onNavigate('calories', activeCalories)}
-          className="glass-card rounded-sm h-14 flex flex-col items-center justify-center group hover:border-[#333333] transition-all duration-300">
+          className="glass-card glass-sheen rounded-sm h-14 flex flex-col items-center justify-center group card-hover">
           <span className="text-[#555555] font-sans text-[9px] tracking-[0.2em] group-hover:text-[#888888] transition-colors">CALORÍAS</span>
           <span className="text-[#c8f500] font-mono text-sm font-bold group-hover:text-[#deff33] transition-colors">→</span>
         </button>
         <button onClick={() => onNavigate('gym')}
-          className="glass-card rounded-sm h-14 flex flex-col items-center justify-center group hover:border-[#333333] transition-all duration-300">
+          className="glass-card glass-sheen rounded-sm h-14 flex flex-col items-center justify-center group card-hover">
           <span className="text-[#555555] font-sans text-[9px] tracking-[0.2em] group-hover:text-[#888888] transition-colors">GYM</span>
           <span className="text-[#c8f500] font-mono text-sm font-bold group-hover:text-[#deff33] transition-colors">→</span>
         </button>
@@ -550,7 +550,7 @@ export default function Home({ onNavigate, onLogout }) {
       <Separator className="my-5" />
 
       <button onClick={() => onNavigate('aiReport')}
-        className="w-full h-14 glass-card-elevated rounded-sm border-[#1f2a00] text-[#6a8000] font-sans text-sm font-bold tracking-widest text-left px-5 hover:text-[#c8f500] hover:border-[#c8f500]/40 transition-all duration-300 group relative overflow-hidden mb-4">
+        className="w-full h-14 glass-card-elevated glass-sheen rounded-sm border-[#1f2a00] text-[#6a8000] font-sans text-sm font-bold tracking-widest text-left px-5 hover:text-[#c8f500] hover:border-[#c8f500]/40 transition-all duration-300 group relative overflow-hidden mb-4">
         <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-[#c8f500] to-transparent opacity-0 group-hover:opacity-60 transition-opacity duration-300 rounded-r-sm" />
         <span className="relative z-10 flex items-center gap-2">
           <span className="text-[#333333] group-hover:text-[#c8f500] transition-colors">◆</span>

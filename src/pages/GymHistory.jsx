@@ -147,7 +147,7 @@ function ExerciseChart({ name, logs, phases }) {
         )}
       </svg>
       {tooltip && (
-        <div className="absolute top-3 right-3 glass-card-elevated rounded-sm px-3 py-2 font-sans text-xs pointer-events-none border-none shadow-lg">
+        <div className="absolute top-3 right-3 glass-tooltip rounded-sm px-3 py-2 font-sans text-xs pointer-events-none">
           <p className="text-[#555555]">{tooltip.date}</p>
           <p className="font-bold text-sm" style={{ color: tooltip.color }}>1RM ~{tooltip.weight.toFixed(1)}</p>
           <p className="text-[#444444] text-[10px]">{tooltip.rawWeight}kg × {tooltip.reps || '—'}</p>

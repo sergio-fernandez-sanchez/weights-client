@@ -275,6 +275,27 @@ async function getRawReport() {
   return res.text()
 }
 
+// ── Photos ────────────────────────────────────────────────────────────────────
+
+async function getPhotoDates() {
+  return request('/photos')
+}
+
+async function getPhotosByDate(date) {
+  return request(`/photos/${date}`)
+}
+
+async function uploadPhoto(date, photoType, imageData) {
+  return request('/photos', {
+    method: 'POST',
+    body: JSON.stringify({ date, photo_type: photoType, image_data: imageData }),
+  })
+}
+
+async function deletePhoto(photoId) {
+  return request(`/photos/${photoId}`, { method: 'DELETE' })
+}
+
 // ── Exports ───────────────────────────────────────────────────────────────────
 
 export {
@@ -315,4 +336,8 @@ export {
   postGymLog,
   patchGymLog,
   deleteGymLog,
+  getPhotoDates,
+  getPhotosByDate,
+  uploadPhoto,
+  deletePhoto,
 }

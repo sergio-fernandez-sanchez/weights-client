@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getLastWeight, getActiveGymLogs, getActiveCalories, getBioimpedanceReports, getDexaReports, getBodyMeasurements, getWeeklyReports } from '../api/client'
+import { getLastWeight, getActiveGymLogs, getActiveCalories, getBioimpedanceReports, getDexaReports, getBodyMeasurements, getWeeklyReports, getPhotoDates } from '../api/client'
 import { usePhase, PHASE_COLORS } from '../context/PhaseContext'
 import PageWrapper from '../components/PageWrapper'
 import PageHeader from '../components/PageHeader'
@@ -42,7 +42,7 @@ export default function DataMenu({ onNavigate }) {
   useEffect(() => {
     async function fetchPreviews() {
       try {
-        const [weight, gym, cal, bio, dexa, body, weekly] = await Promise.all([
+        const [weight, gym, cal, bio, dexa, body, weekly, photos] = await Promise.all([
           getLastWeight().catch(() => null),
           getActiveGymLogs().catch(() => []),
           getActiveCalories().catch(() => null),
@@ -50,6 +50,7 @@ export default function DataMenu({ onNavigate }) {
           getDexaReports().catch(() => []),
           getBodyMeasurements().catch(() => []),
           getWeeklyReports().catch(() => []),
+          getPhotoDates().catch(() => []),
         ])
         const bestRM = gym?.length > 0
           ? gym.reduce((best, log) => {
@@ -70,6 +71,8 @@ export default function DataMenu({ onNavigate }) {
           bodyCount: body?.length || 0,
           gymCount: gym?.length || 0,
           weeklyCount: weekly?.length || 0,
+          photoCount: photos?.reduce((sum, p) => sum + (p.count || 0), 0) || 0,
+          photoDates: photos?.length || 0,
         })
       } catch {}
       finally { setLoading(false) }
@@ -133,6 +136,13 @@ export default function DataMenu({ onNavigate }) {
             preview={s.bodyCount > 0 ? `${s.bodyCount}` : null}
             sub={s.bodyCount > 0 ? `registro${s.bodyCount > 1 ? 's' : ''}` : null}
             onClick={() => onNavigate('bodyMeasurements')}
+          />
+          <DataItem
+            label="FOTOGRAFÍAS"
+            preview={s.photoCount > 0 ? `${s.photoCount}` : null}
+            sub={s.photoDates > 0 ? `${s.photoDates} sesión${s.photoDates > 1 ? 'es' : ''}` : null}
+            onClick={() => onNavigate('photos')}
+            color="#c8f500"
           />
           <DataItem
             label="INFORMES SEMANALES"

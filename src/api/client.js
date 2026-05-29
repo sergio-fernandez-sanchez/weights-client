@@ -275,6 +275,20 @@ async function getRawReport() {
   return res.text()
 }
 
+async function getAiReportZip() {
+  const token = getToken()
+  const res = await fetch(`${BASE_URL}/generate-report/zip`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  if (res.status === 401) {
+    removeToken()
+    window.location.reload()
+    return
+  }
+  if (!res.ok) throw new Error('Error generating zip')
+  return res.blob()
+}
+
 // ── Photos ────────────────────────────────────────────────────────────────────
 
 async function getPhotoDates() {
@@ -336,6 +350,7 @@ export {
   postGymLog,
   patchGymLog,
   deleteGymLog,
+  getAiReportZip,
   getPhotoDates,
   getPhotosByDate,
   uploadPhoto,

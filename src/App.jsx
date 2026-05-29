@@ -139,7 +139,7 @@ function AppInner() {
   const [nextPage, setNextPage]   = useState(null)
   const [nextData, setNextData]   = useState(null)
   const [transitioning, setTransitioning] = useState(false)
-  const { phaseColor } = usePhase()
+  const { phaseColor, refreshPhase } = usePhase()
 
   function navigate(newPage, data = null) {
     if (transitioning) return
@@ -179,7 +179,7 @@ function AppInner() {
       <ParticleBackground />
       <div className="relative" style={{ zIndex: 1 }}>
         {!auth ? (
-          <Auth onLogin={() => { setAuth(true); window.history.replaceState({ page: 'home', data: null }, '', '') }} />
+          <Auth onLogin={() => { setAuth(true); refreshPhase(); window.history.replaceState({ page: 'home', data: null }, '', '') }} />
         ) : (
           <>
             <div data-page-content>

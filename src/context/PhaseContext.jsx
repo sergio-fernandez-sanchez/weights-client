@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react'
-import { getActivePhase } from '../api/client'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { getActivePhase, isAuthenticated } from '../api/client'
 
 const PHASE_COLORS = { bulk: '#c8f500', cut: '#ff2d2d', maintenance: '#ff9f00' }
 const DEFAULT_COLOR = '#c8f500'
@@ -13,14 +13,18 @@ const PhaseContext = createContext({
 export function PhaseProvider({ children }) {
   const [activePhase, setActivePhase] = useState(null)
 
-  async function refreshPhase() {
+  const refreshPhase = useCallback(async () => {
+    // Only fetch if authenticated — prevents 401 reload loop
+    if (!isAuthenticated()) return
     try {
       const data = await getActivePhase()
       setActivePhase(data)
-    } catch {}
-  }
+    } catch {
+      // Silently fail — don't trigger reload chain
+    }
+  }, [])
 
-  useEffect(() => { refreshPhase() }, [])
+  useEffect(() => { refreshPhase() }, [refreshPhase])
 
   const phaseColor = activePhase
     ? (PHASE_COLORS[activePhase.phase_type] || DEFAULT_COLOR)

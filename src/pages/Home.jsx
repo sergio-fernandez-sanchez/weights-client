@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getLastWeight, postWeight, getActiveCalories, getWeeklyReports, getActivePhase, getWeights, getGymLogs, logout } from '../api/client'
+import { getLastWeight, postWeight, getActiveCalories, getWeeklyReports, getActivePhase, getWeights, getGymLogs, getBodyMeasurements, logout } from '../api/client'
 import PageWrapper from '../components/PageWrapper'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
@@ -43,6 +43,101 @@ function barColor(d) {
   return '#ff9f00'
 }
 
+// ── Body Silhouette with measurements ──────────────────────────────────────
+const BODY_POINTS = [
+  { key: 'shoulders_cm', label: 'HOM', y: 48, side: 'r' },
+  { key: 'chest_cm',     label: 'PEC', y: 68, side: 'r' },
+  { key: 'bicep_cm',     label: 'BÍC', y: 82, side: 'l' },
+  { key: 'waist_cm',     label: 'CIN', y: 100, side: 'r' },
+  { key: 'hip_cm',       label: 'CAD', y: 118, side: 'l' },
+  { key: 'thigh_cm',     label: 'MUS', y: 148, side: 'r' },
+  { key: 'neck_cm',      label: 'CUE', y: 33, side: 'l' },
+]
+
+function BodySilhouette({ current, previous }) {
+  if (!current) return null
+  const W = 130, H = 200
+
+  function deltaArrow(key) {
+    if (!previous || current[key] == null || previous[key] == null) return null
+    const diff = parseFloat(current[key]) - parseFloat(previous[key])
+    if (Math.abs(diff) < 0.1) return null
+    return diff > 0
+      ? { symbol: '↑', color: '#4a9eff' }
+      : { symbol: '↓', color: '#ff9f00' }
+  }
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
+      {/* Body silhouette — minimalist outline */}
+      <g stroke="#1e1e1e" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+        {/* Head */}
+        <ellipse cx="65" cy="18" rx="10" ry="12" />
+        {/* Neck */}
+        <line x1="60" y1="30" x2="60" y2="38" />
+        <line x1="70" y1="30" x2="70" y2="38" />
+        {/* Shoulders */}
+        <path d="M60,38 Q58,40 40,44" />
+        <path d="M70,38 Q72,40 90,44" />
+        {/* Arms left */}
+        <path d="M40,44 Q36,60 30,80 Q28,86 32,90" />
+        {/* Arms right */}
+        <path d="M90,44 Q94,60 100,80 Q102,86 98,90" />
+        {/* Torso */}
+        <path d="M40,44 Q42,70 44,95 Q46,110 50,118" />
+        <path d="M90,44 Q88,70 86,95 Q84,110 80,118" />
+        {/* Hips */}
+        <path d="M50,118 Q48,122 46,128" />
+        <path d="M80,118 Q82,122 84,128" />
+        {/* Legs */}
+        <path d="M46,128 Q44,148 42,170 Q41,180 44,190" />
+        <path d="M84,128 Q86,148 88,170 Q89,180 86,190" />
+        {/* Inner legs */}
+        <path d="M56,128 Q58,148 60,170 Q60,180 58,190" />
+        <path d="M74,128 Q72,148 70,170 Q70,180 72,190" />
+      </g>
+
+      {/* Measurement lines and labels */}
+      {BODY_POINTS.map(bp => {
+        const val = current[bp.key]
+        if (val == null) return null
+        const delta = deltaArrow(bp.key)
+        const isLeft = bp.side === 'l'
+        const lineX1 = isLeft ? 25 : 105
+        const lineX2 = isLeft ? 2 : 128
+        const textX = isLeft ? 0 : 130
+        const anchor = isLeft ? 'start' : 'end'
+
+        return (
+          <g key={bp.key}>
+            {/* Dotted line from body to label */}
+            <line x1={lineX1} y1={bp.y} x2={lineX2} y2={bp.y}
+              stroke="#2a2a2a" strokeWidth="0.5" strokeDasharray="2,2" />
+            {/* Dot on body */}
+            <circle cx={lineX1} cy={bp.y} r="1.5" fill="#333333" />
+            {/* Value */}
+            <text x={textX} y={bp.y - 3} textAnchor={anchor}
+              fill="#666666" fontSize="7.5" fontFamily="Inter, sans-serif">
+              {bp.label}
+            </text>
+            <text x={textX} y={bp.y + 6} textAnchor={anchor}
+              fill="#999999" fontSize="8" fontFamily="'Courier New', monospace" fontWeight="bold">
+              {parseFloat(val).toFixed(1)}
+            </text>
+            {/* Delta arrow */}
+            {delta && (
+              <text x={textX + (isLeft ? 28 : -28)} y={bp.y + 6} textAnchor="middle"
+                fill={delta.color} fontSize="7" fontFamily="Inter, sans-serif">
+                {delta.symbol}
+              </text>
+            )}
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
 export default function Home({ onNavigate, onLogout }) {
   const [lastWeight, setLastWeight]         = useState(null)
   const [input, setInput]                   = useState('')
@@ -55,6 +150,7 @@ export default function Home({ onNavigate, onLogout }) {
   const [allWeights, setAllWeights]         = useState([])
   const [gymAvgStrength, setGymAvgStrength] = useState(null)
   const [refreshing, setRefreshing]         = useState(true)
+  const [bodyData, setBodyData]             = useState({ current: null, previous: null })
 
   const lastMondayISO = getLastMondayISO()
 
@@ -102,48 +198,42 @@ export default function Home({ onNavigate, onLogout }) {
 
   async function fetchExtraStats() {
     try {
-      const [phaseData, weightsData, gymData] = await Promise.all([
-        getActivePhase(), getWeights(), getGymLogs()
+      const [phaseData, weightsData, gymData, bodyMeasurements] = await Promise.all([
+        getActivePhase(), getWeights(), getGymLogs(), getBodyMeasurements().catch(() => [])
       ])
       setActivePhase(phaseData)
       setAllWeights(weightsData || [])
 
-      // Calculate avg gym strength change during active phase
+      // Body measurements — last 2
+      if (bodyMeasurements && bodyMeasurements.length > 0) {
+        const sorted = [...bodyMeasurements].sort((a, b) => parseDate(a.date) - parseDate(b.date))
+        setBodyData({
+          current: sorted[sorted.length - 1],
+          previous: sorted.length >= 2 ? sorted[sorted.length - 2] : null,
+        })
+      }
+
+      // Gym avg strength
       if (phaseData && gymData && gymData.length > 0) {
         const phaseStart = parseDate(phaseData.start_date)
         const phaseEnd = new Date()
-
-        // Get unique exercises
         const exerciseIds = [...new Set(gymData.filter(l => l.weight).map(l => l.exercise_type_id))]
-
         const pcts = []
         exerciseIds.forEach(exId => {
-          const history = gymData
-            .filter(l => l.exercise_type_id === exId && l.weight)
-            .sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
-
-          const phaseHistory = history.filter(l => {
-            const d = parseDate(l.start_date)
-            return d >= phaseStart && d <= phaseEnd
-          })
+          const history = gymData.filter(l => l.exercise_type_id === exId && l.weight).sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
+          const phaseHistory = history.filter(l => { const d = parseDate(l.start_date); return d >= phaseStart && d <= phaseEnd })
           const beforePhase = history.filter(l => parseDate(l.start_date) < phaseStart)
-
           if (phaseHistory.length === 0) return
-
           const current = phaseHistory[phaseHistory.length - 1]
           let baseLog = null
           if (phaseHistory.length >= 2) baseLog = phaseHistory[0]
           else if (beforePhase.length > 0) baseLog = beforePhase[beforePhase.length - 1]
-
           if (!baseLog || baseLog.id === current.id) return
           const rmBase = oneRM(baseLog), rmCurr = oneRM(current)
           if (!rmBase || !rmCurr) return
           pcts.push(((rmCurr - rmBase) / rmBase) * 100)
         })
-
-        if (pcts.length > 0) {
-          setGymAvgStrength(parseFloat((pcts.reduce((a, b) => a + b, 0) / pcts.length).toFixed(1)))
-        }
+        if (pcts.length > 0) setGymAvgStrength(parseFloat((pcts.reduce((a, b) => a + b, 0) / pcts.length).toFixed(1)))
       }
     } catch {}
   }
@@ -170,10 +260,9 @@ export default function Home({ onNavigate, onLogout }) {
   const phaseDays = activePhase
     ? Math.floor((new Date() - new Date(activePhase.start_date + 'T00:00:00')) / (1000*60*60*24))
     : null
-
   const phaseColor = activePhase ? (PHASE_COLORS[activePhase.phase_type] || '#888') : '#888'
 
-  // Build weekly deltas from ALL weights (phase-independent)
+  // Weekly deltas
   const weeklyDeltas = (() => {
     if (!allWeights || allWeights.length < 2) return []
     const sorted = [...allWeights].sort((a, b) => parseDate(a.date) - parseDate(b.date))
@@ -200,14 +289,22 @@ export default function Home({ onNavigate, onLogout }) {
       const monday = parseDate(weeklyAvgs[i].key)
       const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6)
       deltas.push({
-        label: `${monday.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })} – ${sunday.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}`,
+        label: `${monday.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}`,
         delta: parseFloat(delta.toFixed(2)),
       })
     }
     return deltas.slice(-4)
   })()
-
   const maxDeltaAbs = weeklyDeltas.length > 0 ? Math.max(...weeklyDeltas.map(d => Math.abs(d.delta)), 0.1) : 1
+
+  // Sparkline data
+  const sparkData = (() => {
+    const sorted = [...allWeights].sort((a, b) => parseDate(a.date) - parseDate(b.date))
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 14)
+    return sorted.filter(w => parseDate(w.date) >= cutoff).map(w => parseFloat(w.weight))
+  })()
+
+  const hasBody = bodyData.current && BODY_POINTS.some(bp => bodyData.current[bp.key] != null)
 
   return (
     <PageWrapper>
@@ -215,24 +312,17 @@ export default function Home({ onNavigate, onLogout }) {
 
       {/* ── Status Card ── */}
       <div className="glass-card-elevated rounded-sm mb-5 animate-fade-in-up relative overflow-hidden" style={{ animationDelay: '0.1s' }}>
-        {/* Top accent line — phase color */}
+        {/* Top accent line */}
         <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${phaseColor}, transparent)`, opacity: 0.7 }} />
-
-        {/* Refresh shimmer */}
         {refreshing && (
           <div className="absolute top-0 left-0 right-0 h-[2px] overflow-hidden" style={{ zIndex: 2 }}>
-            <div className="h-full w-full" style={{
-              background: `linear-gradient(90deg, transparent, ${phaseColor}, transparent)`,
-              backgroundSize: '200% 100%',
-              animation: 'shimmer 1.2s linear infinite',
-            }} />
+            <div className="h-full w-full" style={{ background: `linear-gradient(90deg, transparent, ${phaseColor}, transparent)`, backgroundSize: '200% 100%', animation: 'shimmer 1.2s linear infinite' }} />
           </div>
         )}
 
         {/* ─ Weight + Phase row ─ */}
         <div className="p-4 pb-0">
           <div className="flex items-start justify-between">
-            {/* Weight hero */}
             <div>
               <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-1.5">
                 {todayLogged ? 'HOY' : 'ÚLTIMO REGISTRO'}
@@ -248,16 +338,10 @@ export default function Home({ onNavigate, onLogout }) {
                 <p className="text-[#333333] font-sans text-[10px] mt-1.5">{parseDate(lastWeight.date).toLocaleDateString('es-ES')}</p>
               )}
             </div>
-
-            {/* Phase badge */}
             {activePhase && (
               <div className="flex flex-col items-end gap-1.5">
                 <span className="font-sans text-[10px] font-bold tracking-[0.15em] px-2.5 py-1 rounded-sm"
-                  style={{
-                    color: phaseColor,
-                    backgroundColor: `${phaseColor}10`,
-                    border: `1px solid ${phaseColor}20`,
-                  }}>
+                  style={{ color: phaseColor, backgroundColor: `${phaseColor}10`, border: `1px solid ${phaseColor}20` }}>
                   {PHASE_LABELS[activePhase.phase_type] || activePhase.phase_type.toUpperCase()}
                 </span>
                 <span className="text-[#444444] font-sans text-[10px] tracking-wider">
@@ -266,7 +350,6 @@ export default function Home({ onNavigate, onLogout }) {
               </div>
             )}
           </div>
-
           {todayLogged && (
             <div className="flex items-center gap-1.5 mt-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#c8f500] animate-pulse" />
@@ -275,86 +358,82 @@ export default function Home({ onNavigate, onLogout }) {
           )}
         </div>
 
-        {/* ─ Sparkline — last 14 days ─ */}
-        {(() => {
-          const sorted = [...allWeights]
-            .sort((a, b) => parseDate(a.date) - parseDate(b.date))
-          const cutoff = new Date()
-          cutoff.setDate(cutoff.getDate() - 14)
-          const recent = sorted.filter(w => parseDate(w.date) >= cutoff).map(w => parseFloat(w.weight))
-          if (recent.length < 3) return null
-
-          const min = Math.min(...recent), max = Math.max(...recent)
-          const range = max - min || 0.1
-          const W = 280, H = 32
-          const points = recent.map((w, i) => {
-            const x = (i / (recent.length - 1)) * W
-            const y = H - 2 - ((w - min) / range) * (H - 4)
-            return `${x},${y}`
-          }).join(' ')
-          const area = `0,${H} ${points} ${W},${H}`
-
-          return (
-            <div className="px-4 pt-3">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-[#333333] font-sans text-[9px] tracking-[0.2em]">14 DÍAS</p>
-                <p className="text-[#333333] font-sans text-[9px]">
-                  {min.toFixed(1)} – {max.toFixed(1)} kg
-                </p>
-              </div>
-              <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: '32px' }}>
-                <defs>
-                  <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={phaseColor} stopOpacity="0.15" />
-                    <stop offset="100%" stopColor={phaseColor} stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <polygon points={area} fill="url(#spark-fill)" />
-                <polyline points={points} fill="none" stroke={phaseColor} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
-                <circle cx={(recent.length - 1) / (recent.length - 1) * W} cy={H - 2 - ((recent[recent.length - 1] - min) / range) * (H - 4)} r="2.5" fill={phaseColor} />
-              </svg>
-            </div>
-          )
-        })()}
-
-        {/* ─ Separator ─ */}
         <div className="mx-4 mt-3 mb-0 h-px bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" />
 
-        {/* ─ Weekly history bars ─ */}
-        {weeklyDeltas.length > 0 && (
-          <div className="px-4 pt-3 pb-1">
-            <p className="text-[#444444] font-sans text-[9px] tracking-[0.2em] mb-2.5">ÚLTIMAS 4 SEMANAS</p>
-            <div className="flex flex-col gap-2">
-              {weeklyDeltas.map((w, i) => {
-                const color = barColor(w.delta)
-                const widthPct = Math.max(6, (Math.abs(w.delta) / maxDeltaAbs) * 100)
-                return (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="text-[#444444] font-sans text-[9px] w-[90px] flex-shrink-0">{w.label}</span>
-                    <div className="flex-1 relative h-[6px] bg-[#141414] rounded-full overflow-hidden">
-                      <div
-                        className="absolute inset-y-0 left-0 rounded-full"
-                        style={{
-                          width: `${widthPct}%`,
-                          backgroundColor: color,
-                          boxShadow: `0 0 6px ${color}25`,
-                        }}
-                      />
-                    </div>
-                    <span className="font-mono text-[10px] font-bold w-[52px] text-right flex-shrink-0" style={{ color }}>
-                      {w.delta > 0 ? '+' : ''}{w.delta.toFixed(2)}
-                    </span>
+        {/* ─ Two-column: Charts left, Body right ─ */}
+        <div className="flex">
+          {/* Left column: sparkline + weekly bars */}
+          <div className={`${hasBody ? 'flex-1 min-w-0' : 'w-full'}`}>
+            {/* Sparkline */}
+            {sparkData.length >= 3 && (() => {
+              const min = Math.min(...sparkData), max = Math.max(...sparkData)
+              const range = max - min || 0.1
+              const W = 160, H = 28
+              const points = sparkData.map((w, i) => {
+                const x = (i / (sparkData.length - 1)) * W
+                const y = H - 2 - ((w - min) / range) * (H - 4)
+                return `${x},${y}`
+              }).join(' ')
+              const area = `0,${H} ${points} ${W},${H}`
+              return (
+                <div className="px-4 pt-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-[#333333] font-sans text-[8px] tracking-[0.15em]">14 DÍAS</p>
+                    <p className="text-[#333333] font-mono text-[8px]">{min.toFixed(1)}–{max.toFixed(1)}</p>
                   </div>
-                )
-              })}
-            </div>
+                  <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: '28px' }}>
+                    <defs>
+                      <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={phaseColor} stopOpacity="0.15" />
+                        <stop offset="100%" stopColor={phaseColor} stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    <polygon points={area} fill="url(#spark-fill)" />
+                    <polyline points={points} fill="none" stroke={phaseColor} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+                    <circle cx={W} cy={H - 2 - ((sparkData[sparkData.length - 1] - min) / range) * (H - 4)} r="2" fill={phaseColor} />
+                  </svg>
+                </div>
+              )
+            })()}
+
+            {/* Weekly bars */}
+            {weeklyDeltas.length > 0 && (
+              <div className="px-4 pt-2 pb-2">
+                <p className="text-[#333333] font-sans text-[8px] tracking-[0.15em] mb-2">SEMANAS</p>
+                <div className="flex flex-col gap-1.5">
+                  {weeklyDeltas.map((w, i) => {
+                    const color = barColor(w.delta)
+                    const widthPct = Math.max(6, (Math.abs(w.delta) / maxDeltaAbs) * 100)
+                    return (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="text-[#333333] font-sans text-[8px] w-[36px] flex-shrink-0">{w.label}</span>
+                        <div className="flex-1 relative h-[5px] bg-[#141414] rounded-full overflow-hidden">
+                          <div className="absolute inset-y-0 left-0 rounded-full"
+                            style={{ width: `${widthPct}%`, backgroundColor: color, boxShadow: `0 0 4px ${color}20` }} />
+                        </div>
+                        <span className="font-mono text-[9px] font-bold w-[38px] text-right flex-shrink-0" style={{ color }}>
+                          {w.delta > 0 ? '+' : ''}{w.delta.toFixed(2)}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Right column: body silhouette */}
+          {hasBody && (
+            <div className="w-[140px] flex-shrink-0 pr-2 py-2">
+              <BodySilhouette current={bodyData.current} previous={bodyData.previous} />
+            </div>
+          )}
+        </div>
 
         {/* ─ Bottom stats strip ─ */}
         {(gymAvgStrength !== null || activeCalories) && (
           <>
-            <div className="mx-4 mt-2 mb-0 h-px bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" />
+            <div className="mx-4 mt-0 mb-0 h-px bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" />
             <div className="flex">
               {gymAvgStrength !== null && (
                 <div className="flex-1 px-4 py-2.5 border-r border-[#ffffff06]">
@@ -383,14 +462,8 @@ export default function Home({ onNavigate, onLogout }) {
           style={{ animationDelay: '0.15s' }}
         >
           <div className="flex items-center gap-3">
-            <span
-              className="w-8 h-8 rounded-sm flex items-center justify-center text-base font-sans border"
-              style={{
-                borderColor: weekFilled ? '#c8f500' : '#ff2d2d',
-                color: weekFilled ? '#c8f500' : '#ff2d2d',
-                backgroundColor: weekFilled ? 'rgba(200,245,0,0.06)' : 'rgba(255,45,45,0.06)',
-              }}
-            >
+            <span className="w-8 h-8 rounded-sm flex items-center justify-center text-base font-sans border"
+              style={{ borderColor: weekFilled ? '#c8f500' : '#ff2d2d', color: weekFilled ? '#c8f500' : '#ff2d2d', backgroundColor: weekFilled ? 'rgba(200,245,0,0.06)' : 'rgba(255,45,45,0.06)' }}>
               {weekFilled ? '✓' : '!'}
             </span>
             <div className="text-left">
@@ -404,33 +477,19 @@ export default function Home({ onNavigate, onLogout }) {
 
       {/* ── Weight Input ── */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-3 mb-5 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-        <Input
-          label={todayLogged ? 'ACTUALIZAR PESO (kg)' : 'PESO DE HOY (kg)'}
-          type="number"
-          step="0.01"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="00.00"
-          required
-        />
-        <Button type="submit" disabled={loading}>
-          {loading ? '...' : todayLogged ? 'ACTUALIZAR PESO' : 'AÑADIR PESO'}
-        </Button>
+        <Input label={todayLogged ? 'ACTUALIZAR PESO (kg)' : 'PESO DE HOY (kg)'} type="number" step="0.01" value={input} onChange={e => setInput(e.target.value)} placeholder="00.00" required />
+        <Button type="submit" disabled={loading}>{loading ? '...' : todayLogged ? 'ACTUALIZAR PESO' : 'AÑADIR PESO'}</Button>
       </form>
 
       {/* ── Quick Actions ── */}
       <div className="grid grid-cols-2 gap-2 mb-5 animate-fade-in-up" style={{ animationDelay: '0.25s' }}>
-        <button
-          onClick={() => onNavigate('calories', activeCalories)}
-          className="glass-card rounded-sm h-14 flex flex-col items-center justify-center group hover:border-[#333333] transition-all duration-300"
-        >
+        <button onClick={() => onNavigate('calories', activeCalories)}
+          className="glass-card rounded-sm h-14 flex flex-col items-center justify-center group hover:border-[#333333] transition-all duration-300">
           <span className="text-[#555555] font-sans text-[9px] tracking-[0.2em] group-hover:text-[#888888] transition-colors">CALORÍAS</span>
           <span className="text-[#c8f500] font-mono text-sm font-bold group-hover:text-[#deff33] transition-colors">→</span>
         </button>
-        <button
-          onClick={() => onNavigate('gym')}
-          className="glass-card rounded-sm h-14 flex flex-col items-center justify-center group hover:border-[#333333] transition-all duration-300"
-        >
+        <button onClick={() => onNavigate('gym')}
+          className="glass-card rounded-sm h-14 flex flex-col items-center justify-center group hover:border-[#333333] transition-all duration-300">
           <span className="text-[#555555] font-sans text-[9px] tracking-[0.2em] group-hover:text-[#888888] transition-colors">GYM</span>
           <span className="text-[#c8f500] font-mono text-sm font-bold group-hover:text-[#deff33] transition-colors">→</span>
         </button>
@@ -438,27 +497,16 @@ export default function Home({ onNavigate, onLogout }) {
 
       <Separator className="my-5" />
 
-      {/* ── Navigation ── */}
       <div className="flex flex-col gap-2 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-        {[
-          ['VER DATOS',        'data'],
-          ['NUEVA FASE',       'phase'],
-          ['NUEVO INFORME',    'newReport'],
-          ['DATOS PERSONALES', 'profile'],
-        ].map(([label, page]) => (
-          <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>
-            {label}
-          </Button>
+        {[['VER DATOS', 'data'], ['NUEVA FASE', 'phase'], ['NUEVO INFORME', 'newReport'], ['DATOS PERSONALES', 'profile']].map(([label, page]) => (
+          <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>{label}</Button>
         ))}
       </div>
 
       <Separator className="my-5" />
 
-      {/* ── AI Report Button ── */}
-      <button
-        onClick={() => onNavigate('aiReport')}
-        className="w-full h-14 glass-card-elevated rounded-sm border-[#1f2a00] text-[#6a8000] font-sans text-sm font-bold tracking-widest text-left px-5 hover:text-[#c8f500] hover:border-[#c8f500]/40 transition-all duration-300 group relative overflow-hidden mb-4"
-      >
+      <button onClick={() => onNavigate('aiReport')}
+        className="w-full h-14 glass-card-elevated rounded-sm border-[#1f2a00] text-[#6a8000] font-sans text-sm font-bold tracking-widest text-left px-5 hover:text-[#c8f500] hover:border-[#c8f500]/40 transition-all duration-300 group relative overflow-hidden mb-4">
         <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-[#c8f500] to-transparent opacity-0 group-hover:opacity-60 transition-opacity duration-300 rounded-r-sm" />
         <span className="relative z-10 flex items-center gap-2">
           <span className="text-[#333333] group-hover:text-[#c8f500] transition-colors">◆</span>
@@ -466,9 +514,7 @@ export default function Home({ onNavigate, onLogout }) {
         </span>
       </button>
 
-      <Button variant="ghost" onClick={() => { logout(); onLogout() }}>
-        CERRAR SESIÓN
-      </Button>
+      <Button variant="ghost" onClick={() => { logout(); onLogout() }}>CERRAR SESIÓN</Button>
 
       <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] mt-4 select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
 

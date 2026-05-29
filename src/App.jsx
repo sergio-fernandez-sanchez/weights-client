@@ -26,6 +26,7 @@ import BodyMeasurements from './pages/BodyMeasurements'
 import PhaseComparison from './pages/PhaseComparison'
 import MonthlySummary from './pages/MonthlySummary'
 import Photos from './pages/Photos'
+import PhotoUpload from './pages/PhotoUpload'
 import ParticleBackground from './components/ParticleBackground'
 
 function GlitchTransition({ onMidpoint, onDone, color }) {
@@ -132,6 +133,7 @@ function renderPage(page, pageData, navigate, handleLogout) {
     case 'phaseComparison':     return <PhaseComparison      onNavigate={navigate} />
     case 'monthlySummary':      return <MonthlySummary       onNavigate={navigate} />
     case 'photos':              return <Photos               onNavigate={navigate} />
+    case 'photoUpload':         return <PhotoUpload          onNavigate={navigate} />
     default:                    return <Home                 onNavigate={navigate} onLogout={handleLogout} />
   }
 }

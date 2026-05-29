@@ -3,6 +3,13 @@ import AnimatedNumber from './AnimatedNumber'
 export default function MetricCard({ label, value, sub, valueColor = '#c8f500', icon = null }) {
   const numericValue = typeof value === 'string' ? parseFloat(value) : value
   const isNumeric = !isNaN(numericValue) && value !== '—' && value !== null
+  // Extract decimal places from the numeric part only
+  const decimalPlaces = (() => {
+    if (!isNumeric || typeof value !== 'string') return 2
+    const numStr = value.match(/[\d.]+/)?.[0] || ''
+    const parts = numStr.split('.')
+    return parts.length > 1 ? parts[1].length : 0
+  })()
 
   return (
     <div className="relative glass-card glass-sheen rounded-sm p-4 group card-hover overflow-hidden">
@@ -27,7 +34,7 @@ export default function MetricCard({ label, value, sub, valueColor = '#c8f500', 
         </div>
         <p className="font-mono text-xl font-bold leading-none tracking-tight" style={{ color: valueColor }}>
           {isNumeric ? (
-            <AnimatedNumber value={numericValue} decimals={value?.includes?.('.') ? (value.split('.')[1]?.length || 2) : 0} />
+            <AnimatedNumber value={numericValue} decimals={decimalPlaces} />
           ) : (
             value
           )}

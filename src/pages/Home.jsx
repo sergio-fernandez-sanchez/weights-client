@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getLastWeight, postWeight, getActiveCalories, getWeeklyReports, getActivePhase, getWeights, getGymLogs, getBodyMeasurements, logout } from '../api/client'
+import { getLastWeight, postWeight, getActiveCalories, getWeeklyReports, getActivePhase, getWeights, getGymLogs, getBodyMeasurements, getProfile, logout } from '../api/client'
 import PageWrapper from '../components/PageWrapper'
 import PageHeader from '../components/PageHeader'
 import Button from '../components/Button'
@@ -55,9 +55,10 @@ const BODY_POINTS = [
   { key: 'neck_cm',      label: 'CUE', y: 33, side: 'l' },
 ]
 
-function BodySilhouette({ current, previous }) {
+function BodySilhouette({ current, previous, sex }) {
   if (!current) return null
   const W = 130, H = 200
+  const isFemale = sex === 'female'
 
   function deltaArrow(key) {
     if (!previous || current[key] == null || previous[key] == null) return null
@@ -68,35 +69,127 @@ function BodySilhouette({ current, previous }) {
       : { symbol: '↓', color: '#ff9f00' }
   }
 
+  const BODY_POINTS = [
+    { key: 'neck_cm',      label: 'CUE', y: 38, side: 'l' },
+    { key: 'shoulders_cm', label: 'HOM', y: 52, side: 'r' },
+    { key: 'chest_cm',     label: 'PEC', y: 70, side: 'r' },
+    { key: 'bicep_cm',     label: 'BÍC', y: 78, side: 'l' },
+    { key: 'waist_cm',     label: 'CIN', y: 98, side: 'r' },
+    { key: 'hip_cm',       label: 'CAD', y: 116, side: 'l' },
+    { key: 'thigh_cm',     label: 'MUS', y: 145, side: 'r' },
+  ]
+
+  // Athletic male silhouette — wider shoulders, V-taper, defined muscles
+  const malePath = `
+    M65,8 C60,8 56,12 56,17 C56,22 59,26 63,27
+    L62,27 C61,29 60,31 60,33
+    L60,36 C59,37 56,39 50,42
+    C44,45 38,47 35,50
+    L32,54 C30,58 28,68 27,76
+    C26,82 27,86 30,88
+    L33,88 C34,86 34,84 33,80
+    L36,68 C38,62 40,58 42,54
+    L43,51 C46,50 50,50 52,52
+    L54,60 C55,68 55,80 54,92
+    C53,100 52,106 50,112
+    L48,120 C47,124 46,130 46,136
+    C46,142 46,150 47,158
+    C47,166 48,174 49,180
+    L50,186 C51,190 53,192 56,192
+    L60,192 C61,190 61,188 60,184
+    L58,170 C57,160 57,150 58,140
+    L60,130 C62,124 64,120 65,118
+    L65,118
+    C66,120 68,124 70,130
+    L72,140 C73,150 73,160 72,170
+    L70,184 C69,188 69,190 70,192
+    L74,192 C77,192 79,190 80,186
+    L81,180 C82,174 83,166 83,158
+    C84,150 84,142 84,136
+    C84,130 83,124 82,120
+    L80,112 C78,106 77,100 76,92
+    C75,80 75,68 76,60
+    L78,52 C80,50 84,50 87,51
+    L88,54 C90,58 92,62 94,68
+    L97,80 C96,84 96,86 97,88
+    L100,88 C103,86 104,82 103,76
+    C102,68 100,58 98,54
+    L95,50 C92,47 86,45 80,42
+    C74,39 71,37 70,36
+    L70,33 C70,31 69,29 68,27
+    L67,27 C71,26 74,22 74,17
+    C74,12 70,8 65,8 Z
+  `
+
+  // Athletic female silhouette — narrower shoulders, defined waist, wider hips
+  const femalePath = `
+    M65,8 C61,8 57,12 57,17 C57,22 60,26 63,27
+    L62,27 C61,29 61,31 61,33
+    L61,36 C60,37 58,39 54,42
+    C50,44 46,46 43,48
+    L40,50 C38,53 36,60 35,68
+    C34,74 35,78 37,80
+    L40,80 C41,78 41,76 40,73
+    L42,64 C44,58 46,54 48,52
+    L50,50 C53,49 56,50 58,53
+    L59,58 C60,64 60,70 60,78
+    C59,86 58,92 56,98
+    C54,104 52,108 50,112
+    L47,120 C46,126 45,132 45,140
+    C45,148 45,156 46,164
+    C46,172 47,178 48,182
+    L49,188 C50,191 52,193 55,193
+    L59,193 C60,191 60,189 59,186
+    L58,174 C57,164 57,154 58,144
+    L60,134 C62,128 64,124 65,122
+    L65,122
+    C66,124 68,128 70,134
+    L72,144 C73,154 73,164 72,174
+    L71,186 C70,189 70,191 71,193
+    L75,193 C78,193 80,191 81,188
+    L82,182 C83,178 84,172 84,164
+    C85,156 85,148 85,140
+    C85,132 84,126 83,120
+    L80,112 C78,108 76,104 74,98
+    C72,92 71,86 70,78
+    C70,70 70,64 71,58
+    L72,53 C74,50 77,49 80,50
+    L82,52 C84,54 86,58 88,64
+    L90,73 C89,76 89,78 90,80
+    L93,80 C95,78 96,74 95,68
+    C94,60 92,53 90,50
+    L87,48 C84,46 80,44 76,42
+    C72,39 70,37 69,36
+    L69,33 C69,31 69,29 68,27
+    L67,27 C70,26 73,22 73,17
+    C73,12 69,8 65,8 Z
+  `
+
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
-      {/* Body silhouette — minimalist outline */}
-      <g stroke="#1e1e1e" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-        {/* Head */}
-        <ellipse cx="65" cy="18" rx="10" ry="12" />
-        {/* Neck */}
-        <line x1="60" y1="30" x2="60" y2="38" />
-        <line x1="70" y1="30" x2="70" y2="38" />
-        {/* Shoulders */}
-        <path d="M60,38 Q58,40 40,44" />
-        <path d="M70,38 Q72,40 90,44" />
-        {/* Arms left */}
-        <path d="M40,44 Q36,60 30,80 Q28,86 32,90" />
-        {/* Arms right */}
-        <path d="M90,44 Q94,60 100,80 Q102,86 98,90" />
-        {/* Torso */}
-        <path d="M40,44 Q42,70 44,95 Q46,110 50,118" />
-        <path d="M90,44 Q88,70 86,95 Q84,110 80,118" />
-        {/* Hips */}
-        <path d="M50,118 Q48,122 46,128" />
-        <path d="M80,118 Q82,122 84,128" />
-        {/* Legs */}
-        <path d="M46,128 Q44,148 42,170 Q41,180 44,190" />
-        <path d="M84,128 Q86,148 88,170 Q89,180 86,190" />
-        {/* Inner legs */}
-        <path d="M56,128 Q58,148 60,170 Q60,180 58,190" />
-        <path d="M74,128 Q72,148 70,170 Q70,180 72,190" />
-      </g>
+      {/* Body silhouette */}
+      <path
+        d={isFemale ? femalePath : malePath}
+        fill="#131313"
+        stroke="#1e1e1e"
+        strokeWidth="1"
+        strokeLinejoin="round"
+      />
+
+      {/* Muscle definition lines — subtle */}
+      {!isFemale && (
+        <g stroke="#1a1a1a" strokeWidth="0.5" fill="none" opacity="0.6">
+          {/* Chest separation */}
+          <path d="M65,55 C65,62 65,68 65,75" />
+          {/* Abs */}
+          <path d="M58,80 C60,80 62,80 65,80" />
+          <path d="M65,80 C68,80 70,80 72,80" />
+          <path d="M58,88 C60,88 62,88 65,88" />
+          <path d="M65,88 C68,88 70,88 72,88" />
+          <path d="M59,96 C61,96 63,96 65,96" />
+          <path d="M65,96 C67,96 69,96 71,96" />
+        </g>
+      )}
 
       {/* Measurement lines and labels */}
       {BODY_POINTS.map(bp => {
@@ -104,19 +197,16 @@ function BodySilhouette({ current, previous }) {
         if (val == null) return null
         const delta = deltaArrow(bp.key)
         const isLeft = bp.side === 'l'
-        const lineX1 = isLeft ? 25 : 105
+        const lineX1 = isLeft ? 28 : 102
         const lineX2 = isLeft ? 2 : 128
         const textX = isLeft ? 0 : 130
         const anchor = isLeft ? 'start' : 'end'
 
         return (
           <g key={bp.key}>
-            {/* Dotted line from body to label */}
             <line x1={lineX1} y1={bp.y} x2={lineX2} y2={bp.y}
               stroke="#2a2a2a" strokeWidth="0.5" strokeDasharray="2,2" />
-            {/* Dot on body */}
             <circle cx={lineX1} cy={bp.y} r="1.5" fill="#333333" />
-            {/* Value */}
             <text x={textX} y={bp.y - 3} textAnchor={anchor}
               fill="#666666" fontSize="7.5" fontFamily="Inter, sans-serif">
               {bp.label}
@@ -125,7 +215,6 @@ function BodySilhouette({ current, previous }) {
               fill="#999999" fontSize="8" fontFamily="'Courier New', monospace" fontWeight="bold">
               {parseFloat(val).toFixed(1)}
             </text>
-            {/* Delta arrow */}
             {delta && (
               <text x={textX + (isLeft ? 28 : -28)} y={bp.y + 6} textAnchor="middle"
                 fill={delta.color} fontSize="7" fontFamily="Inter, sans-serif"
@@ -139,6 +228,7 @@ function BodySilhouette({ current, previous }) {
     </svg>
   )
 }
+
 
 export default function Home({ onNavigate, onLogout }) {
   const [lastWeight, setLastWeight]         = useState(null)
@@ -154,6 +244,7 @@ export default function Home({ onNavigate, onLogout }) {
   const [refreshing, setRefreshing]         = useState(true)
   const [celebrating, setCelebrating]       = useState(false)
   const [bodyData, setBodyData]             = useState({ current: null, previous: null })
+  const [userSex, setUserSex]               = useState(null)
 
   const lastMondayISO = getLastMondayISO()
 
@@ -201,11 +292,13 @@ export default function Home({ onNavigate, onLogout }) {
 
   async function fetchExtraStats() {
     try {
-      const [phaseData, weightsData, gymData, bodyMeasurements] = await Promise.all([
-        getActivePhase(), getWeights(), getGymLogs(), getBodyMeasurements().catch(() => [])
+      const [phaseData, weightsData, gymData, bodyMeasurements, profileData] = await Promise.all([
+        getActivePhase(), getWeights(), getGymLogs(), getBodyMeasurements().catch(() => []), getProfile().catch(() => null)
       ])
       setActivePhase(phaseData)
       setAllWeights(weightsData || [])
+
+      if (profileData?.sex) setUserSex(profileData.sex)
 
       // Body measurements — last 2
       if (bodyMeasurements && bodyMeasurements.length > 0) {
@@ -430,7 +523,7 @@ export default function Home({ onNavigate, onLogout }) {
           {/* Right column: body silhouette */}
           {hasBody && (
             <div className="w-[140px] flex-shrink-0 pr-2 py-2">
-              <BodySilhouette current={bodyData.current} previous={bodyData.previous} />
+              <BodySilhouette current={bodyData.current} previous={bodyData.previous} sex={userSex} />
             </div>
           )}
         </div>

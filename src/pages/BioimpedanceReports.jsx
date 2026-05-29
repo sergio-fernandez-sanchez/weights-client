@@ -104,7 +104,7 @@ function BioChart({ reports }) {
       <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-2">EVOLUCIÓN</p>
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
         onMouseMove={handleMove} onTouchMove={handleMove}
-        onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)}>
+        onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)} className="chart-reveal">
         <defs>
           {CHART_METRICS.map(m => (
             <linearGradient key={m.key} id={`bio-area-${m.key}`} x1="0" y1="0" x2="0" y2="1">
@@ -236,32 +236,52 @@ export default function BioimpedanceReports({ onNavigate }) {
           )}
         </div>
 
-        {/* Composition donut */}
-        {report.body_fat_pct != null && report.skeletal_muscle_mass != null && report.total_body_water != null && bodyWeight && (
+        {/* Composition donut — fat vs fat-free (sums to 100%) */}
+        {report.body_fat_pct != null && (
           <div className="glass-card rounded-sm p-4 mb-4">
             <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-3">COMPOSICIÓN CORPORAL</p>
             <div className="flex items-center justify-center gap-6">
               <DonutChart
                 segments={[
                   { value: parseFloat(report.body_fat_pct), label: '% GRASA', color: '#ff6b35' },
-                  { value: report.skeletal_muscle_mass ? (parseFloat(report.skeletal_muscle_mass) / parseFloat(bodyWeight) * 100) : 0, label: '% MÚSC.', color: '#4a9eff' },
-                  { value: report.total_body_water ? (parseFloat(report.total_body_water) / parseFloat(bodyWeight) * 100) : 0, label: '% AGUA', color: '#00b4d8' },
+                  { value: 100 - parseFloat(report.body_fat_pct), label: '% LIBRE', color: '#4a9eff' },
                 ]}
                 size={130}
                 strokeWidth={16}
               />
-              <div className="flex flex-col gap-2">
-                {[
-                  ['GRASA', `${parseFloat(report.body_fat_pct).toFixed(1)}%`, '#ff6b35'],
-                  ['MÚSCULO', report.skeletal_muscle_mass ? `${(parseFloat(report.skeletal_muscle_mass) / parseFloat(bodyWeight) * 100).toFixed(1)}%` : '—', '#4a9eff'],
-                  ['AGUA', report.total_body_water ? `${(parseFloat(report.total_body_water) / parseFloat(bodyWeight) * 100).toFixed(1)}%` : '—', '#00b4d8'],
-                ].map(([label, val, color]) => (
-                  <div key={label} className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                    <span className="text-[#555555] font-sans text-[10px] w-[52px]">{label}</span>
-                    <span className="font-mono text-xs font-bold" style={{ color }}>{val}</span>
+              <div className="flex flex-col gap-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#ff6b35' }} />
+                  <div>
+                    <span className="text-[#555555] font-sans text-[9px] block tracking-wider">GRASA</span>
+                    <span className="font-mono text-sm font-bold text-[#ff6b35]">{parseFloat(report.body_fat_pct).toFixed(1)}%</span>
                   </div>
-                ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#4a9eff' }} />
+                  <div>
+                    <span className="text-[#555555] font-sans text-[9px] block tracking-wider">LIBRE DE GRASA</span>
+                    <span className="font-mono text-sm font-bold text-[#4a9eff]">{(100 - parseFloat(report.body_fat_pct)).toFixed(1)}%</span>
+                  </div>
+                </div>
+                {report.skeletal_muscle_mass && bodyWeight && (
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#c8f500' }} />
+                    <div>
+                      <span className="text-[#555555] font-sans text-[9px] block tracking-wider">M. ESQUELÉTICA</span>
+                      <span className="font-mono text-xs font-bold text-[#c8f500]">{parseFloat(report.skeletal_muscle_mass).toFixed(1)} kg</span>
+                    </div>
+                  </div>
+                )}
+                {report.total_body_water && (
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#00b4d8' }} />
+                    <div>
+                      <span className="text-[#555555] font-sans text-[9px] block tracking-wider">AGUA CORPORAL</span>
+                      <span className="font-mono text-xs font-bold text-[#00b4d8]">{parseFloat(report.total_body_water).toFixed(1)} kg</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

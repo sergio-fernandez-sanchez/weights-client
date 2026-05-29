@@ -114,7 +114,7 @@ function ExerciseChart({ name, logs, phases }) {
       </div>
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
         onMouseMove={handleMove} onTouchMove={handleMove}
-        onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)}>
+        onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)} className="chart-reveal">
         <defs>
           {Object.entries(PHASE_COLORS).map(([phase, color]) => (
             <linearGradient key={phase} id={`gym-area-${phase}`} x1="0" y1="0" x2="0" y2="1">
@@ -131,8 +131,8 @@ function ExerciseChart({ name, logs, phases }) {
         ))}
         {segments.map((seg, i) => (
           <g key={i}>
-            <polygon points={seg.area} fill={`url(#gym-area-${seg.phase || 'unknown'})`} className="svg-area-fade" style={{ "--area-delay": `${i * 0.1 + 0.4}s` }} />
-            <polyline points={seg.points} fill="none" stroke={PHASE_COLORS[seg.phase] || '#888'} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" className="svg-line-draw" style={{ "--draw-duration": "1.5s", "--line-length": "2000", "--draw-delay": `${i * 0.1}s` }} />
+            <polygon points={seg.area} fill={`url(#gym-area-${seg.phase || 'unknown'})`} />
+            <polyline points={seg.points} fill="none" stroke={PHASE_COLORS[seg.phase] || '#888'} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
           </g>
         ))}
         {points.length <= 20 && points.map((p, i) => (

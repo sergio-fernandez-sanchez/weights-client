@@ -45,7 +45,7 @@ export default function RadarChart({ data, size = 260, className = '' }) {
 
   return (
     <div className={`flex justify-center ${className}`}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="chart-fade-up" style={{ "--reveal-delay": "0.15s" }}>
         {/* Grid */}
         {gridLevels.map((level, i) => (
           <polygon key={i} points={level.points} fill="none" stroke="#1a1a1a" strokeWidth="1" />
@@ -56,20 +56,20 @@ export default function RadarChart({ data, size = 260, className = '' }) {
         ))}
         {/* Data fill */}
         <polygon points={dataPolygon} fill="rgba(200,245,0,0.08)" stroke="none"
-          className="svg-area-fade" style={{ "--area-delay": "0.3s" }} />
+          />
         {/* Data outline */}
         <polygon points={dataPolygon} fill="none" stroke="#c8f500" strokeWidth="1.5" strokeLinejoin="round"
-          className="svg-line-draw" style={{ "--draw-duration": "1.5s", "--line-length": "2000" }} />
+          />
         {/* Data dots */}
         {dataPoints.map((p, i) => (
           <circle key={i} cx={p.x} cy={p.y} r="3" fill="#c8f500"
-            className="svg-dot-pop" style={{ "--dot-delay": `${0.8 + i * 0.1}s` }} />
+            />
         ))}
         {/* Labels */}
         {labels.map((l, i) => (
           <text key={i} x={l.x} y={l.y} textAnchor="middle" dominantBaseline="central"
             fill="#555555" fontSize="9" fontFamily="Inter, sans-serif"
-            className="svg-area-fade" style={{ "--area-delay": `${0.5 + i * 0.05}s` }}>
+           >
             {l.label}
           </text>
         ))}

@@ -68,7 +68,7 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
     <div className="glass-card rounded-sm p-4 mb-4 relative overflow-hidden">
       <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-3">EVOLUCIÓN EN ESTA FASE</p>
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
-        onMouseMove={handleMouseMove} onTouchMove={handleMouseMove} onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)}>
+        onMouseMove={handleMouseMove} onTouchMove={handleMouseMove} onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)} className="chart-reveal">
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={phaseColor} stopOpacity="0.25" />
@@ -88,13 +88,13 @@ function PhaseChart({ data, phaseColor, weightGoal }) {
             stroke={phaseColor} strokeWidth="1" strokeDasharray="4,4" strokeOpacity="0.4" />
         )}
         {/* Area fill */}
-        <polygon points={areaPoints} fill={`url(#${gradId})`} className="svg-area-fade" style={{ "--area-delay": "0.6s" }} />
+        <polygon points={areaPoints} fill={`url(#${gradId})`} />
         {/* Line */}
         <polyline points={points} fill="none" stroke={phaseColor} strokeWidth="2"
-          strokeLinejoin="round" strokeLinecap="round" className="svg-line-draw" style={{ "--draw-duration": "1.8s", "--line-length": "2000" }} />
+          strokeLinejoin="round" strokeLinecap="round" />
         {/* Data points */}
         {data.length <= 30 && data.map((d, i) => (
-          <circle key={i} cx={xPos(i)} cy={yPos(d.weight)} r="2" fill={phaseColor} className="svg-dot-pop" style={{ "--dot-delay": `${0.8 + i * 0.03}s` }} />
+          <circle key={i} cx={xPos(i)} cy={yPos(d.weight)} r="2" fill={phaseColor} />
         ))}
         {tooltip && (
           <>

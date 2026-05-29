@@ -17,7 +17,7 @@ export default function DonutChart({ segments, size = 140, strokeWidth = 18, cla
 
   return (
     <div className={`relative inline-flex items-center justify-center ${className}`}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="chart-reveal" style={{ "--reveal-delay": "0.2s" }}>
         {/* Background ring */}
         <circle cx={cx} cy={cy} r={radius} fill="none" stroke="#1a1a1a" strokeWidth={strokeWidth} />
         {/* Segments */}
@@ -31,12 +31,7 @@ export default function DonutChart({ segments, size = 140, strokeWidth = 18, cla
             strokeDasharray={`${arc.dash} ${arc.gap}`}
             strokeLinecap="round"
             transform={`rotate(${-90 + arc.rotation} ${cx} ${cy})`}
-            className="svg-line-draw"
-            style={{
-              "--draw-duration": "1.2s",
-              "--line-length": circumference,
-              "--draw-delay": `${i * 0.2}s`,
-            }}
+
           />
         ))}
       </svg>

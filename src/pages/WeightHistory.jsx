@@ -92,10 +92,10 @@ function WeightChart({ data }) {
   const presentPhases = [...new Set(data.map(d => d.phase_type))].filter(p => p !== 'unknown')
 
   return (
-    <div className="glass-card rounded-sm p-3 relative overflow-hidden">
+    <div className="glass-card rounded-sm p-3 relative overflow-hidden chart-fade-up">
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full"
         onMouseMove={handleMouseMove} onTouchMove={handleMouseMove}
-        onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)}>
+        onMouseLeave={() => setTooltip(null)} onTouchEnd={() => setTooltip(null)} className="chart-reveal">
         <defs>
           {Object.entries(PHASE_COLORS).map(([phase, color]) => (
             <linearGradient key={phase} id={`wh-area-${phase}`} x1="0" y1="0" x2="0" y2="1">
@@ -114,13 +114,13 @@ function WeightChart({ data }) {
         ))}
         {/* Area fills */}
         {segments.map((seg, i) => (
-          <polygon key={`area-${i}`} points={seg.area} className="svg-draw-area" style={{ "--draw-duration": "2s", "--draw-delay": `${0.2 + i * 0.1}s` }} fill={`url(#wh-area-${seg.phase || 'unknown'})`} className="svg-area-fade" style={{ "--area-delay": `${i * 0.15 + 0.5}s` }} />
+          <polygon key={`area-${i}`} points={seg.area} fill={`url(#wh-area-${seg.phase || 'unknown'})`} />
         ))}
         {/* Lines */}
         {segments.map((seg, i) => (
           <polyline key={i} points={seg.points} fill="none" className="svg-draw" style={{ "--path-length": "2000", "--draw-duration": "2s", "--draw-delay": `${0.2 + i * 0.1}s` }}
             stroke={PHASE_COLORS[seg.phase] || '#888'} strokeWidth="2"
-            strokeLinejoin="round" strokeLinecap="round" className="svg-line-draw" style={{ "--draw-duration": "1.8s", "--line-length": "2000", "--draw-delay": `${i * 0.15}s` }} />
+            strokeLinejoin="round" strokeLinecap="round" />
         ))}
         {/* Moving average */}
         {(() => {
@@ -128,7 +128,7 @@ function WeightChart({ data }) {
           if (maData.length < 2) return null
           const maPoints = maData.map((d, i) => `${xPos(i)},${yPos(d.weight)}`).join(' ')
           return <polyline points={maPoints} fill="none" stroke="#ffffff" strokeWidth="1" className="svg-draw" style={{ "--path-length": "2000", "--draw-duration": "2.5s", "--draw-delay": "0.5s" }}
-            strokeDasharray="4,4" strokeOpacity="0.2" strokeLinejoin="round" className="svg-line-draw" style={{ "--draw-duration": "2s", "--line-length": "2000", "--draw-delay": "0.3s" }} />
+            strokeDasharray="4,4" strokeOpacity="0.2" strokeLinejoin="round" />
         })()}
         {tooltip && (
           <>

@@ -41,6 +41,7 @@ export default function Photos({ onNavigate }) {
   const [measurements, setMeasurements] = useState([])
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
+  const [lightbox, setLightbox] = useState(null)
 
   useEffect(() => { fetchAll() }, [])
 
@@ -158,13 +159,14 @@ export default function Photos({ onNavigate }) {
                   <div key={type} className="flex flex-col gap-1">
                     <p className="text-[#444444] font-sans text-[9px] tracking-[0.15em] text-center">{TYPE_LABELS[type]}</p>
                     {photo ? (
-                      <div className="relative rounded-sm overflow-hidden border border-[#222222] group aspect-[3/4]">
+                      <div className="relative rounded-sm overflow-hidden border border-[#222222] group aspect-[3/4] cursor-pointer"
+                        onClick={() => setLightbox({ src: `data:image/jpeg;base64,${photo.image_data}`, type })}>
                         <img
                           src={`data:image/jpeg;base64,${photo.image_data}`}
                           alt={type}
                           className="w-full h-full object-cover"
                         />
-                        <button onClick={() => handleDelete(photo.id)}
+                        <button onClick={e => { e.stopPropagation(); handleDelete(photo.id) }}
                           className="absolute top-1 right-1 w-6 h-6 rounded-sm bg-[#0a0a0a]/70 text-[#555555] text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 hover:text-[#ff2d2d] transition-all">
                           ✕
                         </button>
@@ -184,6 +186,31 @@ export default function Photos({ onNavigate }) {
         <Separator className="mt-8 mb-4" />
         <p className="text-[#1a1a1a] font-sans text-[9px] text-center tracking-[0.3em] select-none">W E I G H T S <span className="text-[#252525]">·</span> 1.0</p>
         {toast && <Toast message={toast.msg} type={toast.type} onDone={() => setToast(null)} />}
+
+        {/* Lightbox */}
+        {lightbox && (
+          <div
+            className="fixed inset-0 z-[9000] flex items-center justify-center bg-[#0a0a0a]/95 backdrop-blur-sm"
+            onClick={() => setLightbox(null)}
+          >
+            <div className="relative max-w-[90vw] max-h-[85vh] animate-fade-in" onClick={e => e.stopPropagation()}>
+              <img
+                src={lightbox.src}
+                alt={lightbox.type}
+                className="max-w-full max-h-[85vh] object-contain rounded-sm"
+              />
+              <div className="absolute top-3 left-3 px-2.5 py-1 rounded-sm bg-[#0a0a0a]/80 border border-[#333333]">
+                <span className="text-[#c8f500] font-sans text-[10px] font-bold tracking-wider">{TYPE_LABELS[lightbox.type]}</span>
+              </div>
+              <button
+                onClick={() => setLightbox(null)}
+                className="absolute top-3 right-3 w-8 h-8 rounded-sm bg-[#0a0a0a]/80 border border-[#333333] text-[#888888] flex items-center justify-center hover:border-[#ff2d2d] hover:text-[#ff2d2d] transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

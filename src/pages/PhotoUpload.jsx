@@ -59,7 +59,7 @@ export default function PhotoUpload({ onNavigate }) {
             <span className="w-1 h-1 rounded-full bg-[#c8f500] opacity-40" />
             TIPO
           </label>
-          <Tabs options={[['FRENTE', 'front'], ['PERFIL', 'side'], ['ESPALDA', 'back']]} value={uploadType} onChange={setUploadType} />
+          <Tabs options={[['FRENTE', 'front'], ['PERFIL', 'side'], ['ESPALDA', 'back']]} value={uploadType} onChange={t => { setUploadType(t); setPreview(null); if (fileRef.current) fileRef.current.value = '' }} />
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -77,7 +77,7 @@ export default function PhotoUpload({ onNavigate }) {
         </div>
 
         {/* File input */}
-        <input ref={fileRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/heic,image/heif,image/webp,.jpg,.jpeg,.png,.heic,.heif,.webp" onChange={handleFileSelect} className="hidden" />
 
         {preview ? (
           <div className="relative rounded-sm overflow-hidden border border-[#222222]">

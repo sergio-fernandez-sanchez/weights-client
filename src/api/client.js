@@ -299,10 +299,10 @@ async function getPhotosByDate(date) {
   return request(`/photos/${date}`)
 }
 
-async function uploadPhoto(date, photoType, imageData) {
+async function uploadPhoto(date, photoType, imageData, phaseType = null) {
   return request('/photos', {
     method: 'POST',
-    body: JSON.stringify({ date, photo_type: photoType, image_data: imageData }),
+    body: JSON.stringify({ date, photo_type: photoType, image_data: imageData, phase_type: phaseType }),
   })
 }
 

@@ -9,7 +9,7 @@ import EmptyState from '../components/EmptyState'
 import Toast from '../components/Toast'
 
 const PHASE_COLORS = {
-  bulk: '#c8f500', cut: '#ff2d2d', maintenance: '#ff9f00', unknown: '#888888',
+  bulk: '#a4c400', cut: '#e23535', maintenance: '#e88c00', unknown: '#8a8c94',
 }
 const PHASE_LABELS = { bulk: 'VOLUMEN', cut: 'DEFINICIÓN', maintenance: 'MANTEN.' }
 
@@ -57,10 +57,10 @@ function getWeightDelta(weights, startDate, endDate) {
 }
 
 function deltaColor(delta) {
-  if (delta === null) return '#444444'
-  if (delta > 0.2) return '#c8f500'
-  if (delta < -0.2) return '#ff2d2d'
-  return '#ff9f00'
+  if (delta === null) return '#94959c'
+  if (delta > 0.2) return '#5f8a00'
+  if (delta < -0.2) return '#d92020'
+  return '#b87400'
 }
 
 const STORAGE_KEY = 'weights_calorie_references'
@@ -80,9 +80,9 @@ function saveRefs(refs) {
 function CalorieRefCard({ refs, onEdit }) {
   const hasData = refs.cut || refs.maintenance || refs.bulk
   const items = [
-    { key: 'cut',         label: 'DÉFICIT',  color: '#ff2d2d' },
-    { key: 'maintenance', label: 'MANTEN.',  color: '#ff9f00' },
-    { key: 'bulk',        label: 'VOLUMEN',  color: '#c8f500' },
+    { key: 'cut',         label: 'DÉFICIT',  color: '#d92020' },
+    { key: 'maintenance', label: 'MANTEN.',  color: '#b87400' },
+    { key: 'bulk',        label: 'VOLUMEN',  color: '#5f8a00' },
   ]
 
   return (
@@ -96,7 +96,7 @@ function CalorieRefCard({ refs, onEdit }) {
         </div>
         <button
           onClick={onEdit}
-          className="px-2.5 h-6 rounded-sm border border-[#252525] text-[#555555] font-sans text-[10px] font-bold tracking-wider hover:border-[#c8f500] hover:text-[#c8f500] transition-colors"
+          className="px-2.5 h-6 glass-card card-hover click-press rounded-sm text-[#6c6e76] font-sans text-[10px] font-bold tracking-wider transition-all"
         >
           EDITAR
         </button>
@@ -111,7 +111,7 @@ function CalorieRefCard({ refs, onEdit }) {
               style={{ backgroundColor: `${item.color}08`, border: `1px solid ${item.color}15` }}>
               <div className="absolute top-0 left-0 right-0 h-[1px]" style={{ backgroundColor: item.color, opacity: 0.3 }} />
               <p className="font-sans text-[9px] tracking-[0.15em] mb-1" style={{ color: `${item.color}99` }}>{item.label}</p>
-              <p className="font-mono text-base font-bold leading-none" style={{ color: refs[item.key] ? item.color : '#2a2a2a' }}>
+              <p className="font-mono text-base font-bold leading-none" style={{ color: refs[item.key] ? item.color : '#b6b7bd' }}>
                 {refs[item.key] || '—'}
               </p>
             </div>
@@ -138,11 +138,11 @@ function EditRefsModal({ refs, onSave, onCancel }) {
 
       <div className="flex gap-2">
         <button onClick={onCancel}
-          className="flex-1 h-10 rounded-sm border border-[#252525] text-[#555555] font-sans text-xs font-bold tracking-wider hover:border-[#888888] hover:text-[#888888] transition-colors">
+          className="flex-1 h-10 glass-card card-hover click-press rounded-sm text-[#6c6e76] font-sans text-xs font-bold tracking-wider transition-all">
           CANCELAR
         </button>
         <button onClick={() => onSave(form)}
-          className="flex-1 h-10 rounded-sm bg-[#c8f500] text-[#0a0a0a] font-sans text-xs font-bold tracking-wider hover:bg-[#deff33] transition-colors">
+          className="flex-1 h-10 btn-liquid click-press rounded-sm text-[#2a3a00] font-sans text-xs font-bold tracking-wider flex items-center justify-center">
           GUARDAR
         </button>
       </div>
@@ -238,7 +238,7 @@ export default function CaloriesHistory({ onNavigate }) {
                       <div className="flex flex-col items-end gap-1.5">
                         {isActive && (
                           <span className="flex items-center gap-1.5 font-sans text-[9px] tracking-widest px-2 py-0.5 rounded-sm text-[#c8f500]"
-                            style={{ backgroundColor: 'rgba(200,245,0,0.08)', border: '1px solid rgba(200,245,0,0.15)' }}>
+                            style={{ backgroundColor: 'rgba(164,196,0,0.08)', border: '1px solid rgba(164,196,0,0.15)' }}>
                             <span className="w-1.5 h-1.5 rounded-full bg-[#c8f500] animate-pulse" />
                             ACTIVO
                           </span>

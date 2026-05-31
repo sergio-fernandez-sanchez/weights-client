@@ -5,7 +5,7 @@ import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 import EmptyState from '../components/EmptyState'
 
-const PHASE_COLORS = { bulk: '#c8f500', cut: '#ff2d2d', maintenance: '#ff9f00' }
+const PHASE_COLORS = { bulk: '#a4c400', cut: '#e23535', maintenance: '#e88c00' }
 const PHASE_LABELS = { bulk: 'VOLUMEN', cut: 'DEFINICIÓN', maintenance: 'MANTEN.' }
 
 function parseDate(dateStr) { return new Date(dateStr + 'T00:00:00') }
@@ -57,23 +57,23 @@ function calcPhaseStats(phase, weights, gymLogs) {
 }
 
 function PhaseCard({ phase, stats, maxDays, isActive }) {
-  const color = PHASE_COLORS[phase.phase_type] || '#888'
+  const color = PHASE_COLORS[phase.phase_type] || '#71727a'
   const label = PHASE_LABELS[phase.phase_type] || phase.phase_type
   const phaseStart = parseDate(phase.start_date)
   const barWidth = maxDays > 0 ? Math.max(8, (stats.days / maxDays) * 100) : 50
 
   function deltaColor(d) {
-    if (d === null) return '#444'
-    if (phase.phase_type === 'bulk') return d > 0 ? '#c8f500' : d < -0.2 ? '#ff2d2d' : '#ff9f00'
-    if (phase.phase_type === 'cut') return d < 0 ? '#c8f500' : d > 0.2 ? '#ff2d2d' : '#ff9f00'
-    return Math.abs(d) < 0.5 ? '#c8f500' : '#ff9f00'
+    if (d === null) return '#94959c'
+    if (phase.phase_type === 'bulk') return d > 0 ? '#5f8a00' : d < -0.2 ? '#d92020' : '#b87400'
+    if (phase.phase_type === 'cut') return d < 0 ? '#5f8a00' : d > 0.2 ? '#d92020' : '#b87400'
+    return Math.abs(d) < 0.5 ? '#5f8a00' : '#b87400'
   }
 
   function gymColor(g) {
-    if (g === null) return '#444'
-    if (g > 2) return '#c8f500'
-    if (g < -2) return '#ff2d2d'
-    return '#ff9f00'
+    if (g === null) return '#94959c'
+    if (g > 2) return '#5f8a00'
+    if (g < -2) return '#d92020'
+    return '#b87400'
   }
 
   return (
@@ -123,7 +123,7 @@ function PhaseCard({ phase, stats, maxDays, isActive }) {
         <div className="flex-1 px-4 py-2.5 border-r border-[#ffffff06]">
           <p className="text-[#333333] font-sans text-[9px] tracking-[0.1em] mb-0.5">KG/SEM</p>
           <p className="font-mono text-sm font-bold" style={{ color: deltaColor(stats.weeklyRate) }}>
-            {stats.weeklyRate !== null ? `${stats.weeklyRate > 0 ? '+' : ''}${stats.weeklyRate}` : '—'}
+            {stats.weeklyRate !== null ? <>{stats.weeklyRate > 0 ? '+' : ''}{stats.weeklyRate} <span className="text-[10px] font-normal opacity-60">kg/sem</span></> : '—'}
           </p>
         </div>
         {/* Gym */}

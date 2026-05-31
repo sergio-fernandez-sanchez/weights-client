@@ -4,9 +4,33 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <meta name="theme-color" content="#eaecf2" />
     <title>weights-client</title>
   </head>
   <body>
+    <!-- ░░ LIQUID GLASS · refraction filters (iOS 26 style light distortion) ░░ -->
+    <svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true">
+      <defs>
+        <filter id="lg-refract" x="-35%" y="-35%" width="170%" height="170%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.008 0.012" numOctaves="2" seed="14" result="noise"/>
+          <feGaussianBlur in="noise" stdDeviation="1.6" result="softNoise"/>
+          <feDisplacementMap in="SourceGraphic" in2="softNoise" scale="54" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <filter id="lg-refract-strong" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.006 0.010" numOctaves="2" seed="7" result="noise"/>
+          <feGaussianBlur in="noise" stdDeviation="2" result="softNoise"/>
+          <feDisplacementMap in="SourceGraphic" in2="softNoise" scale="88" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <filter id="lg-refract-soft" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.012 0.016" numOctaves="2" seed="22" result="noise"/>
+          <feGaussianBlur in="noise" stdDeviation="1.2" result="softNoise"/>
+          <feDisplacementMap in="SourceGraphic" in2="softNoise" scale="30" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+      </defs>
+    </svg>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

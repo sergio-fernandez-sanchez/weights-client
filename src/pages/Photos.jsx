@@ -1,16 +1,30 @@
 import { useState, useEffect } from 'react'
-import { getPhotoDates, getPhotosByDate, deletePhoto, getWeights, getBodyMeasurements } from '../api/client'
+import { getPhotoDates, getPhotosByDate, deletePhoto, getWeights, getBodyMeasurements, getPhases } from '../api/client'
 import { SkeletonPage } from '../components/Skeleton'
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 import Toast from '../components/Toast'
 import EmptyState from '../components/EmptyState'
+import { readableOnLight } from '../utils/color'
 
 function parseDate(dateStr) { return new Date(dateStr + 'T00:00:00') }
 
 const TYPE_LABELS = { front: 'FRENTE', side: 'PERFIL', back: 'ESPALDA' }
 const TYPE_ORDER = ['front', 'side', 'back']
+
+const PHASE_COLORS = { bulk: '#a4c400', cut: '#e23535', maintenance: '#e88c00' }
+const PHASE_LABELS = { bulk: 'VOLUMEN', cut: 'DEFINICIÓN', maintenance: 'MANTENIMIENTO' }
+
+function getPhaseOnDate(phases, dateStr) {
+  const d = parseDate(dateStr)
+  for (const p of phases) {
+    const start = parseDate(p.start_date)
+    const end = p.end_date ? parseDate(p.end_date) : new Date(8640000000000000)
+    if (d >= start && d <= end) return p.phase_type
+  }
+  return null
+}
 
 const MEASUREMENT_LABELS = {
   neck_cm: 'Cuello', shoulders_cm: 'Hombros', chest_cm: 'Pecho',
@@ -39,6 +53,7 @@ export default function Photos({ onNavigate }) {
   const [photos, setPhotos] = useState([])
   const [weights, setWeights] = useState([])
   const [measurements, setMeasurements] = useState([])
+  const [phases, setPhases] = useState([])
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
   const [lightbox, setLightbox] = useState(null)
@@ -48,12 +63,13 @@ export default function Photos({ onNavigate }) {
   async function fetchAll() {
     setLoading(true)
     try {
-      const [datesData, wData, mData] = await Promise.all([
-        getPhotoDates(), getWeights(), getBodyMeasurements().catch(() => [])
+      const [datesData, wData, mData, pData] = await Promise.all([
+        getPhotoDates(), getWeights(), getBodyMeasurements().catch(() => []), getPhases().catch(() => [])
       ])
       setDates(datesData || [])
       setWeights(wData || [])
       setMeasurements(mData || [])
+      setPhases(pData || [])
       if (datesData?.length > 0 && !selectedDate) {
         const first = datesData[0]
         setSelectedDate(typeof first.date === 'string' ? first.date : first.date?.toISOString?.()?.split('T')[0] || String(first.date))
@@ -88,18 +104,16 @@ export default function Photos({ onNavigate }) {
 
   const dateWeight = selectedDate ? getWeightOnDate(weights, selectedDate) : null
   const dateMeasurements = selectedDate ? getMeasurementsOnDate(measurements, selectedDate) : null
+  // Fase de la foto: la guardada con la foto; si es antigua y no tiene, se
+  // deduce por la fecha como respaldo.
+  const storedPhase = photos.find(p => p.phase_type)?.phase_type || null
+  const datePhase = storedPhase || (selectedDate ? getPhaseOnDate(phases, selectedDate) : null)
 
   return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton onClick={() => onNavigate('data')} />
         <PageHeader title="FOTOGRAFÍAS" sub="progreso visual" />
-
-        {/* Add photo button */}
-        <button onClick={() => onNavigate('photoUpload')}
-          className="w-full h-11 glass-card rounded-sm text-[#555555] font-sans text-xs font-bold tracking-widest hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mb-5">
-          + NUEVA FOTO
-        </button>
 
         {dates.length === 0 ? (
           <EmptyState message="SIN FOTOGRAFÍAS" icon="◇" />
@@ -114,7 +128,7 @@ export default function Photos({ onNavigate }) {
                   <button key={i} onClick={() => setSelectedDate(dateStr)}
                     className={`relative flex-shrink-0 px-3 h-9 font-sans text-xs font-bold rounded-sm transition-all whitespace-nowrap ${
                       active
-                        ? 'bg-[#c8f500] text-[#0a0a0a] shadow-[0_0_12px_rgba(200,245,0,0.2)]'
+                        ? 'bg-[#c8f500] text-[#0a0a0a] shadow-[0_0_12px_rgba(164,196,0,0.2)]'
                         : 'glass-card text-[#555555] hover:text-[#888888]'
                     }`}>
                     {parseDate(dateStr).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
@@ -128,11 +142,23 @@ export default function Photos({ onNavigate }) {
 
             {/* Context bar */}
             <div className="glass-card rounded-sm p-3 mb-4">
+              {datePhase && (
+                <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[rgba(70,80,115,0.1)]">
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: PHASE_COLORS[datePhase], boxShadow: `0 0 6px ${PHASE_COLORS[datePhase]}` }} />
+                  <span className="font-sans text-[10px] font-bold tracking-[0.18em]"
+                    style={{ color: readableOnLight(PHASE_COLORS[datePhase]) }}>
+                    {PHASE_LABELS[datePhase]}
+                  </span>
+                  {!storedPhase && (
+                    <span className="font-sans text-[8px] text-[#9a9ba2] tracking-wider">(según fecha)</span>
+                  )}
+                </div>
+              )}
               <div className="flex items-center gap-4 flex-wrap">
                 {dateWeight && (
                   <div>
-                    <p className="text-[#333333] font-sans text-[9px] tracking-wider">PESO</p>
-                    <p className="text-[#c8f500] font-mono text-sm font-bold">{dateWeight.toFixed(1)} kg</p>
+                    <p className="text-[#9a9ba2] font-sans text-[9px] tracking-wider">PESO</p>
+                    <p className="text-[#5f8a00] font-mono text-sm font-bold">{dateWeight.toFixed(1)} kg</p>
                   </div>
                 )}
                 {dateMeasurements && Object.entries(MEASUREMENT_LABELS).map(([key, label]) => {
@@ -140,13 +166,13 @@ export default function Photos({ onNavigate }) {
                   if (!val) return null
                   return (
                     <div key={key}>
-                      <p className="text-[#333333] font-sans text-[8px] tracking-wider">{label.toUpperCase()}</p>
-                      <p className="text-[#888888] font-mono text-[11px] font-bold">{parseFloat(val).toFixed(1)}</p>
+                      <p className="text-[#9a9ba2] font-sans text-[8px] tracking-wider">{label.toUpperCase()}</p>
+                      <p className="text-[#41434a] font-mono text-[11px] font-bold">{parseFloat(val).toFixed(1)}</p>
                     </div>
                   )
                 })}
                 {!dateWeight && !dateMeasurements && (
-                  <p className="text-[#333333] font-sans text-[10px]">sin datos de peso/medidas para esta fecha</p>
+                  <p className="text-[#9a9ba2] font-sans text-[10px]">sin datos de peso/medidas para esta fecha</p>
                 )}
               </div>
             </div>

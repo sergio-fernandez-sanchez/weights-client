@@ -95,7 +95,7 @@ export default function Profile({ onNavigate }) {
             <select
               value={form.sex}
               onChange={set('sex')}
-              className="bg-[#111111] border border-[#222222] text-[#e8e8e8] font-sans text-sm px-4 h-12 outline-none focus:border-[#c8f500] focus:shadow-[0_0_20px_rgba(200,245,0,0.12)] transition-all duration-300 rounded-sm"
+              className="input-frosted text-[#1d1d1f] font-sans text-sm px-4 h-12 outline-none transition-all duration-300 rounded-sm"
             >
               <option value="">— selecciona —</option>
               {SEX_OPTIONS.map(o => (
@@ -116,7 +116,7 @@ export default function Profile({ onNavigate }) {
               onChange={set('allergies')}
               placeholder="Ej: lactosa, gluten..."
               rows={3}
-              className="bg-[#111111] border border-[#222222] text-[#e8e8e8] font-sans text-sm px-4 py-3 outline-none focus:border-[#c8f500] focus:shadow-[0_0_20px_rgba(200,245,0,0.12)] transition-all duration-300 resize-none rounded-sm"
+              className="input-frosted text-[#1d1d1f] font-sans text-sm px-4 py-3 outline-none transition-all duration-300 resize-none rounded-sm"
             />
           </div>
 
@@ -130,7 +130,7 @@ export default function Profile({ onNavigate }) {
               onChange={set('supplements')}
               placeholder="Ej: creatina 5g, proteína de suero..."
               rows={3}
-              className="bg-[#111111] border border-[#222222] text-[#e8e8e8] font-sans text-sm px-4 py-3 outline-none focus:border-[#c8f500] focus:shadow-[0_0_20px_rgba(200,245,0,0.12)] transition-all duration-300 resize-none rounded-sm"
+              className="input-frosted text-[#1d1d1f] font-sans text-sm px-4 py-3 outline-none transition-all duration-300 resize-none rounded-sm"
             />
           </div>
 

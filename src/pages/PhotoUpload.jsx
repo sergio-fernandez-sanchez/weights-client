@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react'
-import { uploadPhoto } from '../api/client'
+import { useState, useRef, useEffect } from 'react'
+import { uploadPhoto, getPhases } from '../api/client'
 import PageWrapper from '../components/PageWrapper'
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 import Toast from '../components/Toast'
+import { readableOnLight } from '../utils/color'
 
 const TYPES = [
   { key: 'front', label: 'FRENTE' },
@@ -12,12 +13,42 @@ const TYPES = [
   { key: 'back',  label: 'ESPALDA' },
 ]
 
+const PHASE_COLORS = { bulk: '#a4c400', cut: '#e23535', maintenance: '#e88c00' }
+const PHASE_LABELS = { bulk: 'VOLUMEN', cut: 'DEFINICIÓN', maintenance: 'MANTENIMIENTO' }
+const PHASE_OPTS = ['bulk', 'cut', 'maintenance']
+
+function parseDate(d) { return new Date(d + 'T00:00:00') }
+function phaseOnDate(phases, dateStr) {
+  const d = parseDate(dateStr)
+  for (const p of phases) {
+    const s = parseDate(p.start_date)
+    const e = p.end_date ? parseDate(p.end_date) : new Date(8640000000000000)
+    if (d >= s && d <= e) return p.phase_type
+  }
+  return null
+}
+
 export default function PhotoUpload({ onNavigate }) {
   const [photos, setPhotos] = useState({ front: null, side: null, back: null })
   const [uploadDate, setUploadDate] = useState('')
   const [uploading, setUploading] = useState(false)
   const [toast, setToast] = useState(null)
+  const [phases, setPhases] = useState([])
+  const [phaseType, setPhaseType] = useState(null)
+  const [phaseTouched, setPhaseTouched] = useState(false)
   const fileRefs = { front: useRef(null), side: useRef(null), back: useRef(null) }
+
+  useEffect(() => {
+    getPhases().then(p => setPhases(p || [])).catch(() => {})
+  }, [])
+
+  // Sugerir automáticamente la fase activa en la fecha elegida (si el usuario
+  // no ha tocado el selector manualmente).
+  useEffect(() => {
+    if (phaseTouched) return
+    const d = uploadDate || new Date().toISOString().split('T')[0]
+    setPhaseType(phaseOnDate(phases, d))
+  }, [uploadDate, phases, phaseTouched])
 
   function handleFileSelect(type, e) {
     const file = e.target.files?.[0]
@@ -51,7 +82,7 @@ export default function PhotoUpload({ onNavigate }) {
       if (!photos[type]) continue
       try {
         const base64 = photos[type].split(',')[1]
-        await uploadPhoto(date, type, base64)
+        await uploadPhoto(date, type, base64, phaseType)
         success++
       } catch {
         errors++
@@ -83,9 +114,40 @@ export default function PhotoUpload({ onNavigate }) {
           type="date"
           value={uploadDate}
           onChange={e => setUploadDate(e.target.value)}
-          className="bg-[#111111] border border-[#222222] text-[#e8e8e8] font-sans text-sm px-4 h-12 outline-none focus:border-[#c8f500] focus:shadow-[0_0_20px_rgba(200,245,0,0.12)] transition-all duration-300 rounded-sm"
+          className="input-frosted text-[#1d1d1f] font-sans text-sm px-4 h-12 outline-none transition-all duration-300 rounded-sm"
         />
         <p className="text-[#333333] font-sans text-[10px]">vacío = hoy</p>
+      </div>
+
+      {/* Fase asociada */}
+      <div className="flex flex-col gap-1.5 mb-5">
+        <label className="text-[#666666] font-sans text-[10px] tracking-[0.2em] uppercase flex items-center gap-2">
+          <span className="w-1 h-1 rounded-full opacity-60" style={{ backgroundColor: phaseType ? PHASE_COLORS[phaseType] : '#a4c400' }} />
+          FASE ASOCIADA
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          {PHASE_OPTS.map(t => {
+            const c = PHASE_COLORS[t]
+            const ink = readableOnLight(c)
+            const sel = phaseType === t
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => { setPhaseTouched(true); setPhaseType(sel ? null : t) }}
+                className="relative glass-card card-hover click-press rounded-sm py-2.5 px-2 flex flex-col items-center gap-1 overflow-hidden"
+                style={sel ? { borderColor: `${c}88`, background: `${c}1a`, boxShadow: `0 8px 22px -8px ${c}66, inset 0 1px 1px rgba(255,255,255,0.7)` } : undefined}
+              >
+                <span className="absolute top-0 left-0 right-0 h-[2px] transition-opacity"
+                  style={{ background: `linear-gradient(90deg, ${c}, transparent)`, opacity: sel ? 1 : 0.25 }} />
+                <span className="font-sans text-[9px] font-bold tracking-wider" style={{ color: sel ? ink : '#71727a' }}>{PHASE_LABELS[t]}</span>
+              </button>
+            )
+          })}
+        </div>
+        <p className="text-[#333333] font-sans text-[10px]">
+          {phaseType ? 'toca de nuevo para quitar' : 'opcional · se sugiere según la fecha'}
+        </p>
       </div>
 
       {/* 3 photo slots */}
@@ -122,12 +184,12 @@ export default function PhotoUpload({ onNavigate }) {
 
       {/* Upload button */}
       <button onClick={handleUpload} disabled={!hasAnyPhoto || uploading}
-        className="w-full h-14 bg-[#c8f500] text-[#0a0a0a] font-sans font-bold tracking-widest rounded-sm disabled:opacity-40 transition-colors hover:bg-[#deff33] flex items-center justify-center mb-4">
+        className="w-full h-14 btn-liquid click-press text-[#2a3a00] font-sans font-bold tracking-widest rounded-sm disabled:opacity-40 flex items-center justify-center mb-4">
         {uploading ? '...' : `GUARDAR ${photoCount} FOTO${photoCount !== 1 ? 'S' : ''}`}
       </button>
 
       <button onClick={() => onNavigate('photos')}
-        className="w-full h-10 glass-card rounded-sm text-[#555555] font-sans text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200">
+        className="w-full h-10 glass-card glass-sheen card-hover click-press rounded-sm text-[#6c6e76] font-sans text-xs transition-all duration-200">
         VER GALERÍA DE FOTOS
       </button>
 

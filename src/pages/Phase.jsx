@@ -1,3 +1,4 @@
+import { readableOnLight } from '../utils/color'
 import { useState, useEffect } from 'react'
 import { postPhase, getWeights, getGymLogs } from '../api/client'
 import { usePhase, PHASE_COLORS } from '../context/PhaseContext'
@@ -13,6 +14,11 @@ import { haptic } from '../utils/haptic'
 
 const PHASE_LABELS = { bulk: 'VOLUMEN', cut: 'DEFINICIÓN', maintenance: 'MANTENIMIENTO' }
 const PHASE_TYPES = ['bulk', 'cut', 'maintenance']
+const PHASE_META = {
+  bulk:        { label: 'VOLUMEN',       desc: 'ganar masa',    icon: '▲' },
+  cut:         { label: 'DEFINICIÓN',    desc: 'perder grasa',  icon: '▼' },
+  maintenance: { label: 'MANTENIMIENTO', desc: 'mantener peso', icon: '◆' },
+}
 
 function parseDate(dateStr) { return new Date(dateStr + 'T00:00:00') }
 
@@ -113,7 +119,9 @@ export default function Phase({ onNavigate }) {
   const activePhaseDays = activePhase
     ? Math.floor((new Date() - parseDate(activePhase.start_date)) / (1000 * 60 * 60 * 24))
     : null
-  const activeColor = activePhase ? (PHASE_COLORS[activePhase.phase_type] || '#888') : '#888'
+  const activeColor = activePhase ? readableOnLight(PHASE_COLORS[activePhase.phase_type] || '#71727a') : '#71727a'
+  const selColor = PHASE_COLORS[phaseType] || '#a4c400'
+  const selInk = readableOnLight(selColor)
 
   return (
     <PageWrapper>
@@ -149,19 +157,19 @@ export default function Phase({ onNavigate }) {
               <div className="flex gap-2 mb-2">
                 <div className="flex-1">
                   <p className="text-[#444444] font-sans text-[9px] tracking-wide mb-0.5">Δ PESO</p>
-                  <p className="font-mono text-sm font-bold" style={{ color: phaseSummary.delta !== null ? (phaseSummary.delta > 0 ? '#c8f500' : phaseSummary.delta < -0.2 ? '#ff2d2d' : '#ff9f00') : '#444' }}>
+                  <p className="font-mono text-sm font-bold" style={{ color: phaseSummary.delta !== null ? (phaseSummary.delta > 0 ? '#5f8a00' : phaseSummary.delta < -0.2 ? '#d92020' : '#b87400') : '#94959c' }}>
                     {phaseSummary.delta !== null ? `${phaseSummary.delta > 0 ? '+' : ''}${phaseSummary.delta} kg` : '—'}
                   </p>
                 </div>
                 <div className="flex-1">
                   <p className="text-[#444444] font-sans text-[9px] tracking-wide mb-0.5">RITMO</p>
-                  <p className="font-mono text-sm font-bold" style={{ color: phaseSummary.weeklyRate !== null ? '#888' : '#444' }}>
+                  <p className="font-mono text-sm font-bold" style={{ color: phaseSummary.weeklyRate !== null ? '#71727a' : '#94959c' }}>
                     {phaseSummary.weeklyRate !== null ? `${phaseSummary.weeklyRate > 0 ? '+' : ''}${phaseSummary.weeklyRate} kg/sem` : '—'}
                   </p>
                 </div>
                 <div className="flex-1">
                   <p className="text-[#444444] font-sans text-[9px] tracking-wide mb-0.5">GYM</p>
-                  <p className="font-mono text-sm font-bold" style={{ color: phaseSummary.gymPct !== null ? (phaseSummary.gymPct > 2 ? '#c8f500' : phaseSummary.gymPct < -2 ? '#ff2d2d' : '#ff9f00') : '#444' }}>
+                  <p className="font-mono text-sm font-bold" style={{ color: phaseSummary.gymPct !== null ? (phaseSummary.gymPct > 2 ? '#5f8a00' : phaseSummary.gymPct < -2 ? '#d92020' : '#b87400') : '#94959c' }}>
                     {phaseSummary.gymPct !== null ? `${phaseSummary.gymPct > 0 ? '+' : ''}${phaseSummary.gymPct}%` : '—'}
                   </p>
                 </div>
@@ -176,11 +184,12 @@ export default function Phase({ onNavigate }) {
 
           <div className="flex gap-2">
             <button onClick={() => { setShowConfirm(false); setPhaseSummary(null) }}
-              className="flex-1 h-10 rounded-sm border border-[#252525] text-[#555555] font-sans text-xs font-bold tracking-wider hover:border-[#888888] hover:text-[#888888] transition-colors">
+              className="flex-1 h-10 glass-card card-hover click-press rounded-sm text-[#6c6e76] font-sans text-xs font-bold tracking-wider transition-all">
               CANCELAR
             </button>
             <button onClick={doSubmit}
-              className="flex-1 h-10 rounded-sm bg-[#ff9f00] text-[#0a0a0a] font-sans text-xs font-bold tracking-wider hover:bg-[#ffb333] transition-colors">
+              className="flex-1 h-10 rounded-sm text-[#3a2600] font-sans text-xs font-bold tracking-wider click-press transition-all"
+              style={{ background: 'linear-gradient(180deg, #f0a420, #e88c00)', border: '0.5px solid #e88c00', boxShadow: '0 6px 16px -6px rgba(232,140,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4)' }}>
               CONFIRMAR
             </button>
           </div>
@@ -189,16 +198,37 @@ export default function Phase({ onNavigate }) {
 
       <div className="flex flex-col gap-1.5 mb-6">
         <label className="text-[#666666] font-sans text-[10px] tracking-[0.2em] uppercase flex items-center gap-2">
-          <span className="w-1 h-1 rounded-full bg-[#c8f500] opacity-40" />
+          <span className="w-1 h-1 rounded-full opacity-60" style={{ backgroundColor: selColor }} />
           TIPO DE FASE
         </label>
-        <Tabs options={PHASE_TYPES.map(t => [t.toUpperCase(), t])} value={phaseType} onChange={setPhaseType} className="mb-0" />
+        <div className="grid grid-cols-3 gap-2">
+          {PHASE_TYPES.map(t => {
+            const c = PHASE_COLORS[t]
+            const ink = readableOnLight(c)
+            const sel = phaseType === t
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => { haptic('light'); setPhaseType(t) }}
+                className="relative glass-card card-hover rounded-sm py-3 px-2 flex flex-col items-center gap-1.5 click-press overflow-hidden"
+                style={sel ? { borderColor: `${c}88`, background: `${c}1a`, boxShadow: `0 8px 22px -8px ${c}66, inset 0 1px 1px rgba(255,255,255,0.7)` } : undefined}
+              >
+                <span className="absolute top-0 left-0 right-0 h-[2px] transition-opacity"
+                  style={{ background: `linear-gradient(90deg, ${c}, transparent)`, opacity: sel ? 1 : 0.25 }} />
+                <span className="text-base leading-none transition-transform" style={{ color: ink, transform: sel ? 'scale(1.15)' : 'scale(1)' }}>{PHASE_META[t].icon}</span>
+                <span className="font-sans text-[9px] font-bold tracking-wider" style={{ color: sel ? ink : '#71727a' }}>{PHASE_META[t].label}</span>
+                <span className="font-sans text-[8px]" style={{ color: sel ? ink : '#9a9ba2', opacity: sel ? 0.8 : 0.6 }}>{PHASE_META[t].desc}</span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <form onSubmit={handlePreSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <label className="text-[#666666] font-sans text-[10px] tracking-[0.2em] uppercase flex items-center gap-2">
-            <span className="w-1 h-1 rounded-full bg-[#c8f500] opacity-40" />
+            <span className="w-1 h-1 rounded-full opacity-60" style={{ backgroundColor: selColor }} />
             FECHA DE INICIO
           </label>
           <Tabs options={[['HOY', 'today'], ['MANUAL', 'manual']]} value={startDateMode} onChange={setStartDateMode} className="mb-0" />
@@ -210,9 +240,17 @@ export default function Phase({ onNavigate }) {
         <Input label="OBJETIVO DE PESO (kg)" type="number" step="0.01" value={weightGoal} onChange={e => setWeightGoal(e.target.value)} placeholder="75.00" />
         <Input label="FECHA OBJETIVO (dd/mm/aa)" type="text" value={dateGoal} onChange={e => setDateGoal(e.target.value)} placeholder="01/09/26" />
 
-        <Button type="submit" disabled={loading}>
-          {loading ? '...' : 'INICIAR FASE'}
-        </Button>
+        <button type="submit" disabled={loading}
+          className="group relative w-full h-14 rounded-sm overflow-hidden font-sans font-semibold text-sm tracking-wide click-press flex items-center justify-center disabled:opacity-40 disabled:pointer-events-none transition-all"
+          style={{
+            color: '#cfd0d5',
+            background: `linear-gradient(180deg, ${selColor}f0 0%, ${selColor} 50%, ${selColor}cc 100%)`,
+            border: `0.5px solid ${selColor}`,
+            boxShadow: `0 8px 22px -6px ${selColor}80, inset 0 1px 0 rgba(255,255,255,0.55)`,
+          }}>
+          <span className="absolute top-0 left-0 right-0 h-1/2 pointer-events-none" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.5), transparent)', mixBlendMode: 'overlay' }} />
+          <span className="relative z-10">{loading ? '...' : 'INICIAR FASE'}</span>
+        </button>
       </form>
 
       <Separator className="mt-10 mb-4" />

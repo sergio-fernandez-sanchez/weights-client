@@ -1,27 +1,66 @@
+import { useEffect, useRef, useState } from 'react'
+
+/**
+ * Tabs — segmented control iOS 26 (light).
+ * Track translúcido con inset suave; indicador deslizante de cristal blanco
+ * que se anima con la curva estándar. Sin cambiar API ni datos.
+ */
 export default function Tabs({ options, value, onChange, className = '' }) {
+  const containerRef = useRef(null)
+  const [indicator, setIndicator] = useState({ left: 0, width: 0, opacity: 0 })
+
+  useEffect(() => {
+    if (!containerRef.current) return
+    const update = () => {
+      const idx = options.findIndex(([, v]) => v === value)
+      if (idx === -1) return
+      const btns = containerRef.current.querySelectorAll('[data-tab]')
+      const el = btns[idx]
+      if (!el) return
+      const cRect = containerRef.current.getBoundingClientRect()
+      const r = el.getBoundingClientRect()
+      setIndicator({ left: r.left - cRect.left, width: r.width, opacity: 1 })
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(containerRef.current)
+    return () => ro.disconnect()
+  }, [value, options])
+
   return (
-    <div className={`flex gap-1 mb-4 p-1 rounded-sm ${className}`}
+    <div
+      ref={containerRef}
+      className={`relative flex gap-0 mb-4 p-1 rounded-full ${className}`}
       style={{
-        background: 'linear-gradient(180deg, rgba(10,10,10,0.8) 0%, rgba(14,14,14,0.7) 100%)',
-        backdropFilter: 'blur(8px)',
-        border: '1px solid rgba(255,255,255,0.03)',
-        boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)',
-      }}>
+        background: 'rgba(70, 80, 115, 0.08)',
+        backdropFilter: 'blur(16px) saturate(1.6)',
+        WebkitBackdropFilter: 'blur(16px) saturate(1.6)',
+        border: '0.5px solid rgba(255,255,255,0.5)',
+        boxShadow: 'inset 0 1px 2px rgba(70,80,115,0.12), inset 0 0.5px 0 rgba(255,255,255,0.5)',
+      }}
+    >
+      <div
+        className="absolute top-1 bottom-1 rounded-full pointer-events-none"
+        style={{
+          left: indicator.left,
+          width: indicator.width,
+          opacity: indicator.opacity,
+          background: 'rgba(255, 255, 255, 0.92)',
+          border: '0.5px solid rgba(255,255,255,0.9)',
+          boxShadow: '0 2px 8px rgba(70,80,115,0.2), inset 0 0.5px 0 rgba(255,255,255,1)',
+          transition: 'left 0.32s cubic-bezier(0.32,0.72,0,1), width 0.32s cubic-bezier(0.32,0.72,0,1)',
+        }}
+      />
       {options.map(([label, val]) => {
         const active = value === val
         return (
           <button
             key={val}
+            data-tab
             onClick={() => onChange(val)}
-            className={`flex-1 h-8 font-sans text-[10px] font-bold tracking-[0.15em] transition-all duration-200 relative rounded-sm ${
-              active
-                ? 'text-[#0a0a0a]'
-                : 'bg-transparent text-[#555555] hover:text-[#888888] hover:bg-[#ffffff04]'
+            className={`relative z-[1] flex-1 h-8 font-sans text-[10px] font-semibold tracking-[0.15em] uppercase rounded-full transition-colors duration-200 ${
+              active ? 'text-[#5f8a00]' : 'text-[#71727a]'
             }`}
-            style={active ? {
-              background: 'linear-gradient(180deg, #d4ff1a 0%, #c8f500 100%)',
-              boxShadow: '0 2px 8px rgba(200,245,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
-            } : undefined}
           >
             {label}
           </button>

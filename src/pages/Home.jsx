@@ -1,3 +1,4 @@
+import { readableOnLight } from '../utils/color'
 import { useState, useEffect } from 'react'
 import { getLastWeight, postWeight, getActiveCalories, getWeeklyReports, getActivePhase, getWeights, getGymLogs, getBodyMeasurements, getProfile, logout } from '../api/client'
 import PageWrapper from '../components/PageWrapper'
@@ -36,13 +37,13 @@ function oneRM(log) {
   return null
 }
 
-const PHASE_COLORS = { bulk: '#c8f500', cut: '#ff2d2d', maintenance: '#ff9f00' }
+const PHASE_COLORS = { bulk: '#a4c400', cut: '#e23535', maintenance: '#e88c00' }
 const PHASE_LABELS = { bulk: 'VOLUMEN', cut: 'DEFINICIÓN', maintenance: 'MANTEN.' }
 
 function barColor(d) {
-  if (d > 0.2) return '#c8f500'
-  if (d < -0.2) return '#ff2d2d'
-  return '#ff9f00'
+  if (d > 0.2) return '#5f8a00'
+  if (d < -0.2) return '#d92020'
+  return '#b87400'
 }
 
 // ── Body Silhouette with measurements ──────────────────────────────────────
@@ -65,8 +66,8 @@ function BodySilhouette({ current, previous }) {
     const diff = parseFloat(current[key]) - parseFloat(previous[key])
     if (Math.abs(diff) < 0.1) return null
     return diff > 0
-      ? { symbol: '↑', color: '#4a9eff' }
-      : { symbol: '↓', color: '#ff9f00' }
+      ? { symbol: '↑', color: '#0a6fd6' }
+      : { symbol: '↓', color: '#b87400' }
   }
 
   const BODY_POINTS = [
@@ -82,7 +83,7 @@ function BodySilhouette({ current, previous }) {
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
       {/* Body silhouette — minimalist outline */}
-      <g stroke="#1e1e1e" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <g stroke="#d6d8e0" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
         {/* Head */}
         <ellipse cx="65" cy="18" rx="10" ry="12" />
         {/* Neck */}
@@ -123,14 +124,14 @@ function BodySilhouette({ current, previous }) {
         return (
           <g key={bp.key}>
             <line x1={lineX1} y1={bp.y} x2={lineX2} y2={bp.y}
-              stroke="#2a2a2a" strokeWidth="0.5" strokeDasharray="2,2" />
-            <circle cx={lineX1} cy={bp.y} r="1.5" fill="#333333" />
+              stroke="rgba(70,80,115,0.25)" strokeWidth="0.5" strokeDasharray="2,2" />
+            <circle cx={lineX1} cy={bp.y} r="1.5" fill="#71727a" />
             <text x={textX} y={bp.y - 3} textAnchor={anchor}
-              fill="#666666" fontSize="7.5" fontFamily="Inter, sans-serif">
+              fill="#9a9ba2" fontSize="7.5" fontFamily="Inter, sans-serif">
               {bp.label}
             </text>
             <text x={textX} y={bp.y + 6} textAnchor={anchor}
-              fill="#999999" fontSize="8" fontFamily="'Courier New', monospace" fontWeight="bold">
+              fill="#41434a" fontSize="8" fontFamily="'JetBrains Mono', monospace" fontWeight="bold">
               {parseFloat(val).toFixed(1)}
             </text>
             {delta && (
@@ -277,7 +278,7 @@ export default function Home({ onNavigate, onLogout }) {
   const phaseDays = activePhase
     ? Math.floor((new Date() - new Date(activePhase.start_date + 'T00:00:00')) / (1000*60*60*24))
     : null
-  const phaseColor = activePhase ? (PHASE_COLORS[activePhase.phase_type] || '#888') : '#888'
+  const phaseColor = activePhase ? readableOnLight(PHASE_COLORS[activePhase.phase_type] || '#71727a') : '#71727a'
 
   // Weekly deltas
   const weeklyDeltas = (() => {
@@ -323,11 +324,30 @@ export default function Home({ onNavigate, onLogout }) {
 
   const hasBody = bodyData.current && BODY_POINTS.some(bp => bodyData.current[bp.key] != null)
 
+  // Progreso hacia el objetivo de peso de la fase: inicio → actual → objetivo.
+  const goalRing = (() => {
+    const goal = activePhase?.weight_goal ? parseFloat(activePhase.weight_goal) : null
+    const curr = lastWeight ? parseFloat(lastWeight.weight) : null
+    if (!activePhase || goal == null || curr == null) return null
+    const start = parseDate(activePhase.start_date)
+    const sorted = [...allWeights].sort((a, b) => parseDate(a.date) - parseDate(b.date))
+    const inPhase = sorted.filter(w => parseDate(w.date) >= start)
+    const startW = inPhase.length > 0 ? parseFloat(inPhase[0].weight)
+                 : (sorted.length > 0 ? parseFloat(sorted[0].weight) : curr)
+    const total = goal - startW
+    const done = curr - startW
+    let pct
+    if (Math.abs(total) < 0.01) pct = (curr === goal ? 1 : 0)
+    else pct = done / total
+    pct = Math.max(0, Math.min(1, pct))
+    return { goal, curr, startW, pct, remaining: parseFloat((goal - curr).toFixed(2)) }
+  })()
+
   return (
     <PageWrapper>
       <PageHeader title="W E I G H T S" blink />
 
-      {/* ── Status Card ── */}
+      {/* ── Status Card (anillo de progreso) ── */}
       <div className={`glass-card-elevated glass-sheen rounded-sm mb-5 animate-fade-in-up relative overflow-hidden ${celebrating ? "celebrate-pulse" : ""}`} style={{ animationDelay: '0.1s' }}>
         {/* Top accent line */}
         <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${phaseColor}, transparent)`, opacity: 0.7 }} />
@@ -337,142 +357,135 @@ export default function Home({ onNavigate, onLogout }) {
           </div>
         )}
 
-        {/* ─ Weight + Phase row ─ */}
-        <div className="p-4 pb-0">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-1.5">
-                {todayLogged ? 'HOY' : 'ÚLTIMO REGISTRO'}
-              </p>
-              {lastWeight ? (
-                <p className="text-[#c8f500] font-mono text-4xl font-bold leading-none tracking-tight">
-                  <AnimatedNumber value={parseFloat(lastWeight.weight)} decimals={2} /><span className="text-lg ml-1 opacity-50">kg</span>
-                </p>
-              ) : (
-                <p className="text-[#333333] font-mono text-2xl font-bold">—</p>
-              )}
-              {!todayLogged && lastWeight?.date && (
-                <p className="text-[#333333] font-sans text-[10px] mt-1.5">{parseDate(lastWeight.date).toLocaleDateString('es-ES')}</p>
-              )}
-            </div>
+        <div className="p-4">
+          {/* ─ Header: etiqueta + fase ─ */}
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em]">
+              {todayLogged ? 'HOY' : 'ÚLTIMO REGISTRO'}
+            </p>
             {activePhase && (
-              <div className="flex flex-col items-end gap-1.5">
-                <span className="font-sans text-[10px] font-bold tracking-[0.15em] px-2.5 py-1 rounded-sm"
-                  style={{ color: phaseColor, backgroundColor: `${phaseColor}10`, border: `1px solid ${phaseColor}20` }}>
-                  {PHASE_LABELS[activePhase.phase_type] || activePhase.phase_type.toUpperCase()}
-                </span>
-                <span className="text-[#444444] font-sans text-[10px] tracking-wider">
-                  día <span className="font-mono font-bold text-[#888888]">{phaseDays}</span>
-                </span>
-              </div>
+              <span className="font-sans text-[10px] font-bold tracking-[0.15em] px-2.5 py-1 rounded-sm"
+                style={{ color: phaseColor, backgroundColor: `${phaseColor}10`, border: `1px solid ${phaseColor}20` }}>
+                {PHASE_LABELS[activePhase.phase_type] || activePhase.phase_type.toUpperCase()} · día {phaseDays}
+              </span>
             )}
           </div>
-          {todayLogged && (
-            <div className="flex items-center gap-1.5 mt-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#c8f500] animate-pulse" />
-              <span className="text-[#c8f500] font-sans text-[9px] tracking-[0.2em]">REGISTRADO HOY</span>
+
+          {/* ─ Anillo (progreso al objetivo) + stats laterales ─ */}
+          <div className="flex items-center gap-5">
+            {/* Ring */}
+            <div className="relative flex-shrink-0" style={{ width: 108, height: 108 }}>
+              <svg viewBox="0 0 108 108" style={{ width: 108, height: 108, transform: 'rotate(-90deg)' }}>
+                <circle cx="54" cy="54" r="47" fill="none" stroke="rgba(70,80,115,0.12)" strokeWidth="7" />
+                {goalRing && (
+                  <circle cx="54" cy="54" r="47" fill="none" stroke={phaseColor} strokeWidth="7" strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 47}
+                    strokeDashoffset={(1 - goalRing.pct) * 2 * Math.PI * 47}
+                    style={{ filter: `drop-shadow(0 0 4px ${phaseColor}66)`, transition: 'stroke-dashoffset 0.8s cubic-bezier(0.32,0.72,0,1)' }} />
+                )}
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                {lastWeight ? (
+                  <>
+                    <span className="font-mono font-bold leading-none tracking-tight" style={{ color: phaseColor, fontSize: '22px' }}>
+                      <AnimatedNumber value={parseFloat(lastWeight.weight)} decimals={2} />
+                    </span>
+                    <span className="font-mono text-[10px] text-[#9a9ba2] mt-0.5">kg</span>
+                  </>
+                ) : (
+                  <span className="font-mono text-2xl font-bold text-[#9a9ba2]">—</span>
+                )}
+              </div>
             </div>
-          )}
-        </div>
 
-        <div className="mx-4 mt-3 mb-0 h-px bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" />
-
-        {/* ─ Two-column: Charts left, Body right ─ */}
-        <div className="flex">
-          {/* Left column: sparkline + weekly bars */}
-          <div className={`${hasBody ? 'flex-1 min-w-0' : 'w-full'}`}>
-            {/* Sparkline */}
-            {sparkData.length >= 3 && (() => {
-              const min = Math.min(...sparkData), max = Math.max(...sparkData)
-              const range = max - min || 0.1
-              const W = 160, H = 28
-              const points = sparkData.map((w, i) => {
-                const x = (i / (sparkData.length - 1)) * W
-                const y = H - 2 - ((w - min) / range) * (H - 4)
-                return `${x},${y}`
-              }).join(' ')
-              const area = `0,${H} ${points} ${W},${H}`
-              return (
-                <div className="px-4 pt-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-[#333333] font-sans text-[8px] tracking-[0.15em]">14 DÍAS</p>
-                    <p className="text-[#333333] font-mono text-[8px]">{min.toFixed(1)}–{max.toFixed(1)}</p>
+            {/* Side stats: sparkline + objetivo */}
+            <div className="flex-1 min-w-0 flex flex-col gap-2.5">
+              {/* Sparkline 14d */}
+              {sparkData.length >= 3 ? (() => {
+                const min = Math.min(...sparkData), max = Math.max(...sparkData)
+                const range = max - min || 0.1
+                const W = 120, H = 24
+                const points = sparkData.map((w, i) => {
+                  const x = (i / (sparkData.length - 1)) * W
+                  const y = H - 2 - ((w - min) / range) * (H - 4)
+                  return `${x},${y}`
+                }).join(' ')
+                return (
+                  <div>
+                    <p className="text-[#444444] font-sans text-[8px] tracking-[0.15em] mb-0.5">14 DÍAS</p>
+                    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: '22px' }}>
+                      <polyline points={points} fill="none" stroke={phaseColor} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+                      <circle cx={W} cy={H - 2 - ((sparkData[sparkData.length - 1] - min) / range) * (H - 4)} r="2" fill={phaseColor} />
+                    </svg>
+                    <p className="text-[#444444] font-mono text-[8px] mt-0.5">{min.toFixed(1)}–{max.toFixed(1)} kg</p>
                   </div>
-                  <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: '28px' }}>
-                    <defs>
-                      <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={phaseColor} stopOpacity="0.15" />
-                        <stop offset="100%" stopColor={phaseColor} stopOpacity="0" />
-                      </linearGradient>
-                    </defs>
-                    <polygon points={area} fill="url(#spark-fill)" />
-                    <polyline points={points} fill="none" stroke={phaseColor} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
-                    <circle cx={W} cy={H - 2 - ((sparkData[sparkData.length - 1] - min) / range) * (H - 4)} r="2" fill={phaseColor} />
-                  </svg>
-                </div>
-              )
-            })()}
+                )
+              })() : (
+                !todayLogged && lastWeight?.date && (
+                  <p className="text-[#444444] font-sans text-[10px]">{parseDate(lastWeight.date).toLocaleDateString('es-ES')}</p>
+                )
+              )}
 
-            {/* Weekly bars */}
-            {weeklyDeltas.length > 0 && (
-              <div className="px-4 pt-2 pb-2">
-                <p className="text-[#333333] font-sans text-[8px] tracking-[0.15em] mb-2">SEMANAS</p>
-                <div className="flex flex-col gap-1.5">
-                  {weeklyDeltas.map((w, i) => {
-                    const color = barColor(w.delta)
-                    const widthPct = Math.max(4, (Math.abs(w.delta) / maxDeltaAbs) * 50)
-                    const isPos = w.delta >= 0
-                    return (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="text-[#333333] font-sans text-[8px] w-[36px] flex-shrink-0">{w.label}</span>
-                        <div className="flex-1 relative h-[5px] bg-[#111111] rounded-full overflow-hidden">
-                          {/* Center line */}
-                          <div className="absolute top-0 bottom-0 left-1/2 w-px bg-[#222222]" />
-                          {/* Bar */}
-                          <div className="absolute inset-y-0 rounded-full"
-                            style={{
-                              width: `${widthPct}%`,
-                              backgroundColor: color,
-                              boxShadow: `0 0 4px ${color}20`,
-                              ...(isPos ? { left: '50%' } : { right: '50%' }),
-                            }} />
-                        </div>
-                        <span className="font-mono text-[9px] font-bold w-[38px] text-right flex-shrink-0" style={{ color }}>
-                          {w.delta > 0 ? '+' : ''}{w.delta.toFixed(2)}
-                        </span>
-                      </div>
-                    )
-                  })}
+              {/* Objetivo / restante */}
+              {goalRing ? (
+                <div className="flex gap-4">
+                  <div>
+                    <p className="text-[#444444] font-sans text-[8px] tracking-[0.15em]">OBJETIVO</p>
+                    <p className="font-mono text-sm font-bold" style={{ color: phaseColor }}>{goalRing.goal.toFixed(1)} <span className="text-[9px] opacity-50">kg</span></p>
+                  </div>
+                  <div>
+                    <p className="text-[#444444] font-sans text-[8px] tracking-[0.15em]">RESTANTE</p>
+                    <p className="font-mono text-sm font-bold text-[#71727a]">{goalRing.remaining > 0 ? '+' : ''}{goalRing.remaining} <span className="text-[9px] opacity-50">kg</span></p>
+                  </div>
                 </div>
-              </div>
-            )}
+              ) : (
+                todayLogged && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: phaseColor }} />
+                    <span className="font-sans text-[9px] tracking-[0.2em]" style={{ color: phaseColor }}>REGISTRADO HOY</span>
+                  </div>
+                )
+              )}
+            </div>
           </div>
 
-          {/* Right column: body silhouette */}
-          {hasBody && (
-            <div className="w-[140px] flex-shrink-0 pr-2 py-2">
-              <BodySilhouette current={bodyData.current} previous={bodyData.previous} />
+          {/* ─ Barras semanales (mini-columnas) ─ */}
+          {weeklyDeltas.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-[rgba(70,80,115,0.1)]">
+              <div className="flex gap-2 items-end" style={{ height: 40 }}>
+                {weeklyDeltas.map((w, i) => {
+                  const color = barColor(w.delta)
+                  const h = Math.max(6, (Math.abs(w.delta) / maxDeltaAbs) * 28)
+                  return (
+                    <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1">
+                      <div className="w-full rounded" style={{ height: `${h}px`, backgroundColor: color, opacity: 0.85, boxShadow: `0 0 6px ${color}33` }} />
+                      <span className="font-mono text-[7px] font-bold" style={{ color }}>{w.delta > 0 ? '+' : ''}{w.delta.toFixed(2)}</span>
+                    </div>
+                  )
+                })}
+              </div>
+              <p className="text-[#444444] font-sans text-[8px] tracking-[0.15em] text-center mt-1.5">SEMANAS</p>
             </div>
           )}
         </div>
 
-        {/* ─ Bottom stats strip ─ */}
+        {/* ─ Bottom stats strip: GYM FASE + CALORÍAS ─ */}
         {(gymAvgStrength !== null || activeCalories) && (
           <>
-            <div className="mx-4 mt-0 mb-0 h-px bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" />
+            <div className="mx-4 mt-0 mb-0 h-px bg-gradient-to-r from-[rgba(70,80,115,0.1)] via-[rgba(70,80,115,0.2)] to-[rgba(70,80,115,0.1)]" />
             <div className="flex">
               {gymAvgStrength !== null && (
-                <div className="flex-1 px-4 py-2.5 border-r border-[#ffffff06]">
-                  <p className="text-[#333333] font-sans text-[9px] tracking-[0.15em] mb-0.5">GYM FASE</p>
-                  <p className="font-mono text-sm font-bold" style={{ color: gymAvgStrength > 2 ? '#c8f500' : gymAvgStrength < -2 ? '#ff2d2d' : '#ff9f00' }}>
+                <div className="flex-1 px-4 py-2.5 border-r border-[rgba(70,80,115,0.1)]">
+                  <p className="text-[#9a9ba2] font-sans text-[9px] tracking-[0.15em] mb-0.5">GYM FASE</p>
+                  <p className="font-mono text-sm font-bold" style={{ color: gymAvgStrength > 2 ? '#5f8a00' : gymAvgStrength < -2 ? '#d92020' : '#b87400' }}>
                     {gymAvgStrength > 0 ? '+' : ''}{gymAvgStrength}%
                   </p>
                 </div>
               )}
               {activeCalories && (
                 <div className="flex-1 px-4 py-2.5">
-                  <p className="text-[#333333] font-sans text-[9px] tracking-[0.15em] mb-0.5">CALORÍAS</p>
-                  <p className="text-[#888888] font-mono text-sm font-bold">{activeCalories} <span className="text-[10px] font-normal opacity-50">kcal</span></p>
+                  <p className="text-[#9a9ba2] font-sans text-[9px] tracking-[0.15em] mb-0.5">CALORÍAS</p>
+                  <p className="text-[#71727a] font-mono text-sm font-bold">{activeCalories} <span className="text-[10px] font-normal opacity-50">kcal</span></p>
                 </div>
               )}
             </div>
@@ -483,13 +496,13 @@ export default function Home({ onNavigate, onLogout }) {
       {/* ── Weekly Report Banner ── */}
       {weekFilled !== null && (
         <button
-          onClick={() => onNavigate('weeklyReport', lastMondayISO)}
-          className="w-full glass-card rounded-sm p-3 mb-5 flex items-center justify-between group hover:border-[#333333] transition-all duration-300 animate-fade-in-up"
+          onClick={() => onNavigate('weeklyReport', { weekStart: lastMondayISO, from: 'home' })}
+          className="w-full glass-card glass-sheen card-hover click-press rounded-sm p-3 mb-5 flex items-center justify-between group transition-all duration-300 animate-fade-in-up"
           style={{ animationDelay: '0.15s' }}
         >
           <div className="flex items-center gap-3">
             <span className="w-8 h-8 rounded-sm flex items-center justify-center text-base font-sans border"
-              style={{ borderColor: weekFilled ? '#c8f500' : '#ff2d2d', color: weekFilled ? '#c8f500' : '#ff2d2d', backgroundColor: weekFilled ? 'rgba(200,245,0,0.06)' : 'rgba(255,45,45,0.06)' }}>
+              style={{ borderColor: weekFilled ? '#5f8a00' : '#d92020', color: weekFilled ? '#5f8a00' : '#d92020', backgroundColor: weekFilled ? 'rgba(164,196,0,0.06)' : 'rgba(255,45,45,0.06)' }}>
               {weekFilled ? '✓' : '!'}
             </span>
             <div className="text-left">
@@ -528,12 +541,12 @@ export default function Home({ onNavigate, onLogout }) {
       {/* ── Quick Actions ── */}
       <div className="grid grid-cols-2 gap-2 mb-5 animate-fade-in-up" style={{ animationDelay: '0.25s' }}>
         <button onClick={() => onNavigate('calories', activeCalories)}
-          className="glass-card glass-sheen rounded-sm h-14 flex flex-col items-center justify-center group card-hover">
+          className="glass-card glass-sheen rounded-sm h-14 flex flex-col items-center justify-center group card-hover click-press">
           <span className="text-[#555555] font-sans text-[9px] tracking-[0.2em] group-hover:text-[#888888] transition-colors">CALORÍAS</span>
           <span className="text-[#c8f500] font-mono text-sm font-bold group-hover:text-[#deff33] transition-colors">→</span>
         </button>
         <button onClick={() => onNavigate('gym')}
-          className="glass-card glass-sheen rounded-sm h-14 flex flex-col items-center justify-center group card-hover">
+          className="glass-card glass-sheen rounded-sm h-14 flex flex-col items-center justify-center group card-hover click-press">
           <span className="text-[#555555] font-sans text-[9px] tracking-[0.2em] group-hover:text-[#888888] transition-colors">GYM</span>
           <span className="text-[#c8f500] font-mono text-sm font-bold group-hover:text-[#deff33] transition-colors">→</span>
         </button>
@@ -550,12 +563,12 @@ export default function Home({ onNavigate, onLogout }) {
       <Separator className="my-5" />
 
       <button onClick={() => onNavigate('aiReport')}
-        className="w-full h-14 glass-card-elevated glass-sheen rounded-sm border-[#1f2a00] text-[#6a8000] font-sans text-sm font-bold tracking-widest text-left px-5 hover:text-[#c8f500] hover:border-[#c8f500]/40 transition-all duration-300 group relative overflow-hidden mb-4">
-        <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-[#c8f500] to-transparent opacity-0 group-hover:opacity-60 transition-opacity duration-300 rounded-r-sm" />
-        <span className="relative z-10 flex items-center gap-2">
-          <span className="text-[#333333] group-hover:text-[#c8f500] transition-colors">◆</span>
+        className="w-full h-14 glass-card glass-sheen card-hover click-press rounded-sm text-[#3c3e45] font-sans text-sm font-bold tracking-widest text-left px-5 flex items-center justify-between group mb-4">
+        <span className="flex items-center gap-2 group-hover:text-[#5f8a00] transition-colors">
+          <span className="text-[#5f8a00]">◆</span>
           GENERAR INFORME IA
         </span>
+        <span className="text-[#a8a9b0] group-hover:text-[#5f8a00] transition-colors">›</span>
       </button>
 
       <Button variant="ghost" onClick={() => { logout(); onLogout() }}>CERRAR SESIÓN</Button>

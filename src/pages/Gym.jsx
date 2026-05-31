@@ -28,9 +28,9 @@ function oneRM(log) {
 }
 
 function progressColor(pct) {
-  if (pct > 2) return '#4caf50'
-  if (pct < -2) return '#ff2d2d'
-  return '#ff9f00'
+  if (pct > 2) return '#3a9d4e'
+  if (pct < -2) return '#d92020'
+  return '#b87400'
 }
 
 function progressLabel(pct) {
@@ -279,7 +279,7 @@ export default function Gym({ onNavigate }) {
         )}
 
         <button onClick={() => setMode('add')}
-          className="w-full h-11 glass-card rounded-sm text-[#555555] font-sans text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mt-4 mb-4">
+          className="w-full h-11 glass-card glass-sheen card-hover click-press rounded-sm text-[#6c6e76] font-sans text-xs transition-all duration-200 mt-4 mb-4">
           + AÑADIR EJERCICIO
         </button>
         <Separator className="mt-2 mb-4" />
@@ -300,7 +300,7 @@ export default function Gym({ onNavigate }) {
               EJERCICIO
             </label>
             <select value={selectedExerciseId} onChange={e => setSelectedExerciseId(e.target.value)}
-              className="bg-[#111111] border border-[#222222] text-[#e8e8e8] font-sans text-sm px-4 h-12 outline-none focus:border-[#c8f500] focus:shadow-[0_0_20px_rgba(200,245,0,0.12)] transition-all duration-300 rounded-sm" required>
+              className="input-frosted text-[#1d1d1f] font-sans text-sm px-4 h-12 outline-none transition-all duration-300 rounded-sm" required>
               <option value="">— selecciona —</option>
               {['push', 'pull', 'legs', 'custom'].map(cat => {
                 const opts = availableTypes.filter(t => t.category === cat)
@@ -319,7 +319,7 @@ export default function Gym({ onNavigate }) {
           <Button type="submit" disabled={submitting}>{submitting ? '...' : 'AÑADIR'}</Button>
         </form>
         <button onClick={() => setMode('new-exercise')}
-          className="w-full h-10 mt-4 glass-card rounded-sm text-[#555555] font-sans text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200">
+          className="w-full h-10 mt-4 glass-card glass-sheen card-hover click-press rounded-sm text-[#6c6e76] font-sans text-xs transition-all duration-200">
           + CREAR EJERCICIO PERSONALIZADO
         </button>
         <Separator className="mt-8 mb-4" />

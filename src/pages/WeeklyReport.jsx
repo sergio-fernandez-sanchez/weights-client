@@ -28,9 +28,16 @@ function toISO(date) {
 }
 
 export default function WeeklyReport({ onNavigate, initialWeekStart }) {
+  // initialWeekStart puede ser un string (semana) o { weekStart, from }
+  const weekStartValue = typeof initialWeekStart === 'object' && initialWeekStart !== null
+    ? initialWeekStart.weekStart
+    : initialWeekStart
+  const backTarget = (typeof initialWeekStart === 'object' && initialWeekStart !== null && initialWeekStart.from)
+    ? initialWeekStart.from
+    : 'home'
   const [reports, setReports] = useState({})
   const [currentMonday, setCurrentMonday] = useState(() => {
-    if (initialWeekStart) return new Date(initialWeekStart + 'T00:00:00')
+    if (weekStartValue) return new Date(weekStartValue + 'T00:00:00')
     const today = new Date()
     return getMonday(new Date(today.setDate(today.getDate() - 7)))
   })
@@ -114,7 +121,7 @@ export default function WeeklyReport({ onNavigate, initialWeekStart }) {
         ...prev,
         [week_start]: { week_start, ...form }
       }))
-      setTimeout(() => onNavigate('home'), 800)
+      setTimeout(() => onNavigate(backTarget), 800)
     } catch {
       setMsg('✗  error al guardar')
     } finally {
@@ -135,12 +142,12 @@ export default function WeeklyReport({ onNavigate, initialWeekStart }) {
     </div>
   )
 
-  const statusColor = isFilled ? '#c8f500' : '#ff2d2d'
+  const statusColor = isFilled ? '#5f8a00' : '#d92020'
 
   return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
-        <BackButton onClick={() => onNavigate('home')} />
+        <BackButton onClick={() => onNavigate(backTarget)} />
         <PageHeader title="INFORME SEMANAL" />
 
         {/* Week selector banner */}
@@ -150,12 +157,12 @@ export default function WeeklyReport({ onNavigate, initialWeekStart }) {
 
           <div className="relative flex items-center justify-between p-5">
             <button onClick={prevWeek}
-              className="w-8 h-8 flex items-center justify-center text-[#555555] font-sans text-lg hover:text-[#c8f500] transition-colors rounded-sm hover:bg-white/5">
+              className="w-8 h-8 flex items-center justify-center text-[#555555] font-sans text-lg hover:text-[#c8f500] transition-colors rounded-sm hover:bg-white/5 click-press">
               ←
             </button>
             <div className="text-center flex-1">
               <p className="text-[#444444] font-sans text-[10px] tracking-[0.3em] mb-1">SEMANA</p>
-              <p className="font-mono text-xl font-bold tracking-wide leading-none text-[#e8e8e8]">
+              <p className="font-mono text-xl font-bold tracking-wide leading-none text-[#1d1d1f]">
                 {fmtDate(currentMonday)} → {fmtDate(weekEnd)}
               </p>
               <span className="inline-flex items-center gap-1.5 mt-2 font-sans text-[10px] tracking-widest px-2 py-0.5 rounded-sm"
@@ -188,7 +195,7 @@ export default function WeeklyReport({ onNavigate, initialWeekStart }) {
               onChange={set('notes')}
               placeholder="Lesiones, enfermedades, eventos especiales..."
               rows={3}
-              className="bg-[#111111] border border-[#222222] text-[#e8e8e8] font-sans text-sm px-4 py-3 outline-none focus:border-[#c8f500] focus:shadow-[0_0_20px_rgba(200,245,0,0.12)] transition-all duration-300 resize-none rounded-sm"
+              className="input-frosted text-[#1d1d1f] font-sans text-sm px-4 py-3 outline-none transition-all duration-300 resize-none rounded-sm"
             />
           </div>
 

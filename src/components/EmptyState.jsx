@@ -77,13 +77,13 @@ export default function EmptyState({ message = 'sin datos', icon = '◇' }) {
 
   return (
     <div className="flex flex-col items-center justify-center py-12 animate-fade-in">
-      <div className="relative mb-4 text-[#1e1e1e]">
+      <div className="relative mb-4 text-[#c2c3c8]">
         {svgIcon}
-        <div className="absolute inset-0 text-[#c8f500] opacity-[0.07] blur-md">
+        <div className="absolute inset-0 text-[#c8f500] opacity-[0.12] blur-md">
           {svgIcon}
         </div>
       </div>
-      <p className="text-[#333333] font-sans text-xs tracking-[0.2em]">{message}</p>
+      <p className="text-[#9a9ba2] font-sans text-xs tracking-[0.2em]">{message}</p>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import AnimatedNumber from './AnimatedNumber'
+import { readableOnLight } from '../utils/color'
 
-export default function MetricCard({ label, value, sub, valueColor = '#c8f500', icon = null }) {
+export default function MetricCard({ label, value, sub, valueColor = '#5f8a00', icon = null }) {
   const numericValue = typeof value === 'string' ? parseFloat(value) : value
   const isNumeric = !isNaN(numericValue) && value !== '—' && value !== null
   // Extract decimal places from the numeric part only
@@ -12,34 +13,35 @@ export default function MetricCard({ label, value, sub, valueColor = '#c8f500', 
   })()
 
   return (
-    <div className="relative glass-card glass-sheen rounded-sm p-4 group card-hover overflow-hidden">
+    <div className="relative glass-card glass-sheen rounded-sm p-4 group card-hover overflow-hidden"
+      style={{ background: `linear-gradient(160deg, ${valueColor}12, rgba(255,255,255,0.03) 60%)` }}>
       {/* Top accent — liquid gradient */}
       <div
-        className="absolute top-0 left-0 right-0 h-[2px] opacity-50 group-hover:opacity-80 transition-opacity"
+        className="absolute top-0 left-0 right-0 h-[2px] opacity-60 group-hover:opacity-90 transition-opacity"
         style={{
           background: `linear-gradient(90deg, ${valueColor}, ${valueColor}40, transparent)`,
         }}
       />
 
-      {/* Ambient hover glow */}
+      {/* Ambient corner glow */}
       <div
-        className="absolute -top-10 -left-10 w-28 h-28 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-3xl"
+        className="absolute -top-10 -left-10 w-28 h-28 rounded-full opacity-30 group-hover:opacity-70 transition-opacity duration-700 blur-3xl"
         style={{ backgroundColor: valueColor }}
       />
 
       <div className="relative z-10">
         <div className="flex items-center gap-1.5 mb-2">
           {icon && <span className="text-xs opacity-50">{icon}</span>}
-          <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] uppercase">{label}</p>
+          <p className="text-[#71727a] font-sans text-[10px] font-medium tracking-[0.2em] uppercase">{label}</p>
         </div>
-        <p className="font-mono text-xl font-bold leading-none tracking-tight" style={{ color: valueColor }}>
+        <p className="font-mono text-xl font-bold leading-none tracking-tight" style={{ color: readableOnLight(valueColor) }}>
           {isNumeric ? (
             <AnimatedNumber value={numericValue} decimals={decimalPlaces} />
           ) : (
             value
           )}
         </p>
-        {sub && <p className="text-[#555555] font-sans text-[10px] mt-2 leading-relaxed">{sub}</p>}
+        {sub && <p className="text-[#71727a] font-sans text-[10px] mt-2 leading-relaxed whitespace-pre-line">{sub}</p>}
       </div>
     </div>
   )

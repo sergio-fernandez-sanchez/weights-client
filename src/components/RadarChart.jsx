@@ -48,21 +48,21 @@ export default function RadarChart({ data, size = 260, className = '' }) {
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="chart-fade-up" style={{ "--reveal-delay": "0.15s" }}>
         {/* Grid */}
         {gridLevels.map((level, i) => (
-          <polygon key={i} points={level.points} fill="none" stroke="#1a1a1a" strokeWidth="1" />
+          <polygon key={i} points={level.points} fill="none" stroke="#d6d8e0" strokeWidth="1" />
         ))}
         {/* Axes */}
         {axes.map((axis, i) => (
-          <line key={i} x1={axis.x1} y1={axis.y1} x2={axis.x2} y2={axis.y2} stroke="#1a1a1a" strokeWidth="1" />
+          <line key={i} x1={axis.x1} y1={axis.y1} x2={axis.x2} y2={axis.y2} stroke="#d6d8e0" strokeWidth="1" />
         ))}
         {/* Data fill */}
-        <polygon points={dataPolygon} fill="rgba(200,245,0,0.08)" stroke="none"
+        <polygon points={dataPolygon} fill="rgba(150,195,0,0.16)" stroke="none"
           />
         {/* Data outline */}
-        <polygon points={dataPolygon} fill="none" stroke="#c8f500" strokeWidth="1.5" strokeLinejoin="round"
+        <polygon points={dataPolygon} fill="none" stroke="#5f8a00" strokeWidth="1.75" strokeLinejoin="round"
           />
         {/* Data dots */}
         {dataPoints.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r="3" fill="#c8f500"
+          <circle key={i} cx={p.x} cy={p.y} r="3" fill="#5f8a00"
             />
         ))}
         {/* Labels */}

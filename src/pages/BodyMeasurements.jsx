@@ -8,20 +8,20 @@ import Tabs from '../components/Tabs'
 import EmptyState from '../components/EmptyState'
 
 const METRICS = [
-  { key: 'neck_cm',      label: 'CUELLO',   color: '#c8f500' },
-  { key: 'shoulders_cm', label: 'HOMBROS',  color: '#4a9eff' },
-  { key: 'chest_cm',     label: 'PECHO',    color: '#ff6b35' },
-  { key: 'bicep_cm',     label: 'BÍCEP',    color: '#ff2d2d' },
-  { key: 'waist_cm',     label: 'CINTURA',  color: '#ff9f00' },
-  { key: 'hip_cm',       label: 'CADERA',   color: '#c77dff' },
-  { key: 'thigh_cm',     label: 'MUSLO',    color: '#00b4d8' },
+  { key: 'neck_cm',      label: 'CUELLO',   color: '#5f8a00' },
+  { key: 'shoulders_cm', label: 'HOMBROS',  color: '#3a82d6' },
+  { key: 'chest_cm',     label: 'PECHO',    color: '#e07a3c' },
+  { key: 'bicep_cm',     label: 'BÍCEP',    color: '#d92020' },
+  { key: 'waist_cm',     label: 'CINTURA',  color: '#b87400' },
+  { key: 'hip_cm',       label: 'CADERA',   color: '#a25ce0' },
+  { key: 'thigh_cm',     label: 'MUSLO',    color: '#0093b8' },
 ]
 
 function parseDate(dateStr) { return new Date(dateStr + 'T00:00:00') }
 
 function deltaColor(delta) {
-  if (delta === 0) return '#888888'
-  return delta > 0 ? '#4a9eff' : '#c8f500'
+  if (delta === 0) return '#71727a'
+  return delta > 0 ? '#3a82d6' : '#5f8a00'
 }
 
 function MeasurementsChart({ reports }) {
@@ -79,7 +79,7 @@ function MeasurementsChart({ reports }) {
         </defs>
         {ticks.map((t, i) => (
           <g key={i}>
-            <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#1a1a1a" strokeWidth="1" />
+            <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#d6d8e0" strokeWidth="1" />
             <text x={PAD.left - 6} y={t.y + 4} textAnchor="end" fill="#444" fontSize="9" fontFamily="monospace">{t.val.toFixed(1)}</text>
           </g>
         ))}
@@ -97,7 +97,7 @@ function MeasurementsChart({ reports }) {
         })}
         {tooltip && (
           <line x1={tooltip.x} y1={PAD.top} x2={tooltip.x} y2={H - PAD.bottom}
-            stroke="#c8f500" strokeWidth="1" strokeDasharray="3,3" strokeOpacity="0.3" />
+            stroke="#a4c400" strokeWidth="1" strokeDasharray="3,3" strokeOpacity="0.3" />
         )}
       </svg>
       {tooltip && (
@@ -170,7 +170,7 @@ export default function BodyMeasurements({ onNavigate }) {
               <button key={i} onClick={() => setSelectedIdx(i)}
                 className={`relative flex-shrink-0 px-3 h-9 font-sans text-xs font-bold rounded-sm transition-all whitespace-nowrap ${
                   active
-                    ? 'bg-[#c8f500] text-[#0a0a0a] shadow-[0_0_12px_rgba(200,245,0,0.2)]'
+                    ? 'bg-[#c8f500] text-[#0a0a0a] shadow-[0_0_12px_rgba(164,196,0,0.2)]'
                     : 'glass-card text-[#555555] hover:text-[#888888]'
                 }`}>
                 {parseDate(r.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
@@ -226,7 +226,7 @@ export default function BodyMeasurements({ onNavigate }) {
               desc: 'Indicador de distribución de grasa y riesgo cardiovascular. Relaciona la grasa abdominal con la de caderas.',
               optimal: 'Hombres: < 0.90 (ideal 0.80–0.85). Mujeres: < 0.85 (ideal 0.70–0.80).',
               risk: 'Valores altos indican mayor acumulación de grasa visceral y riesgo metabólico.',
-              color: parseFloat(val) < 0.90 ? '#c8f500' : parseFloat(val) < 0.95 ? '#ff9f00' : '#ff2d2d',
+              color: parseFloat(val) < 0.90 ? '#5f8a00' : parseFloat(val) < 0.95 ? '#b87400' : '#d92020',
             })
           }
 
@@ -242,7 +242,7 @@ export default function BodyMeasurements({ onNavigate }) {
               desc: 'Mide la proporción torso en V. Cuanto mayor, más ancho es el torso respecto a la cintura.',
               optimal: 'Ratio de Adonis: 1.618 (proporción áurea). Buen rango: 1.40–1.60.',
               risk: 'Valores < 1.30 indican poca diferencia entre hombros y cintura.',
-              color: parseFloat(val) >= 1.40 ? '#c8f500' : parseFloat(val) >= 1.30 ? '#ff9f00' : '#ff2d2d',
+              color: parseFloat(val) >= 1.40 ? '#5f8a00' : parseFloat(val) >= 1.30 ? '#b87400' : '#d92020',
             })
           }
 
@@ -258,7 +258,7 @@ export default function BodyMeasurements({ onNavigate }) {
               desc: 'Refleja el desarrollo del torso superior respecto al abdomen.',
               optimal: 'Buen rango: 1.15–1.35. Valores altos indican buen desarrollo pectoral con cintura estrecha.',
               risk: 'Valores < 1.10 sugieren falta de desarrollo pectoral o cintura ancha.',
-              color: parseFloat(val) >= 1.15 ? '#c8f500' : parseFloat(val) >= 1.05 ? '#ff9f00' : '#ff2d2d',
+              color: parseFloat(val) >= 1.15 ? '#5f8a00' : parseFloat(val) >= 1.05 ? '#b87400' : '#d92020',
             })
           }
 
@@ -274,7 +274,7 @@ export default function BodyMeasurements({ onNavigate }) {
               desc: 'Indica el desarrollo muscular de piernas en relación al abdomen.',
               optimal: 'Buen rango: 0.60–0.75. Valores altos indican piernas desarrolladas proporcionalmente.',
               risk: 'Valores bajos pueden indicar desproporción entre tren superior e inferior.',
-              color: parseFloat(val) >= 0.60 ? '#c8f500' : parseFloat(val) >= 0.50 ? '#ff9f00' : '#ff2d2d',
+              color: parseFloat(val) >= 0.60 ? '#5f8a00' : parseFloat(val) >= 0.50 ? '#b87400' : '#d92020',
             })
           }
 
@@ -294,7 +294,7 @@ export default function BodyMeasurements({ onNavigate }) {
                         <div className="flex items-center gap-2">
                           <span className="font-mono text-lg font-bold" style={{ color: r.color }}>{r.value}</span>
                           {delta && (
-                            <span className="font-mono text-[10px]" style={{ color: parseFloat(delta) > 0 ? '#4a9eff' : '#ff9f00' }}>
+                            <span className="font-mono text-[10px]" style={{ color: parseFloat(delta) > 0 ? '#3a82d6' : '#b87400' }}>
                               {parseFloat(delta) > 0 ? '↑' : '↓'}{Math.abs(parseFloat(delta)).toFixed(3)}
                             </span>
                           )}

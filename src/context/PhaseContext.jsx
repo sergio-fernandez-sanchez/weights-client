@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { getActivePhase, isAuthenticated } from '../api/client'
 
-const PHASE_COLORS = { bulk: '#c8f500', cut: '#ff2d2d', maintenance: '#ff9f00' }
-const DEFAULT_COLOR = '#c8f500'
+const PHASE_COLORS = { bulk: '#a4c400', cut: '#e23535', maintenance: '#e88c00' }
+const DEFAULT_COLOR = '#a4c400'
 
 const PhaseContext = createContext({
   activePhase: null,

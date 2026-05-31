@@ -8,10 +8,10 @@ import Tabs from '../components/Tabs'
 import MetricCard from '../components/MetricCard'
 
 const PHASE_COLORS = {
-  bulk:        '#c8f500',
-  cut:         '#ff2d2d',
-  maintenance: '#ff9f00',
-  unknown:     '#888888',
+  bulk:        '#a4c400',
+  cut:         '#e23535',
+  maintenance: '#e88c00',
+  unknown:     '#8a8c94',
 }
 
 const FILTERS = [
@@ -41,7 +41,7 @@ function movingAverage(data, windowDays) {
   })
 }
 
-function WeightChart({ data }) {
+function WeightChart({ data, filter }) {
   const [tooltip, setTooltip] = useState(null)
   const svgRef = useRef(null)
 
@@ -66,17 +66,21 @@ function WeightChart({ data }) {
 
   // Build segments by phase
   const segments = []
-  let i = 0
-  while (i < data.length - 1) {
-    const phase = data[i].phase_type
-    let j = i + 1
-    while (j < data.length && data[j].phase_type === phase) j++
-    const seg = data.slice(i, Math.min(j + 1, data.length))
-    const pts = seg.map((d, k) => `${xPos(i + k)},${yPos(d.weight)}`).join(' ')
-    // Area polygon
-    const areaPts = `${xPos(i)},${PAD.top + chartH} ${pts} ${xPos(Math.min(i + seg.length - 1, data.length - 1))},${PAD.top + chartH}`
-    segments.push({ phase, points: pts, area: areaPts, startIdx: i })
-    i = j
+  for (let k = 0; k < data.length - 1; k++) {
+    const a = data[k], b = data[k + 1]
+    const pts = `${xPos(k)},${yPos(a.weight)} ${xPos(k + 1)},${yPos(b.weight)}`
+    const areaPts = `${xPos(k)},${PAD.top + chartH} ${pts} ${xPos(k + 1)},${PAD.top + chartH}`
+    segments.push({ phase: b.phase_type, points: pts, area: areaPts, startIdx: k })
+  }
+
+  // Marcas de año en el eje X (solo en vista TODO): primer punto de cada año
+  const yearTicks = []
+  if (filter === 'all') {
+    const seen = new Set()
+    data.forEach((d, idx) => {
+      const y = parseDate(d.date).getFullYear()
+      if (!seen.has(y)) { seen.add(y); yearTicks.push({ year: y, x: xPos(idx) }) }
+    })
   }
 
   function handleMouseMove(e) {
@@ -86,7 +90,7 @@ function WeightChart({ data }) {
     const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left - PAD.left
     const idx = Math.max(0, Math.min(data.length - 1, Math.round((x / chartW) * (data.length - 1))))
     const d = data[idx]
-    setTooltip({ x: xPos(idx), y: yPos(d.weight), weight: d.weight, date: parseDate(d.date).toLocaleDateString('es-ES'), color: PHASE_COLORS[d.phase_type] || '#888' })
+    setTooltip({ x: xPos(idx), y: yPos(d.weight), weight: d.weight, date: parseDate(d.date).toLocaleDateString('es-ES'), color: PHASE_COLORS[d.phase_type] || '#71727a' })
   }
 
   const presentPhases = [...new Set(data.map(d => d.phase_type))].filter(p => p !== 'unknown')
@@ -106,7 +110,7 @@ function WeightChart({ data }) {
         </defs>
         {ticks.map((t, i) => (
           <g key={i}>
-            <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#1a1a1a" strokeWidth="1" />
+            <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#d6d8e0" strokeWidth="1" />
             <text x={PAD.left - 6} y={t.y + 4} textAnchor="end" fill="#444" fontSize="9" fontFamily="monospace">
               {t.val.toFixed(1)}
             </text>
@@ -119,7 +123,7 @@ function WeightChart({ data }) {
         {/* Lines */}
         {segments.map((seg, i) => (
           <polyline key={i} points={seg.points} fill="none" className="svg-draw" style={{ "--path-length": "2000", "--draw-duration": "2s", "--draw-delay": `${0.2 + i * 0.1}s` }}
-            stroke={PHASE_COLORS[seg.phase] || '#888'} strokeWidth="2"
+            stroke={PHASE_COLORS[seg.phase] || '#71727a'} strokeWidth="2"
             strokeLinejoin="round" strokeLinecap="round" />
         ))}
         {/* Moving average */}
@@ -127,8 +131,8 @@ function WeightChart({ data }) {
           const maData = movingAverage(data, 7)
           if (maData.length < 2) return null
           const maPoints = maData.map((d, i) => `${xPos(i)},${yPos(d.weight)}`).join(' ')
-          return <polyline points={maPoints} fill="none" stroke="#ffffff" strokeWidth="1" className="svg-draw" style={{ "--path-length": "2000", "--draw-duration": "2.5s", "--draw-delay": "0.5s" }}
-            strokeDasharray="4,4" strokeOpacity="0.2" strokeLinejoin="round" />
+          return <polyline points={maPoints} fill="none" stroke="#1d1d1f" strokeWidth="1" className="svg-draw" style={{ "--path-length": "2000", "--draw-duration": "2.5s", "--draw-delay": "0.5s" }}
+            strokeDasharray="4,4" strokeOpacity="0.35" strokeLinejoin="round" />
         })()}
         {tooltip && (
           <>
@@ -138,6 +142,14 @@ function WeightChart({ data }) {
             <circle cx={tooltip.x} cy={tooltip.y} r="2.5" fill={tooltip.color} />
           </>
         )}
+        {yearTicks.map((t, i) => (
+          <g key={`yr-${t.year}`}>
+            <line x1={t.x} y1={PAD.top} x2={t.x} y2={PAD.top + chartH}
+              stroke="rgba(70,80,115,0.12)" strokeWidth="1" strokeDasharray="2,3" />
+            <text x={t.x} y={H - 6} textAnchor={i === 0 ? 'start' : 'middle'}
+              fill="#71727a" fontSize="9" fontFamily="'JetBrains Mono', monospace">{t.year}</text>
+          </g>
+        ))}
       </svg>
       {tooltip && (
         <div className="absolute top-3 right-3 glass-tooltip rounded-sm px-3 py-2 font-sans text-xs pointer-events-none">
@@ -249,7 +261,7 @@ export default function WeightHistory({ onNavigate }) {
         ) : viewMode === 'chart' ? (
           filtered.length === 0
             ? <p className="text-[#555555] font-sans text-sm">sin datos para este período</p>
-            : <WeightChart data={chartData} />
+            : <WeightChart data={chartData} filter={filter} />
         ) : (
           filtered.length === 0
             ? <p className="text-[#555555] font-sans text-sm">sin datos para este período</p>

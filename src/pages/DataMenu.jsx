@@ -19,16 +19,16 @@ function oneRM(log) {
 function DataItem({ label, preview, sub, onClick, color }) {
   return (
     <button onClick={onClick}
-      className="w-full glass-card rounded-sm p-3.5 flex items-center justify-between group hover:border-[#333333] transition-all duration-200 text-left">
+      className="w-full glass-card glass-sheen card-hover click-press rounded-sm p-3.5 flex items-center justify-between group text-left">
       <div className="min-w-0">
-        <p className="text-[#999999] font-sans text-xs font-bold tracking-[0.12em] group-hover:text-[#c8f500] transition-colors">{label}</p>
-        {sub && <p className="text-[#333333] font-sans text-[10px] mt-0.5 truncate">{sub}</p>}
+        <p className="text-[#3c3e45] font-sans text-xs font-bold tracking-[0.12em] group-hover:text-[#5f8a00] transition-colors">{label}</p>
+        {sub && <p className="text-[#9a9ba2] font-sans text-[10px] mt-0.5 truncate">{sub}</p>}
       </div>
       <div className="flex items-center gap-3 ml-3 flex-shrink-0">
         {preview && (
-          <span className="font-mono text-sm font-bold" style={{ color: color || '#555555' }}>{preview}</span>
+          <span className="font-mono text-sm font-bold" style={{ color: color || '#80828a' }}>{preview}</span>
         )}
-        <span className="text-[#333333] group-hover:text-[#c8f500] transition-colors">›</span>
+        <span className="text-[#a8a9b0] group-hover:text-[#5f8a00] transition-colors">›</span>
       </div>
     </button>
   )
@@ -96,7 +96,7 @@ export default function DataMenu({ onNavigate }) {
             preview={s.lastWeight}
             sub={s.weightDate ? parseDate(s.weightDate).toLocaleDateString('es-ES') : null}
             onClick={() => onNavigate('weightHistory')}
-            color="#c8f500"
+            color="#5f8a00"
           />
           <DataItem
             label="FASES"
@@ -110,14 +110,14 @@ export default function DataMenu({ onNavigate }) {
             preview={s.bestRM ? `${s.bestRM.rm} kg` : s.gymCount > 0 ? `${s.gymCount}` : null}
             sub={s.bestRM ? `mejor 1RM · ${s.bestRM.name.toLowerCase()}` : s.gymCount > 0 ? 'ejercicios activos' : null}
             onClick={() => onNavigate('gymHistory')}
-            color="#c8f500"
+            color="#5f8a00"
           />
           <DataItem
             label="CALORÍAS"
             preview={s.calories ? `${s.calories} kcal` : null}
             sub={s.calories ? 'objetivo actual' : null}
             onClick={() => onNavigate('caloriesHistory')}
-            color="#c8f500"
+            color="#5f8a00"
           />
           <DataItem
             label="BIOIMPEDANCIA"
@@ -142,7 +142,7 @@ export default function DataMenu({ onNavigate }) {
             preview={s.photoCount > 0 ? `${s.photoCount}` : null}
             sub={s.photoDates > 0 ? `${s.photoDates} sesión${s.photoDates > 1 ? 'es' : ''}` : null}
             onClick={() => onNavigate('photos')}
-            color="#c8f500"
+            color="#5f8a00"
           />
           <DataItem
             label="INFORMES SEMANALES"

@@ -17,12 +17,12 @@ const METRICS = [
   ['visceral_fat_kg',      'GRASA VISCERAL (kg)',false],
 ]
 
-const PHASE_COLORS = { bulk: '#c8f500', cut: '#ff2d2d', maintenance: '#ff9f00', unknown: '#888888' }
+const PHASE_COLORS = { bulk: '#a4c400', cut: '#e23535', maintenance: '#e88c00', unknown: '#8a8c94' }
 
 function deltaColor(delta, upIsGood) {
-  if (delta === 0) return '#888888'
-  if ((delta > 0 && upIsGood) || (delta < 0 && !upIsGood)) return '#4caf50'
-  return '#f44336'
+  if (delta === 0) return '#71727a'
+  if ((delta > 0 && upIsGood) || (delta < 0 && !upIsGood)) return '#3a9d4e'
+  return '#d92020'
 }
 
 function parseDate(dateStr) { return new Date(dateStr + 'T00:00:00') }
@@ -90,6 +90,7 @@ export default function DexaReports({ onNavigate }) {
 
   const report = reports[selectedIdx]
   const prevReport = selectedIdx > 0 ? reports[selectedIdx - 1] : null
+  const firstReport = reports.length > 0 ? reports[0] : null
   const bodyWeight = getWeightOnDate(weights, report.date)
   const phaseType = getPhaseOnPrevDay(phases, report.date)
 
@@ -107,7 +108,7 @@ export default function DexaReports({ onNavigate }) {
               <button key={i} onClick={() => setSelectedIdx(i)}
                 className={`relative flex-shrink-0 px-3 h-9 font-sans text-xs font-bold rounded-sm transition-all whitespace-nowrap ${
                   active
-                    ? 'bg-[#c8f500] text-[#0a0a0a] shadow-[0_0_12px_rgba(200,245,0,0.2)]'
+                    ? 'bg-[#c8f500] text-[#0a0a0a] shadow-[0_0_12px_rgba(164,196,0,0.2)]'
                     : 'glass-card text-[#555555] hover:text-[#888888]'
                 }`}>
                 {parseDate(r.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
@@ -139,17 +140,17 @@ export default function DexaReports({ onNavigate }) {
             <div className="flex items-center justify-center gap-6">
               <DonutChart
                 segments={[
-                  { value: parseFloat(report.body_fat_pct), label: '% GRASA', color: '#ff6b35' },
-                  { value: 100 - parseFloat(report.body_fat_pct), label: '% MAGRA', color: '#4a9eff' },
+                  { value: parseFloat(report.body_fat_pct), label: '% GRASA', color: '#e07a3c' },
+                  { value: 100 - parseFloat(report.body_fat_pct), label: '% MAGRA', color: '#3a82d6' },
                 ]}
                 size={130}
                 strokeWidth={16}
               />
               <div className="flex flex-col gap-2">
                 {[
-                  ['GRASA', `${parseFloat(report.fat_mass_kg).toFixed(1)} kg`, `${parseFloat(report.body_fat_pct).toFixed(1)}%`, '#ff6b35'],
-                  ['MAGRA', `${parseFloat(report.lean_mass_kg).toFixed(1)} kg`, `${(100 - parseFloat(report.body_fat_pct)).toFixed(1)}%`, '#4a9eff'],
-                  ...(report.muscle_mass_kg ? [['MÚSCULO', `${parseFloat(report.muscle_mass_kg).toFixed(1)} kg`, '', '#c8f500']] : []),
+                  ['GRASA', `${parseFloat(report.fat_mass_kg).toFixed(1)} kg`, `${parseFloat(report.body_fat_pct).toFixed(1)}%`, '#e07a3c'],
+                  ['MAGRA', `${parseFloat(report.lean_mass_kg).toFixed(1)} kg`, `${(100 - parseFloat(report.body_fat_pct)).toFixed(1)}%`, '#3a82d6'],
+                  ...(report.muscle_mass_kg ? [['MÚSCULO', `${parseFloat(report.muscle_mass_kg).toFixed(1)} kg`, '', '#5f8a00']] : []),
                 ].map(([label, val, pct, color]) => (
                   <div key={label} className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
@@ -171,13 +172,19 @@ export default function DexaReports({ onNavigate }) {
             if (val == null) return null
             const prev = prevReport?.[key]
             const delta = prev != null ? parseFloat(val) - parseFloat(prev) : null
+            const firstVal = firstReport?.[key]
+            const deltaFirst = (firstReport && firstReport !== report && firstVal != null)
+              ? parseFloat(val) - parseFloat(firstVal) : null
+            const subLines = []
+            if (delta !== null) subLines.push(`${delta > 0 ? '+' : ''}${delta.toFixed(2)} vs ant.`)
+            if (deltaFirst !== null) subLines.push(`${deltaFirst > 0 ? '+' : ''}${deltaFirst.toFixed(2)} vs 1ª`)
             return (
               <MetricCard
                 key={key}
                 label={label}
                 value={parseFloat(val).toFixed(2)}
-                sub={delta !== null ? `${delta > 0 ? '+' : ''}${delta.toFixed(2)} vs anterior` : undefined}
-                valueColor={delta !== null ? deltaColor(delta, upIsGood) : '#c8f500'}
+                sub={subLines.length ? subLines.join('\n') : undefined}
+                valueColor={delta !== null ? deltaColor(delta, upIsGood) : '#5f8a00'}
               />
             )
           })}

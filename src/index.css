@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -9,9 +10,10 @@
    ──────────────────────────────────────────────────────────────────────────── */
 
 body {
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -395,7 +397,9 @@ select:focus {
    ──────────────────────────────────────────────────────────────────────────── */
 
 .font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -562,3 +566,516 @@ select:focus {
   border: 0.5px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║  LIGHT · iOS 26 LIQUID GLASS + AURORA RIBBONS + HUD RADAR (latido)        ║
+   ║  Override final. Reglas posteriores y fuera de @layer → prevalecen.       ║
+   ║  Ajustes aprobados: transparencia 90 · distorsión 100 · respiración 4.0s  ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+
+:root {
+  --ink-1: #1d1d1f;
+  --ink-2: #41434a;
+  --ink-3: #71727a;
+  --ink-4: #9a9ba2;
+  --accent: #c8f500;
+  --accent-ink: #5f8a00;
+  --gs: 70, 80, 115;                 /* sombra fría premium */
+  --ease-glass: cubic-bezier(0.32, 0.72, 0, 1);
+  /* cristal — transparencia 90 (muy transparente) */
+  --g-a: 0.030;
+  --g-a2: 0.070;
+  --g-blur: 1.3px;
+}
+
+html, body {
+  background: #eaecf2;
+  color: var(--ink-1);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   GLASS CARD — transparente, refracta la luz a su paso (distorsión 100)
+   ───────────────────────────────────────────────────────────────────────── */
+.glass-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, var(--g-a));
+  /* Base: blur estándar — funciona en TODOS los navegadores, siempre transparente */
+  backdrop-filter: blur(7px) saturate(1.5) brightness(1.06);
+  -webkit-backdrop-filter: blur(7px) saturate(1.5) brightness(1.06);
+  border: 0.5px solid rgba(255, 255, 255, 0.42);
+  box-shadow:
+    0 10px 28px -12px rgba(var(--gs), 0.18),
+    0 2px 6px -3px rgba(var(--gs), 0.10),
+    inset 0 1px 1px rgba(255, 255, 255, 0.8),
+    inset 0 -14px 26px -26px rgba(var(--gs), 0.36);
+}
+.glass-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 34%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.02) 52%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.55;
+  mix-blend-mode: screen;
+}
+.glass-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.1px;
+  background: conic-gradient(from 130deg at 50% 50%,
+    rgba(255, 90, 140, 0.0) 0deg,
+    rgba(120, 200, 255, 0.5) 70deg,
+    rgba(255, 255, 255, 0.82) 140deg,
+    rgba(200, 245, 0, 0.38) 210deg,
+    rgba(180, 130, 255, 0.46) 290deg,
+    rgba(255, 90, 140, 0.0) 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.6;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   GLASS CARD ELEVATED — hero, refracción intensa
+   ───────────────────────────────────────────────────────────────────────── */
+.glass-card-elevated {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, var(--g-a2));
+  backdrop-filter: blur(12px) saturate(1.55) brightness(1.07);
+  -webkit-backdrop-filter: blur(12px) saturate(1.55) brightness(1.07);
+  border: 0.5px solid rgba(255, 255, 255, 0.56);
+  box-shadow:
+    0 26px 52px -20px rgba(var(--gs), 0.26),
+    0 8px 16px -10px rgba(var(--gs), 0.13),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.88),
+    inset 0 -18px 32px -28px rgba(var(--gs), 0.4);
+}
+.glass-card-elevated::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 38%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0.03) 50%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.6;
+  mix-blend-mode: screen;
+}
+.glass-card-elevated::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.2px;
+  background: conic-gradient(from 130deg at 50% 50%,
+    rgba(255, 90, 140, 0.0) 0deg,
+    rgba(120, 200, 255, 0.55) 70deg,
+    rgba(255, 255, 255, 0.9) 140deg,
+    rgba(200, 245, 0, 0.42) 210deg,
+    rgba(180, 130, 255, 0.5) 290deg,
+    rgba(255, 90, 140, 0.0) 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.64;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   PILL / TOOLTIP / SHEEN / GLOW / SEPARATOR
+   ───────────────────────────────────────────────────────────────────────── */
+.glass-pill {
+  position: relative;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, calc(var(--g-a) + 0.06));
+  backdrop-filter: blur(5px) saturate(1.4);
+  -webkit-backdrop-filter: blur(5px) saturate(1.4);
+  border: 0.5px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 2px 8px -2px rgba(var(--gs), 0.13),
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.78);
+}
+
+.glass-tooltip {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(20px) saturate(1.8) brightness(1.05);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8) brightness(1.05);
+  border: 0.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 18px 44px -12px rgba(var(--gs), 0.30),
+    inset 0 1px 0.5px rgba(255, 255, 255, 1);
+}
+
+.glass-sheen::before {
+  background: linear-gradient(135deg, rgba(255,255,255,0.35) 0%, transparent 38%, transparent 62%, rgba(255,255,255,0.12) 100%);
+}
+
+.glass-inner-glow {
+  box-shadow:
+    0 10px 28px -12px rgba(var(--gs), 0.18),
+    inset 0 1px 1px rgba(255, 255, 255, 0.8),
+    inset 0 0 28px rgba(200, 245, 0, 0.05);
+}
+
+.glass-separator {
+  background: linear-gradient(90deg, transparent, rgba(var(--gs), 0.16), transparent);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   CARD HOVER
+   ───────────────────────────────────────────────────────────────────────── */
+.card-hover { transition: transform 0.25s var(--ease-glass), border-color 0.25s ease, background 0.25s ease, box-shadow 0.3s var(--ease-glass); }
+.card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, calc(var(--g-a) + 0.05));
+  box-shadow:
+    0 18px 40px -12px rgba(var(--gs), 0.26),
+    inset 0 1px 1px rgba(255, 255, 255, 0.92);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   BUTTONS · INPUTS
+   ───────────────────────────────────────────────────────────────────────── */
+.btn-liquid {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #d4f93a 0%, #c8f500 50%, #b6df00 100%);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border: 0.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  box-shadow:
+    0 8px 22px -6px rgba(150, 195, 0, 0.5),
+    0 2px 6px -2px rgba(150, 195, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+  transition: all 0.2s var(--ease-glass);
+}
+.btn-liquid::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, transparent 100%);
+  pointer-events: none;
+  border-radius: 12px 12px 0 0;
+  mix-blend-mode: overlay;
+}
+.btn-liquid:hover {
+  background: linear-gradient(180deg, #d9fa55 0%, #cef608 50%, #bce500 100%);
+  transform: translateY(-1px);
+  box-shadow:
+    0 12px 30px -6px rgba(150, 195, 0, 0.55),
+    0 3px 8px -2px rgba(150, 195, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.btn-liquid:active { transform: translateY(0) scale(0.985); }
+
+.input-frosted {
+  background: rgba(255, 255, 255, 0.42);
+  backdrop-filter: blur(8px) saturate(1.6);
+  -webkit-backdrop-filter: blur(8px) saturate(1.6);
+  border: 0.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
+  box-shadow:
+    inset 0 1px 3px rgba(var(--gs), 0.10),
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.75);
+  color: var(--ink-1);
+}
+.input-frosted:focus {
+  border-color: rgba(150, 195, 0, 0.5);
+  background: rgba(255, 255, 255, 0.58);
+  box-shadow:
+    inset 0 1px 3px rgba(var(--gs), 0.08),
+    0 0 0 3.5px rgba(200, 245, 0, 0.14),
+    0 4px 18px rgba(150, 195, 0, 0.18);
+}
+
+.input-display {
+  background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.36) 100%);
+  backdrop-filter: blur(12px) saturate(1.5);
+  -webkit-backdrop-filter: blur(12px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    inset 0 1px 3px rgba(var(--gs), 0.10),
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.75);
+  color: var(--ink-1);
+}
+.input-display:focus {
+  border-color: rgba(150, 195, 0, 0.5);
+  box-shadow:
+    inset 0 1px 3px rgba(var(--gs), 0.08),
+    0 0 18px rgba(150, 195, 0, 0.14);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   REFRACCIÓN (iOS 26) — mejora progresiva.
+   Solo se aplica si el navegador soporta backdrop-filter con filtro SVG url().
+   Donde NO (Safari, Firefox), el cristal se queda con el blur estándar de
+   arriba → sigue siendo transparente, nunca opaco.
+   ───────────────────────────────────────────────────────────────────────── */
+@supports (backdrop-filter: url(#lg-refract)) or (-webkit-backdrop-filter: url(#lg-refract)) {
+  .glass-card {
+    backdrop-filter: url(#lg-refract) blur(var(--g-blur)) saturate(1.5) brightness(1.06);
+    -webkit-backdrop-filter: url(#lg-refract) blur(var(--g-blur)) saturate(1.5) brightness(1.06);
+  }
+  .glass-card-elevated {
+    backdrop-filter: url(#lg-refract-strong) blur(var(--g-blur)) saturate(1.55) brightness(1.07);
+    -webkit-backdrop-filter: url(#lg-refract-strong) blur(var(--g-blur)) saturate(1.55) brightness(1.07);
+  }
+  .glass-pill {
+    backdrop-filter: url(#lg-refract-soft) blur(var(--g-blur)) saturate(1.4);
+    -webkit-backdrop-filter: url(#lg-refract-soft) blur(var(--g-blur)) saturate(1.4);
+  }
+  .input-frosted {
+    backdrop-filter: url(#lg-refract-soft) blur(8px) saturate(1.6);
+    -webkit-backdrop-filter: url(#lg-refract-soft) blur(8px) saturate(1.6);
+  }
+}
+
+/* Si el navegador NO soporta backdrop-filter en absoluto (raro), evitamos el
+   look opaco: damos un fondo algo más presente pero translúcido. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-card, .glass-card-elevated, .glass-pill, .glass-tooltip, .input-frosted {
+    background: rgba(255, 255, 255, 0.55);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   AURORA RIBBONS + HUD RADAR (latido: respiración 4.0s) · fondo global
+   El JS de ParticleBackground inyecta los nodos; aquí van los estilos.
+   ───────────────────────────────────────────────────────────────────────── */
+.aurora-stage { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.aurora-base { position: absolute; inset: 0; background: radial-gradient(ellipse 120% 85% at 50% 0%, #f5f7fa 0%, #edeff4 50%, #e6e8ef 100%); }
+.aurora-wash { position: absolute; inset: 0; background: radial-gradient(ellipse 90% 55% at 50% -8%, rgba(255,255,255,0.7), transparent 55%); }
+
+.aurora-ribbon { position: absolute; left: -30%; width: 160%; height: 42vh; border-radius: 50%; filter: blur(58px); opacity: 0.7; will-change: transform; }
+@keyframes ribA { 0%,100% { transform: translateY(0) rotate(-8deg); } 50% { transform: translateY(8vh) rotate(-3deg); } }
+@keyframes ribB { 0%,100% { transform: translateY(0) rotate(6deg); } 50% { transform: translateY(-10vh) rotate(2deg); } }
+.aurora-ribbon.r1 { top: 18%; background: linear-gradient(90deg, transparent, rgba(200,245,0,0.5), rgba(120,200,255,0.45), transparent); animation: ribA 17s ease-in-out infinite; }
+.aurora-ribbon.r2 { top: 44%; background: linear-gradient(90deg, transparent, rgba(180,140,255,0.45), rgba(255,130,190,0.4), transparent); animation: ribB 21s ease-in-out infinite; }
+.aurora-ribbon.r3 { top: 66%; background: linear-gradient(90deg, transparent, rgba(120,220,180,0.45), rgba(120,180,255,0.4), transparent); animation: ribA 19s ease-in-out infinite; }
+
+/* HUD radar: anillos concéntricos + respiración 4.0s */
+.hud-radar {
+  position: absolute; inset: 0;
+  background: repeating-radial-gradient(circle at 50% 42%, rgba(70,90,120,0.08) 0 1px, transparent 1px 60px);
+  -webkit-mask-image: radial-gradient(circle at 50% 42%, #000 35%, transparent 72%);
+  mask-image: radial-gradient(circle at 50% 42%, #000 35%, transparent 72%);
+  transform-origin: 50% 42%;
+  will-change: transform;
+  animation: hudBreathe 4s ease-in-out infinite;
+}
+@keyframes hudBreathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.045); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-ribbon, .hud-radar { animation: none !important; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   SCROLLBAR · SELECTION · SELECT
+   ───────────────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar-thumb { background: rgba(var(--gs), 0.25); }
+::-webkit-scrollbar-thumb:hover { background: rgba(var(--gs), 0.45); }
+::selection { background: rgba(200, 245, 0, 0.32); color: #3a5400; }
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2371727a' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║  SISTEMA UNIFICADO · iOS 26 (radios · hover · click · focus · tamaños)     ║
+   ║  Tokens y utilidades coherentes para toda la app.                         ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+
+:root {
+  /* Escala de radios iOS (continuum) */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;   /* card estándar */
+  --r-lg: 20px;   /* card elevada */
+  --r-pill: 999px;
+
+  /* Curva y duración estándar de toda interacción */
+  --t-fast: 0.15s;
+  --t-base: 0.22s;
+  --t-slow: 0.32s;
+
+  /* Hover: cuánto se eleva / cuánto se hunde al click */
+  --lift: -2px;
+  --press: 0.97;
+}
+
+/* Radios unificados — sobrescriben el rounded-sm (usado en toda la app) */
+.rounded-sm  { border-radius: var(--r-md) !important; }
+.rounded-r-sm { border-top-right-radius: var(--r-md) !important; border-bottom-right-radius: var(--r-md) !important; border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; }
+.glass-pill, .rounded-full { border-radius: var(--r-pill) !important; }
+
+/* ══ HOVER unificado: elevación + resplandor de cristal + brillo de borde ══ */
+.card-hover,
+.hover-lift {
+  transition:
+    transform var(--t-slow) var(--ease-glass),
+    border-color var(--t-base) ease,
+    background var(--t-base) ease,
+    box-shadow var(--t-slow) var(--ease-glass) !important;
+}
+.hover-lift:hover { transform: translateY(var(--lift)); }
+
+.card-hover:hover {
+  transform: translateY(var(--lift));
+  border-color: rgba(255,255,255,0.85) !important;
+  background: rgba(255,255,255,0.14) !important;
+  box-shadow:
+    0 20px 44px -14px rgba(var(--gs),0.30),
+    0 6px 14px -6px rgba(var(--gs),0.18),
+    inset 0 1px 1px rgba(255,255,255,0.95),
+    inset 0 0 26px rgba(164,196,0,0.06) !important;
+}
+
+/* ══ CLICK unificado: hundimiento con destello de cristal ══ */
+.click-press { transition: transform var(--t-fast) var(--ease-glass) !important; }
+.click-press:active { transform: scale(var(--press)) !important; }
+.btn-liquid:active,
+.glass-pill:active,
+.glass-card.card-hover:active { transform: scale(var(--press)); }
+
+/* ══ Botón líquido: sweep de luz al hover ══ */
+.btn-liquid { position: relative; }
+.btn-liquid::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -60%;
+  width: 50%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.55), transparent);
+  transform: skewX(-18deg);
+  pointer-events: none;
+  opacity: 0;
+  transition: none;
+}
+.btn-liquid:hover::after {
+  opacity: 1;
+  left: 120%;
+  transition: left 0.6s var(--ease-glass), opacity 0.2s ease;
+}
+
+/* ══ Glass-card botón (secundario): borde de acento + glow al hover ══ */
+.glass-card.card-hover {
+  position: relative;
+}
+
+/* ══ Pills: hover con realce de cristal ══ */
+.glass-pill {
+  transition: transform var(--t-base) var(--ease-glass), background var(--t-base) ease, box-shadow var(--t-base) ease, border-color var(--t-base) ease;
+}
+.glass-pill:hover {
+  background: rgba(255,255,255,0.28);
+  border-color: rgba(255,255,255,0.85);
+  box-shadow: 0 4px 14px -3px rgba(var(--gs),0.22), inset 0 1px 0.5px rgba(255,255,255,0.95);
+}
+
+/* ── FOCUS unificado (accesible, color de acento) ── */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid rgba(150, 195, 0, 0.55);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
+
+/* ── Hover de acento unificado ── */
+[class*="hover:text-[#c8f500]"],
+[class*="hover:border-[#c8f500]"] { transition: color var(--t-base) ease, border-color var(--t-base) ease !important; }
+.hover\:text-\[\#c8f500\]:hover { color: #5f8a00 !important; }
+.hover\:border-\[\#c8f500\]:hover { border-color: rgba(95,138,0,0.5) !important; }
+.group:hover .group-hover\:text-\[\#c8f500\] { color: #5f8a00 !important; }
+.group:hover .group-hover\:border-\[\#c8f500\] { border-color: rgba(95,138,0,0.5) !important; }
+.hover\:border-\[\#c8f500\]\/30:hover,
+.group-hover\:border-\[\#c8f500\]\/30:hover,
+.group:hover .group-hover\:border-\[\#c8f500\]\/30 { border-color: rgba(95,138,0,0.35) !important; }
+
+
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+
+/* TEXT: grises claros (dark) → tintas oscuras (light) */
+.text-\[\#e8e8e8\] { color: #1d1d1f !important; }
+.text-\[\#c2c3c8\] { color: #6c6e76 !important; }
+.text-\[\#d6d8e0\] { color: #80828a !important; }
+option { color: #1d1d1f; background: #ffffff; }
+.text-\[\#999999\] { color: #34363d !important; }
+.text-\[\#888888\] { color: #46484f !important; }
+.text-\[\#666666\] { color: #54565d !important; }
+.text-\[\#555555\] { color: #5e6068 !important; }
+.text-\[\#444444\] { color: #6c6e76 !important; }
+.text-\[\#333333\] { color: #7a7c84 !important; }
+.text-\[\#2a2a2a\] { color: #9a9ca3 !important; }
+.text-\[\#252525\] { color: #a6a8af !important; }
+.text-\[\#222222\] { color: #a6a8af !important; }
+.text-\[\#1a1a1a\] { color: #b4b6bd !important; }
+.text-\[\#0a0a0a\] { color: #1a1a1a !important; }
+
+/* TEXT: acento lima → lima profundo legible */
+.text-\[\#c8f500\] { color: #5f8a00 !important; }
+.text-\[\#deff33\] { color: #5f8a00 !important; }
+.text-\[\#6a8000\] { color: #6f9400 !important; }
+
+/* TEXT: estados */
+.text-\[\#ff2d2d\] { color: #d92020 !important; }
+.text-\[\#ff4444\] { color: #d92020 !important; }
+.text-\[\#ff9f00\] { color: #b87400 !important; }
+.text-\[\#ff6b35\] { color: #cf4d1a !important; }
+.text-\[\#4a9eff\] { color: #0a6fd6 !important; }
+.text-\[\#00b4d8\] { color: #0089a8 !important; }
+.text-\[\#c77dff\] { color: #8b3fd6 !important; }
+
+/* BACKGROUNDS: superficies dark → transparente / cristal claro */
+.bg-\[\#0a0a0a\] { background-color: transparent !important; }
+.bg-\[\#0e0e0e\], .bg-\[\#111111\], .bg-\[\#131313\], .bg-\[\#141414\] { background-color: rgba(255,255,255,0.4) !important; }
+.bg-\[\#1a1a1a\] { background-color: rgba(255,255,255,0.5) !important; }
+.bg-\[\#222222\] { background-color: rgba(var(--glass-shadow),0.08) !important; }
+.bg-\[\#555555\] { background-color: #b6b7bd !important; }
+.bg-\[\#e8e8e8\] { background-color: #1d1d1f !important; }
+
+/* BORDERS: dark sutiles → claros sutiles */
+.border-\[\#161616\], .border-\[\#1a1a1a\], .border-\[\#222222\], .border-\[\#252525\], .border-\[\#2a2a2a\] { border-color: rgba(var(--glass-shadow),0.14) !important; }
+.border-\[\#333333\] { border-color: rgba(var(--glass-shadow),0.20) !important; }
+.border-\[\#888888\] { border-color: rgba(var(--glass-shadow),0.34) !important; }
+.border-\[\#1f2a00\] { border-color: rgba(95,138,0,0.3) !important; }
+
+/* ── Verde unificado: fills/bordes lima → lima de marca #a4c400 ── */
+.bg-\[\#c8f500\] { background-color: #a4c400 !important; }
+.bg-\[\#deff33\] { background-color: #a4c400 !important; }
+.bg-\[\#c8f500\]\/3 { background-color: rgba(164,196,0,0.03) !important; }
+.border-\[\#c8f500\] { border-color: #a4c400 !important; }
+.border-\[\#c8f500\]\/30 { border-color: rgba(164,196,0,0.4) !important; }
+.border-\[\#c8f500\]\/40 { border-color: rgba(164,196,0,0.5) !important; }
+
+/* Naranjas/ámbar de acento → naranja de fase unificado */
+.bg-\[\#ff9f00\] { background-color: #e88c00 !important; }
+.bg-\[\#ffb333\] { background-color: #e88c00 !important; }
+.border-\[\#ff9f00\] { border-color: #e88c00 !important; }
+
+/* El botón líquido (btn-liquid) conserva su gradiente lima propio en su regla. */
+
+/* Hover verdes claros neón → lima de marca/legible unificado */
+.hover\:bg-\[\#deff33\]:hover { background-color: #a4c400 !important; }
+.hover\:text-\[\#deff33\]:hover { color: #5f8a00 !important; }
+.group:hover .group-hover\:text-\[\#deff33\] { color: #5f8a00 !important; }
+
+/* Hovers de fondo oscuro residuales → hovers claros coherentes */
+.hover\:bg-\[\#131313\]:hover { background-color: rgba(70,80,115,0.06) !important; }
+.hover\:bg-\[\#e8e8e8\]:hover { background-color: rgba(95,138,0,0.10) !important; }
+.hover\:text-\[\#0a0a0a\]:hover { color: #1d1d1f !important; }

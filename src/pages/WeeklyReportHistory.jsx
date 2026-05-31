@@ -86,7 +86,7 @@ export default function WeeklyReportHistory({ onNavigate }) {
   return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
-        <BackButton onClick={() => onNavigate('home')} />
+        <BackButton onClick={() => onNavigate('data')} />
         <PageHeader title="INFORMES SEMANALES" sub="historial de todas las semanas" />
 
         {weeks.length === 0 ? (
@@ -96,39 +96,39 @@ export default function WeeklyReportHistory({ onNavigate }) {
             {weeks.map((w, i) => {
               const filled = !!w.report
               const pct = w.report ? completeness(w.report) : 0
-              const statusColor = filled ? '#c8f500' : '#ff2d2d'
+              const statusColor = filled ? '#5f8a00' : '#d92020'
 
               return (
                 <button key={w.key}
-                  onClick={() => onNavigate('weeklyReport', w.key)}
-                  className="w-full glass-card rounded-sm p-3.5 flex items-center gap-3 group hover:border-[#333333] transition-all duration-200 text-left relative overflow-hidden"
+                  onClick={() => onNavigate('weeklyReport', { weekStart: w.key, from: 'weeklyReportHistory' })}
+                  className="w-full glass-card glass-sheen card-hover click-press rounded-sm p-3.5 flex items-center gap-3 group text-left relative overflow-hidden"
                 >
                   {/* Left status bar */}
                   <div className="w-[3px] self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: statusColor, opacity: filled ? 0.7 : 0.25 }} />
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-[#e8e8e8] font-sans text-sm font-bold">{w.label}</p>
+                    <p className="text-[#1d1d1f] font-sans text-sm font-bold">{w.label}</p>
                     <div className="flex items-center gap-2 mt-1">
                       {filled ? (
                         <>
                           {w.report.training_days != null && (
-                            <span className="text-[#555555] font-sans text-[10px]">
+                            <span className="text-[#6c6e76] font-sans text-[10px]">
                               {w.report.training_days}d gym
                             </span>
                           )}
                           {w.report.avg_daily_steps != null && (
-                            <span className="text-[#555555] font-sans text-[10px]">
+                            <span className="text-[#6c6e76] font-sans text-[10px]">
                               {Math.round(w.report.avg_daily_steps / 1000)}k pasos
                             </span>
                           )}
                           {w.report.avg_water_liters != null && (
-                            <span className="text-[#555555] font-sans text-[10px]">
+                            <span className="text-[#6c6e76] font-sans text-[10px]">
                               {w.report.avg_water_liters}L
                             </span>
                           )}
                         </>
                       ) : (
-                        <span className="text-[#333333] font-sans text-[10px]">sin rellenar</span>
+                        <span className="text-[#9a9ba2] font-sans text-[10px]">sin rellenar</span>
                       )}
                     </div>
                   </div>
@@ -140,7 +140,7 @@ export default function WeeklyReportHistory({ onNavigate }) {
                         {pct === 100 ? '✓' : `${pct}%`}
                       </span>
                     )}
-                    <span className="text-[#333333] group-hover:text-[#c8f500] transition-colors">›</span>
+                    <span className="text-[#a8a9b0] group-hover:text-[#5f8a00] transition-colors">›</span>
                   </div>
                 </button>
               )

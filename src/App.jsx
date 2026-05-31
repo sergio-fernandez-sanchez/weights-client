@@ -67,7 +67,7 @@ function GlitchTransition({ onMidpoint, onDone, color }) {
           s.style.transform = `translateX(${xShift}px)`
           s.style.background = isAccent
             ? `${color}${Math.floor((0.03 + Math.random() * 0.08) * 255).toString(16).padStart(2, '0')}`
-            : `rgba(255,255,255,${0.01 + Math.random() * 0.03})`
+            : `rgba(70,80,115,${0.02 + Math.random() * 0.05})`
           s.style.borderTop = Math.random() > 0.7 ? `1px solid ${color}25` : 'none'
         })
       } else if (step === 4) {

@@ -6,7 +6,7 @@ import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 import EmptyState from '../components/EmptyState'
 
-const PHASE_COLORS = { bulk: '#c8f500', cut: '#ff2d2d', maintenance: '#ff9f00', unknown: '#888888' }
+const PHASE_COLORS = { bulk: '#a4c400', cut: '#e23535', maintenance: '#e88c00', unknown: '#8a8c94' }
 
 function parseDate(dateStr) { return new Date(dateStr + 'T00:00:00') }
 
@@ -63,19 +63,16 @@ function ExerciseChart({ name, logs, phases }) {
     return { val, y: yPos(val) }
   })
 
-  // Build segments by phase
+  // Segmentos: cada tramo entre dos puntos usa el color de la fase del punto
+  // de DESTINO (la fase en la que se logró ese nuevo dato).
   const segments = []
-  let i = 0
-  while (i < points.length) {
-    const phase = points[i].phase
-    let j = i + 1
-    while (j < points.length && points[j].phase === phase) j++
-    const seg = points.slice(i, Math.min(j + 1, points.length))
-    const pts = seg.map(p => `${xPos(p.date)},${yPos(p.weight)}`).join(' ')
-    const area = `${xPos(seg[0].date)},${PAD.top + chartH} ${pts} ${xPos(seg[seg.length - 1].date)},${PAD.top + chartH}`
-    segments.push({ phase, points: pts, area, startIdx: i })
-    i = j
+  for (let k = 0; k < points.length - 1; k++) {
+    const a = points[k], b = points[k + 1]
+    const pts = `${xPos(a.date)},${yPos(a.weight)} ${xPos(b.date)},${yPos(b.weight)}`
+    const area = `${xPos(a.date)},${PAD.top + chartH} ${pts} ${xPos(b.date)},${PAD.top + chartH}`
+    segments.push({ phase: b.phase, points: pts, area, startIdx: k })
   }
+  // Caso de un solo punto: nada que unir (se dibuja solo el nodo)
 
   function handleMove(e) {
     const svg = svgRef.current
@@ -94,7 +91,7 @@ function ExerciseChart({ name, logs, phases }) {
       weight: closest.weight, rawWeight: closest.rawWeight,
       reps: closest.reps,
       date: closest.date.toLocaleDateString('es-ES'),
-      color: PHASE_COLORS[closest.phase] || '#888',
+      color: PHASE_COLORS[closest.phase] || '#71727a',
     })
   }
 
@@ -107,7 +104,7 @@ function ExerciseChart({ name, logs, phases }) {
       <div className="flex items-start justify-between mb-2">
         <p className="text-[#e8e8e8] font-sans text-xs font-bold tracking-wide uppercase">{name}</p>
         {points.length >= 2 && (
-          <span className="font-sans text-[11px] font-bold" style={{ color: change > 0 ? '#4caf50' : change < 0 ? '#ff2d2d' : '#888' }}>
+          <span className="font-sans text-[11px] font-bold" style={{ color: change > 0 ? '#3a9d4e' : change < 0 ? '#d92020' : '#71727a' }}>
             {change > 0 ? '+' : ''}{changePct.toFixed(1)}%
           </span>
         )}
@@ -125,18 +122,18 @@ function ExerciseChart({ name, logs, phases }) {
         </defs>
         {ticks.map((t, i) => (
           <g key={i}>
-            <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#1a1a1a" strokeWidth="1" />
+            <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#d6d8e0" strokeWidth="1" />
             <text x={PAD.left - 6} y={t.y + 4} textAnchor="end" fill="#444" fontSize="9" fontFamily="monospace">{t.val.toFixed(0)}</text>
           </g>
         ))}
         {segments.map((seg, i) => (
           <g key={i}>
             <polygon points={seg.area} fill={`url(#gym-area-${seg.phase || 'unknown'})`} />
-            <polyline points={seg.points} fill="none" stroke={PHASE_COLORS[seg.phase] || '#888'} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+            <polyline points={seg.points} fill="none" stroke={PHASE_COLORS[seg.phase] || '#71727a'} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
           </g>
         ))}
         {points.length <= 20 && points.map((p, i) => (
-          <circle key={i} cx={xPos(p.date)} cy={yPos(p.weight)} r="2" fill={PHASE_COLORS[p.phase] || '#888'} opacity="0.5" />
+          <circle key={i} cx={xPos(p.date)} cy={yPos(p.weight)} r="2" fill={PHASE_COLORS[p.phase] || '#71727a'} opacity="0.5" />
         ))}
         {tooltip && (
           <>

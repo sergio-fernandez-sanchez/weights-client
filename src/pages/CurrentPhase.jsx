@@ -1,3 +1,4 @@
+import { readableOnLight } from '../utils/color'
 import { SkeletonPage } from "../components/Skeleton"
 import { useState, useEffect, useRef } from 'react'
 import { getPhases, getWeights, getGymLogs } from '../api/client'
@@ -7,10 +8,10 @@ import BackButton from '../components/BackButton'
 import MetricCard from '../components/MetricCard'
 
 const PHASE_COLORS = {
-  bulk:        '#c8f500',
-  cut:         '#ff2d2d',
-  maintenance: '#ff9f00',
-  unknown:     '#888888',
+  bulk:        '#a4c400',
+  cut:         '#e23535',
+  maintenance: '#e88c00',
+  unknown:     '#8a8c94',
 }
 const PHASE_LABELS = { bulk: 'VOLUMEN', cut: 'DEFINICIÓN', maintenance: 'MANTENIMIENTO' }
 
@@ -134,15 +135,15 @@ function PhaseChart({ data, phaseColor, weightGoal, weeklyStats }) {
         {/* Grid */}
         {ticks.map((t, i) => (
           <g key={i}>
-            <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#1a1a1a" strokeWidth="1" />
-            <text x={PAD.left - 6} y={t.y + 4} textAnchor="end" fill="#444" fontSize="9" fontFamily="monospace">{t.val.toFixed(1)}</text>
+            <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#d6d8e0" strokeWidth="1" />
+            <text x={PAD.left - 6} y={t.y + 4} textAnchor="end" fill="#7a7c84" fontSize="9" fontFamily="'JetBrains Mono', monospace">{t.val.toFixed(1)}{i === ticks.length - 1 ? ' kg' : ''}</text>
           </g>
         ))}
 
         {/* Projection separator line */}
         {hasProj && (
           <line x1={projXStart} y1={PAD.top} x2={projXStart} y2={H - PAD.bottom}
-            stroke="#1e1e1e" strokeWidth="1" strokeDasharray="2,4" />
+            stroke="#d6d8e0" strokeWidth="1" strokeDasharray="2,4" />
         )}
 
         {/* Goal line */}
@@ -176,7 +177,7 @@ function PhaseChart({ data, phaseColor, weightGoal, weeklyStats }) {
 
         {/* Connection dot between data and projection */}
         {hasProj && (
-          <circle cx={xPos(data.length - 1)} cy={yPos(lastWeight)} r="3" fill={phaseColor} stroke="#0a0a0a" strokeWidth="1.5" />
+          <circle cx={xPos(data.length - 1)} cy={yPos(lastWeight)} r="3" fill={phaseColor} stroke="#d6d8e0" strokeWidth="1.5" />
         )}
 
         {/* Tooltip */}
@@ -290,9 +291,9 @@ function calcProgress(allLogs, exerciseTypeId, phaseStartDate, phaseEndDate) {
 }
 
 function progressColor(pct) {
-  if (pct > 2) return '#4caf50'
-  if (pct < -2) return '#ff2d2d'
-  return '#ff9f00'
+  if (pct > 2) return '#3a9d4e'
+  if (pct < -2) return '#d92020'
+  return '#b87400'
 }
 
 export default function CurrentPhase({ onNavigate }) {
@@ -336,7 +337,7 @@ export default function CurrentPhase({ onNavigate }) {
 
   const phase    = phases[phaseIndex]
   const isActive = !phase.end_date
-  const phaseColor = PHASE_COLORS[phase.phase_type] || '#888888'
+  const phaseColor = readableOnLight(PHASE_COLORS[phase.phase_type] || '#71727a')
 
   const phaseEnd   = phase.end_date ? parseDate(phase.end_date) : new Date()
   const phaseStart = parseDate(phase.start_date)
@@ -365,6 +366,15 @@ export default function CurrentPhase({ onNavigate }) {
 
   const diff   = currentWeight && weightGoal ? (weightGoal - parseFloat(currentWeight)).toFixed(2) : null
   const gained = currentWeight && startWeight ? (parseFloat(currentWeight) - parseFloat(startWeight)).toFixed(2) : null
+
+  // Progreso hacia el objetivo de peso: inicio → actual → objetivo (con signo).
+  const goalPct = (() => {
+    if (currentWeight == null || startWeight == null || weightGoal == null) return null
+    const total = weightGoal - parseFloat(startWeight)
+    const done = parseFloat(currentWeight) - parseFloat(startWeight)
+    if (Math.abs(total) < 0.01) return parseFloat(currentWeight) === weightGoal ? 1 : 0
+    return Math.max(0, Math.min(1, done / total))
+  })()
   const impliedWeeklyGoal = isActive && weightGoal && startWeight && totalWeeks ? ((weightGoal - parseFloat(startWeight)) / totalWeeks) : null
   const weeksLeft = daysLeft ? daysLeft / 7 : null
   const requiredWeeklyRate = isActive && currentWeight && weightGoal && weeksLeft && weeksLeft > 0
@@ -433,25 +443,25 @@ export default function CurrentPhase({ onNavigate }) {
   const avgStrength = validPcts.length > 0 ? validPcts.reduce((a, b) => a + b, 0) / validPcts.length : null
 
   function gainedColor() {
-    if (!gained) return '#c8f500'
+    if (!gained) return '#5f8a00'
     const g = parseFloat(gained)
-    if (phase.phase_type === 'bulk') return g > 0 ? '#4caf50' : '#f44336'
-    if (phase.phase_type === 'cut')  return g < 0 ? '#4caf50' : '#f44336'
-    return '#c8f500'
+    if (g > 0) return '#3a9d4e'   // ganó peso → verde
+    if (g < 0) return '#d92020'   // perdió peso → rojo
+    return '#71727a'
   }
 
   function weeklyRateColor(actual, goal) {
-    if (!goal) return '#c8f500'
+    if (!goal) return '#5f8a00'
     const ratio = actual / goal
-    if (ratio >= 0.7 && ratio <= 1.3) return '#4caf50'
-    if (ratio >= 0.4 && ratio <= 1.6) return '#ff9f00'
-    return '#f44336'
+    if (ratio >= 0.7 && ratio <= 1.3) return '#3a9d4e'
+    if (ratio >= 0.4 && ratio <= 1.6) return '#b87400'
+    return '#d92020'
   }
 
   function consistencyColor(std) {
-    if (std < 0.3) return '#4caf50'
-    if (std < 0.6) return '#ff9f00'
-    return '#f44336'
+    if (std < 0.3) return '#3a9d4e'
+    if (std < 0.6) return '#b87400'
+    return '#d92020'
   }
 
   function consistencyLabel(std) {
@@ -469,7 +479,7 @@ export default function CurrentPhase({ onNavigate }) {
         {/* Compare phases button — prominent */}
         <button
           onClick={() => onNavigate('phaseComparison')}
-          className="w-full glass-card rounded-sm p-3 mb-5 flex items-center justify-between group hover:border-[#333333] transition-all duration-200"
+          className="w-full glass-card glass-sheen card-hover click-press rounded-sm p-3 mb-5 flex items-center justify-between group transition-all duration-200"
         >
           <div className="flex items-center gap-3">
             <span className="w-8 h-8 rounded-sm flex items-center justify-center border border-[#252525] group-hover:border-[#c8f500] transition-colors"
@@ -502,52 +512,112 @@ export default function CurrentPhase({ onNavigate }) {
           <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
                style={{ backgroundImage: `repeating-linear-gradient(90deg, transparent 0, transparent 20px, ${phaseColor} 20px, ${phaseColor} 21px)` }} />
 
-          <div className="relative flex items-center justify-between p-5">
+          <div className="relative flex items-center justify-between px-4 pt-4 pb-2">
             <button
               onClick={() => setPhaseIndex(i => Math.max(0, i - 1))}
               disabled={phaseIndex === 0}
-              className="w-8 h-8 flex items-center justify-center text-[#555555] font-sans text-lg hover:text-[#c8f500] disabled:opacity-20 transition-colors rounded-sm hover:bg-white/5"
-            >←</button>
+              className="w-8 h-8 flex items-center justify-center text-[#80828a] font-sans text-lg hover:text-[#5f8a00] disabled:opacity-20 transition-colors rounded-sm click-press"
+            >‹</button>
 
-            <div className="text-center flex-1">
-              <p className="font-mono text-2xl font-bold tracking-[0.3em] leading-none" style={{ color: phaseColor }}>
-                {(PHASE_LABELS[phase.phase_type] || phase.phase_type).toUpperCase()}
-              </p>
-              <p className="text-[#555555] font-sans text-[10px] mt-2 tracking-wide">
-                {phaseStart.toLocaleDateString('es-ES')} → {phase.end_date ? parseDate(phase.end_date).toLocaleDateString('es-ES') : 'hoy'}
-              </p>
-              {isActive && (
-                <span className="inline-flex items-center gap-1.5 mt-2 font-sans text-[10px] tracking-widest px-2 py-0.5 rounded-sm"
-                  style={{ color: phaseColor, backgroundColor: `${phaseColor}10`, border: `1px solid ${phaseColor}20` }}>
-                  <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: phaseColor }} />
-                  ACTIVA
-                </span>
-              )}
-            </div>
+            <span className="inline-flex items-center gap-1.5 font-sans text-[10px] font-bold tracking-[0.14em] px-2.5 py-1 rounded-lg"
+              style={{ color: phaseColor, backgroundColor: `${phaseColor}1a`, border: `1px solid ${phaseColor}33` }}>
+              {isActive && <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: phaseColor }} />}
+              {(PHASE_LABELS[phase.phase_type] || phase.phase_type).toUpperCase()} · {isActive ? `día ${daysElapsed} · ACTIVA` : `${daysElapsed}d`}
+            </span>
 
             <button
               onClick={() => setPhaseIndex(i => Math.min(phases.length - 1, i + 1))}
               disabled={phaseIndex === phases.length - 1}
-              className="w-8 h-8 flex items-center justify-center text-[#555555] font-sans text-lg hover:text-[#c8f500] disabled:opacity-20 transition-colors rounded-sm hover:bg-white/5"
-            >→</button>
+              className="w-8 h-8 flex items-center justify-center text-[#80828a] font-sans text-lg hover:text-[#5f8a00] disabled:opacity-20 transition-colors rounded-sm click-press"
+            >›</button>
+          </div>
+
+          {/* Ring + side stats */}
+          <div className="relative flex items-center gap-5 px-5 pb-5 pt-1">
+            <div className="relative flex-shrink-0" style={{ width: 120, height: 120 }}>
+              <svg viewBox="0 0 120 120" style={{ width: 120, height: 120, transform: 'rotate(-90deg)' }}>
+                <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(70,80,115,0.12)" strokeWidth="8" />
+                {goalPct !== null && (
+                  <circle cx="60" cy="60" r="52" fill="none" stroke={phaseColor} strokeWidth="8" strokeLinecap="round"
+                    strokeDasharray={2 * Math.PI * 52}
+                    strokeDashoffset={(1 - goalPct) * 2 * Math.PI * 52}
+                    style={{ filter: `drop-shadow(0 0 5px ${phaseColor}73)`, transition: 'stroke-dashoffset 0.8s cubic-bezier(0.32,0.72,0,1)' }} />
+                )}
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                {currentWeight != null ? (
+                  <>
+                    <span className="font-mono font-bold leading-none" style={{ color: phaseColor, fontSize: '26px' }}>{parseFloat(currentWeight).toFixed(1)}</span>
+                    {weightGoal != null
+                      ? <span className="font-mono text-[9px] text-[#8a8c94] mt-0.5">de {weightGoal.toFixed(1)} kg</span>
+                      : <span className="font-mono text-[9px] text-[#8a8c94] mt-0.5">kg</span>}
+                    {goalPct !== null && <span className="font-mono text-[9px] mt-0.5" style={{ color: phaseColor }}>{Math.round(goalPct * 100)}%</span>}
+                  </>
+                ) : (
+                  <span className="font-mono text-2xl font-bold text-[#8a8c94]">—</span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1 min-w-0 flex flex-col gap-2">
+              <div className="flex justify-between items-baseline">
+                <span className="font-sans text-[8px] tracking-[0.15em] uppercase text-[#6c6e76]">inicio</span>
+                <span className="font-mono text-[13px] font-semibold text-[#41434a]">{startWeight != null ? `${parseFloat(startWeight).toFixed(2)} kg` : '—'}</span>
+              </div>
+              <div className="flex justify-between items-baseline">
+                <span className="font-sans text-[8px] tracking-[0.15em] uppercase text-[#6c6e76]">cambio</span>
+                <span className="font-mono text-[13px] font-bold" style={{ color: gainedColor() }}>{gained ? `${parseFloat(gained) > 0 ? '+' : ''}${gained} kg` : '—'}</span>
+              </div>
+              {isActive && diff && (
+                <div className="flex justify-between items-baseline">
+                  <span className="font-sans text-[8px] tracking-[0.15em] uppercase text-[#6c6e76]">restante</span>
+                  <span className="font-mono text-[13px] font-bold text-[#b87400]">{diff > 0 ? '+' : ''}{diff} kg</span>
+                </div>
+              )}
+              <div className="flex justify-between items-baseline">
+                <span className="font-sans text-[8px] tracking-[0.15em] uppercase text-[#6c6e76]">{isActive ? 'duración' : 'final'}</span>
+                <span className="font-mono text-[13px] font-semibold text-[#41434a]">{isActive ? `${daysElapsed} días` : (currentWeight != null ? `${parseFloat(currentWeight).toFixed(2)} kg` : '—')}</span>
+              </div>
+              <p className="font-sans text-[9px] text-[#8a8c94] mt-0.5">
+                {phaseStart.toLocaleDateString('es-ES')} → {phase.end_date ? parseDate(phase.end_date).toLocaleDateString('es-ES') : 'hoy'}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Metrics Grid */}
+        {/* Chips: ritmo actual / necesario / gym / eta */}
         <div className="grid grid-cols-2 gap-2 mb-4">
-          <MetricCard label="PESO INICIO" value={startWeight ? `${parseFloat(startWeight).toFixed(2)} kg` : '—'} />
-          <MetricCard label={isActive ? 'PESO ACTUAL' : 'PESO FINAL'} value={currentWeight ? `${parseFloat(currentWeight).toFixed(2)} kg` : '—'} />
-          <MetricCard
-            label="CAMBIO"
-            value={gained ? `${gained > 0 ? '+' : ''}${gained} kg` : '—'}
-            valueColor={gainedColor()}
-          />
-          <MetricCard label="DURACIÓN" value={`${daysElapsed} días`} valueColor="#888888" />
-          {isActive && weightGoal && (
-            <MetricCard label="OBJETIVO" value={`${weightGoal.toFixed(2)} kg`} />
+          {isActive && (
+            <div className="glass-card glass-sheen rounded-sm p-3" style={{ borderLeft: `3px solid ${phaseColor}` }}>
+              <p className="text-[#6c6e76] font-sans text-[8px] tracking-[0.15em] uppercase mb-1">Ritmo actual</p>
+              <p className="font-mono text-base font-bold" style={{ color: weeklyStats ? (impliedWeeklyGoal ? weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) : phaseColor) : '#94959c' }}>
+                {weeklyStats ? `${weeklyStats.avgChange > 0 ? '+' : ''}${weeklyStats.avgChange.toFixed(2)}` : '—'} <span className="text-[9px] font-normal opacity-60">kg/sem</span>
+              </p>
+            </div>
           )}
-          {isActive && diff && (
-            <MetricCard label="DIFERENCIA" value={`${diff > 0 ? '+' : ''}${diff} kg`} sub="para el objetivo" />
+          {isActive && (
+            <div className="glass-card glass-sheen rounded-sm p-3" style={{ borderLeft: `3px solid ${phaseColor}` }}>
+              <p className="text-[#6c6e76] font-sans text-[8px] tracking-[0.15em] uppercase mb-1">Ritmo necesario</p>
+              <p className="font-mono text-base font-bold" style={{ color: impliedWeeklyGoal ? phaseColor : '#94959c' }}>
+                {impliedWeeklyGoal ? `${impliedWeeklyGoal > 0 ? '+' : ''}${impliedWeeklyGoal.toFixed(2)}` : '—'} <span className="text-[9px] font-normal opacity-60">kg/sem</span>
+              </p>
+            </div>
+          )}
+          {avgStrength !== null && (
+            <div className="glass-card glass-sheen rounded-sm p-3" style={{ borderLeft: `3px solid ${progressColor(avgStrength)}` }}>
+              <p className="text-[#6c6e76] font-sans text-[8px] tracking-[0.15em] uppercase mb-1">Gym media fase</p>
+              <p className="font-mono text-base font-bold" style={{ color: progressColor(avgStrength) }}>
+                {avgStrength > 0 ? '+' : ''}{avgStrength.toFixed(1)}<span className="text-[9px] font-normal opacity-60">%</span>
+              </p>
+            </div>
+          )}
+          {isActive && weightGoal && (
+            <div className="glass-card glass-sheen rounded-sm p-3" style={{ borderLeft: '3px solid #b87400' }}>
+              <p className="text-[#6c6e76] font-sans text-[8px] tracking-[0.15em] uppercase mb-1">Llegada (ETA)</p>
+              <p className="font-mono text-base font-bold text-[#41434a]">
+                {etaDate === 'never' ? '∞' : etaDate ? etaDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : '—'}
+              </p>
+            </div>
           )}
         </div>
 
@@ -626,7 +696,7 @@ export default function CurrentPhase({ onNavigate }) {
                 {weeklyStats ? (
                   <>
                     <p className="font-mono text-xl font-bold"
-                      style={{ color: impliedWeeklyGoal ? weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) : '#c8f500' }}>
+                      style={{ color: impliedWeeklyGoal ? weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) : '#5f8a00' }}>
                       {weeklyStats.avgChange > 0 ? '+' : ''}{weeklyStats.avgChange.toFixed(2)} <span className="text-xs font-normal opacity-50">kg</span>
                     </p>
                     <p className="text-[#333333] font-sans text-[9px] mt-1">media semanal</p>
@@ -701,7 +771,7 @@ export default function CurrentPhase({ onNavigate }) {
                       </p>
                       {etaDiffWeeks !== null && (
                         <p className="font-sans text-[9px] mt-0.5" style={{
-                          color: Math.abs(etaDiffWeeks) < 1 ? '#4caf50' : etaDiffWeeks > 0 ? '#ff2d2d' : '#4caf50'
+                          color: Math.abs(etaDiffWeeks) < 1 ? '#3a9d4e' : etaDiffWeeks > 0 ? '#d92020' : '#3a9d4e'
                         }}>
                           {Math.abs(etaDiffWeeks) < 1
                             ? 'en plazo'
@@ -765,7 +835,7 @@ export default function CurrentPhase({ onNavigate }) {
                   border: `1px solid ${eta.reached ? '#c8f50015' : eta.reachable ? `${phaseColor}12` : '#ff2d2d12'}`,
                 }}>
                 <div className="absolute top-0 left-0 right-0 h-[1px]"
-                  style={{ backgroundColor: eta.reached ? '#c8f500' : eta.reachable ? phaseColor : '#ff2d2d', opacity: 0.2 }} />
+                  style={{ backgroundColor: eta.reached ? '#5f8a00' : eta.reachable ? phaseColor : '#d92020', opacity: 0.2 }} />
                 <p className="text-[#444444] font-sans text-[9px] tracking-[0.15em] mb-2">ESTIMACIÓN DE LLEGADA</p>
                 {eta.reached ? (
                   <p className="text-[#c8f500] font-sans text-sm font-bold">✓ Objetivo alcanzado</p>
@@ -776,7 +846,7 @@ export default function CurrentPhase({ onNavigate }) {
                     </p>
                     {eta.vsGoal && (
                       <p className="font-sans text-[11px] mt-1.5"
-                        style={{ color: eta.vsGoal.diffDays <= 0 ? '#c8f500' : eta.vsGoal.diffDays <= 14 ? '#ff9f00' : '#ff2d2d' }}>
+                        style={{ color: eta.vsGoal.diffDays <= 0 ? '#5f8a00' : eta.vsGoal.diffDays <= 14 ? '#b87400' : '#d92020' }}>
                         {eta.vsGoal.diffDays <= 0
                           ? `${Math.abs(eta.vsGoal.diffWeeks)} semana${Math.abs(eta.vsGoal.diffWeeks) !== 1 ? 's' : ''} por delante del plan`
                           : `${eta.vsGoal.diffWeeks} semana${eta.vsGoal.diffWeeks !== 1 ? 's' : ''} por detrás del plan`}
@@ -839,9 +909,9 @@ export default function CurrentPhase({ onNavigate }) {
           const maxAbs = Math.max(...recent.map(d => Math.abs(d.delta)), 0.1)
 
           function barColor(d) {
-            if (d > 0.2) return '#c8f500'
-            if (d < -0.2) return '#ff2d2d'
-            return '#ff9f00'
+            if (d > 0.2) return '#5f8a00'
+            if (d < -0.2) return '#d92020'
+            return '#b87400'
           }
 
           return (
@@ -887,7 +957,7 @@ export default function CurrentPhase({ onNavigate }) {
         {isActive && (
           <button
             onClick={() => onNavigate('editPhaseGoals', phase)}
-            className="w-full h-10 glass-card rounded-sm text-[#555555] font-sans text-xs hover:border-[#c8f500] hover:text-[#c8f500] transition-all duration-200 mb-4"
+            className="w-full h-10 glass-card glass-sheen card-hover click-press rounded-sm text-[#6c6e76] font-sans text-xs transition-all duration-200 mb-4"
           >
             EDITAR OBJETIVOS
           </button>

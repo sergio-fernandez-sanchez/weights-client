@@ -73,7 +73,7 @@ export default function AiReport({ onNavigate }) {
           <button
             onClick={downloadZip}
             disabled={loadingZip}
-            className="w-full h-11 bg-[#c8f500] rounded-sm text-[#0a0a0a] font-sans text-xs font-bold tracking-widest hover:bg-[#deff33] transition-all duration-200 disabled:opacity-40"
+            className="w-full h-11 btn-liquid click-press rounded-sm text-[#2a3a00] font-sans text-xs font-bold tracking-widest disabled:opacity-40 flex items-center justify-center"
           >
             {loadingZip ? 'generando...' : '↓  DESCARGAR ZIP'}
           </button>
@@ -92,7 +92,7 @@ export default function AiReport({ onNavigate }) {
           <button
             onClick={() => downloadReport('ai')}
             disabled={loadingAi}
-            className="w-full h-11 glass-card rounded-sm text-[#c8f500] font-sans text-xs font-bold tracking-widest hover:bg-[#c8f500] hover:text-[#0a0a0a] transition-all duration-200 disabled:opacity-40"
+            className="w-full h-11 glass-card glass-sheen card-hover click-press rounded-sm text-[#5f8a00] font-sans text-xs font-bold tracking-widest transition-all duration-200 disabled:opacity-40"
           >
             {loadingAi ? 'generando...' : '↓  DESCARGAR JSON'}
           </button>
@@ -111,7 +111,7 @@ export default function AiReport({ onNavigate }) {
           <button
             onClick={() => downloadReport('raw')}
             disabled={loadingRaw}
-            className="w-full h-11 glass-card rounded-sm text-[#888888] font-sans text-xs font-bold tracking-widest hover:bg-[#e8e8e8] hover:text-[#0a0a0a] transition-all duration-200 disabled:opacity-40"
+            className="w-full h-11 glass-card glass-sheen card-hover click-press rounded-sm text-[#62646b] font-sans text-xs font-bold tracking-widest transition-all duration-200 disabled:opacity-40"
           >
             {loadingRaw ? 'generando...' : '↓  DESCARGAR JSON'}
           </button>

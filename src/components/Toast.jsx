@@ -22,7 +22,7 @@ export default function Toast({ message, type = 'success', onDone }) {
   if (!visible || !message) return null
 
   const isError = type === 'error'
-  const color = isError ? '#ff2d2d' : '#c8f500'
+  const color = isError ? '#d92020' : '#5f8a00'
 
   return (
     <div

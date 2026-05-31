@@ -20,17 +20,17 @@ const METRICS = [
 ]
 
 const CHART_METRICS = [
-  { key: 'body_fat_pct',         label: '% GRASA',         color: '#ff6b35' },
-  { key: 'skeletal_muscle_mass', label: 'M.M. ESQUELÉTICA', color: '#4a9eff' },
-  { key: 'fat_free_mass',        label: 'M. LIBRE GRASA',  color: '#c8f500' },
+  { key: 'body_fat_pct',         label: '% GRASA',         color: '#e07a3c' },
+  { key: 'skeletal_muscle_mass', label: 'M.M. ESQUELÉTICA', color: '#3a82d6' },
+  { key: 'fat_free_mass',        label: 'M. LIBRE GRASA',  color: '#5f8a00' },
 ]
 
-const PHASE_COLORS = { bulk: '#c8f500', cut: '#ff2d2d', maintenance: '#ff9f00', unknown: '#888888' }
+const PHASE_COLORS = { bulk: '#a4c400', cut: '#e23535', maintenance: '#e88c00', unknown: '#8a8c94' }
 
 function deltaColor(delta, upIsGood) {
-  if (upIsGood === null || delta === 0) return '#888888'
-  if ((delta > 0 && upIsGood) || (delta < 0 && !upIsGood)) return '#4caf50'
-  return '#f44336'
+  if (upIsGood === null || delta === 0) return '#71727a'
+  if ((delta > 0 && upIsGood) || (delta < 0 && !upIsGood)) return '#3a9d4e'
+  return '#d92020'
 }
 
 function parseDate(dateStr) { return new Date(dateStr + 'T00:00:00') }
@@ -115,7 +115,7 @@ function BioChart({ reports }) {
         </defs>
         {ticks.map((t, i) => (
           <g key={i}>
-            <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#1a1a1a" strokeWidth="1" />
+            <line x1={PAD.left} y1={t.y} x2={W - PAD.right} y2={t.y} stroke="#d6d8e0" strokeWidth="1" />
             <text x={PAD.left - 6} y={t.y + 4} textAnchor="end" fill="#444" fontSize="9" fontFamily="monospace">{t.val.toFixed(1)}</text>
           </g>
         ))}
@@ -133,7 +133,7 @@ function BioChart({ reports }) {
         })}
         {tooltip && (
           <line x1={tooltip.x} y1={PAD.top} x2={tooltip.x} y2={H - PAD.bottom}
-            stroke="#c8f500" strokeWidth="1" strokeDasharray="3,3" strokeOpacity="0.3" />
+            stroke="#a4c400" strokeWidth="1" strokeDasharray="3,3" strokeOpacity="0.3" />
         )}
       </svg>
       {tooltip && (
@@ -194,6 +194,7 @@ export default function BioimpedanceReports({ onNavigate }) {
 
   const report = reports[selectedIdx]
   const prevReport = selectedIdx > 0 ? reports[selectedIdx - 1] : null
+  const firstReport = reports.length > 0 ? reports[0] : null
   const bodyWeight = getWeightOnDate(weights, report.date)
   const phaseType = getPhaseOnPrevDay(phases, report.date)
 
@@ -211,7 +212,7 @@ export default function BioimpedanceReports({ onNavigate }) {
               <button key={i} onClick={() => setSelectedIdx(i)}
                 className={`relative flex-shrink-0 px-3 h-9 font-sans text-xs font-bold rounded-sm transition-all whitespace-nowrap ${
                   active
-                    ? 'bg-[#c8f500] text-[#0a0a0a] shadow-[0_0_12px_rgba(200,245,0,0.2)]'
+                    ? 'bg-[#c8f500] text-[#0a0a0a] shadow-[0_0_12px_rgba(164,196,0,0.2)]'
                     : 'glass-card text-[#555555] hover:text-[#888888]'
                 }`}>
                 {parseDate(r.date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
@@ -243,22 +244,22 @@ export default function BioimpedanceReports({ onNavigate }) {
             <div className="flex items-center justify-center gap-6">
               <DonutChart
                 segments={[
-                  { value: parseFloat(report.body_fat_pct), label: '% GRASA', color: '#ff6b35' },
-                  { value: 100 - parseFloat(report.body_fat_pct), label: '% LIBRE', color: '#4a9eff' },
+                  { value: parseFloat(report.body_fat_pct), label: '% GRASA', color: '#e07a3c' },
+                  { value: 100 - parseFloat(report.body_fat_pct), label: '% LIBRE', color: '#3a82d6' },
                 ]}
                 size={130}
                 strokeWidth={16}
               />
               <div className="flex flex-col gap-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#ff6b35' }} />
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#e07a3c' }} />
                   <div>
                     <span className="text-[#555555] font-sans text-[9px] block tracking-wider">GRASA</span>
                     <span className="font-mono text-sm font-bold text-[#ff6b35]">{parseFloat(report.body_fat_pct).toFixed(1)}%</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#4a9eff' }} />
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#3a82d6' }} />
                   <div>
                     <span className="text-[#555555] font-sans text-[9px] block tracking-wider">LIBRE DE GRASA</span>
                     <span className="font-mono text-sm font-bold text-[#4a9eff]">{(100 - parseFloat(report.body_fat_pct)).toFixed(1)}%</span>
@@ -266,7 +267,7 @@ export default function BioimpedanceReports({ onNavigate }) {
                 </div>
                 {report.skeletal_muscle_mass && bodyWeight && (
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#c8f500' }} />
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#5f8a00' }} />
                     <div>
                       <span className="text-[#555555] font-sans text-[9px] block tracking-wider">M. ESQUELÉTICA</span>
                       <span className="font-mono text-xs font-bold text-[#c8f500]">{parseFloat(report.skeletal_muscle_mass).toFixed(1)} kg</span>
@@ -275,7 +276,7 @@ export default function BioimpedanceReports({ onNavigate }) {
                 )}
                 {report.total_body_water && (
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#00b4d8' }} />
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#0093b8' }} />
                     <div>
                       <span className="text-[#555555] font-sans text-[9px] block tracking-wider">AGUA CORPORAL</span>
                       <span className="font-mono text-xs font-bold text-[#00b4d8]">{parseFloat(report.total_body_water).toFixed(1)} kg</span>
@@ -297,13 +298,19 @@ export default function BioimpedanceReports({ onNavigate }) {
             if (val == null) return null
             const prev = prevReport?.[key]
             const delta = prev != null ? parseFloat(val) - parseFloat(prev) : null
+            const firstVal = firstReport?.[key]
+            const deltaFirst = (firstReport && firstReport !== report && firstVal != null)
+              ? parseFloat(val) - parseFloat(firstVal) : null
+            const subLines = []
+            if (delta !== null) subLines.push(`${delta > 0 ? '+' : ''}${delta.toFixed(2)} vs ant.`)
+            if (deltaFirst !== null) subLines.push(`${deltaFirst > 0 ? '+' : ''}${deltaFirst.toFixed(2)} vs 1ª`)
             return (
               <MetricCard
                 key={key}
                 label={label}
                 value={parseFloat(val).toFixed(2)}
-                sub={delta !== null ? `${delta > 0 ? '+' : ''}${delta.toFixed(2)} vs anterior` : undefined}
-                valueColor={delta !== null ? deltaColor(delta, upIsGood) : '#c8f500'}
+                sub={subLines.length ? subLines.join('\n') : undefined}
+                valueColor={delta !== null ? deltaColor(delta, upIsGood) : '#5f8a00'}
               />
             )
           })}

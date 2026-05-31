@@ -41,9 +41,9 @@ const PHASE_COLORS = { bulk: '#a4c400', cut: '#e23535', maintenance: '#e88c00' }
 const PHASE_LABELS = { bulk: 'VOLUMEN', cut: 'DEFINICIÓN', maintenance: 'MANTEN.' }
 
 function barColor(d) {
-  if (d > 0.2) return '#5f8a00'
-  if (d < -0.2) return '#d92020'
-  return '#b87400'
+  if (d > 0.1) return '#3a9d4e'   // gana más de 0.1 kg → verde
+  if (d < -0.1) return '#d92020'  // pierde más de 0.1 kg → rojo
+  return '#e88c00'                // entre -0.1 y +0.1 → naranja
 }
 
 // ── Body Silhouette with measurements ──────────────────────────────────────

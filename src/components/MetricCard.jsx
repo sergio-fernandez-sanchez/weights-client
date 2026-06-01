@@ -15,18 +15,15 @@ export default function MetricCard({ label, value, sub, valueColor = '#5f8a00', 
   return (
     <div className="relative glass-card glass-sheen rounded-sm p-4 group card-hover overflow-hidden"
       style={{ background: `linear-gradient(160deg, ${valueColor}12, rgba(255,255,255,0.03) 60%)` }}>
-      {/* Top accent — liquid gradient */}
+      {/* Top accent line */}
       <div
         className="absolute top-0 left-0 right-0 h-[2px] opacity-60 group-hover:opacity-90 transition-opacity"
-        style={{
-          background: `linear-gradient(90deg, ${valueColor}, ${valueColor}40, transparent)`,
-        }}
+        style={{ background: `linear-gradient(90deg, ${valueColor}, ${valueColor}40, transparent)` }}
       />
-
-      {/* Ambient corner glow */}
+      {/* Corner glow: gradiente radial desde la esquina, respeta el border-radius */}
       <div
-        className="absolute -top-10 -left-10 w-28 h-28 rounded-full opacity-30 group-hover:opacity-70 transition-opacity duration-700 blur-3xl"
-        style={{ backgroundColor: valueColor }}
+        className="absolute inset-0 opacity-20 group-hover:opacity-40 transition-opacity duration-700 pointer-events-none rounded-sm"
+        style={{ background: `radial-gradient(ellipse 80% 70% at 0% 0%, ${valueColor}, transparent)` }}
       />
 
       <div className="relative z-10">

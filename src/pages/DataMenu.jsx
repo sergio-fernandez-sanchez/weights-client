@@ -16,6 +16,35 @@ function oneRM(log) {
   return null
 }
 
+// Calcula el % de progreso de un ejercicio en la fase activa:
+// compara el 1RM más antiguo desde el inicio de la fase con el más reciente.
+function calcPhaseProgress(logs, exerciseTypeId, phaseStartDate) {
+  const phaseLogs = logs
+    .filter(l => l.exercise_type_id === exerciseTypeId && parseDate(l.date) >= parseDate(phaseStartDate))
+    .sort((a, b) => parseDate(a.date) - parseDate(b.date))
+  if (phaseLogs.length < 2) return null
+  const base = oneRM(phaseLogs[0])
+  const curr = oneRM(phaseLogs[phaseLogs.length - 1])
+  if (!base || !curr || base === 0) return null
+  return ((curr - base) / base) * 100
+}
+
+function gymPhaseAvg(logs, phaseStartDate) {
+  if (!logs?.length || !phaseStartDate) return null
+  // Un log por ejercicio (el más reciente de la fase)
+  const byType = Object.values(
+    Object.fromEntries(
+      logs
+        .filter(l => parseDate(l.date) >= parseDate(phaseStartDate))
+        .sort((a, b) => parseDate(b.date) - parseDate(a.date))
+        .map(l => [l.exercise_type_id, l])
+    )
+  )
+  const pcts = byType.map(l => calcPhaseProgress(logs, l.exercise_type_id, phaseStartDate)).filter(v => v !== null)
+  if (!pcts.length) return null
+  return pcts.reduce((a, b) => a + b, 0) / pcts.length
+}
+
 function DataItem({ label, preview, sub, onClick, color }) {
   return (
     <button onClick={onClick}
@@ -52,19 +81,20 @@ export default function DataMenu({ onNavigate }) {
           getWeeklyReports().catch(() => []),
           getPhotoDates().catch(() => []),
         ])
-        const bestRM = gym?.length > 0
-          ? gym.reduce((best, log) => {
-              const rm = oneRM(log)
-              return rm && (!best || rm > best.rm) ? { name: log.name, rm: Math.round(rm) } : best
-            }, null)
-          : null
+        const gymPhasePct = gymPhaseAvg(gym, activePhase?.start_date)
 
         setStats({
           lastWeight: weight ? `${weight.weight} kg` : null,
           weightDate: weight?.date,
           phaseLabel: activePhase ? (PHASE_LABELS[activePhase.phase_type] || activePhase.phase_type) : null,
           phaseDays: activePhase ? Math.floor((new Date() - parseDate(activePhase.start_date)) / (1000*60*60*24)) : null,
-          bestRM,
+          bestRM: gymPhasePct === null && gym?.length > 0
+            ? gym.reduce((best, log) => {
+                const rm = oneRM(log)
+                return rm && (!best || rm > best.rm) ? { name: log.name, rm: Math.round(rm) } : best
+              }, null)
+            : null,
+          gymPhasePct,
           calories: cal?.calories,
           bioCount: bio?.length || 0,
           dexaCount: dexa?.length || 0,
@@ -107,10 +137,12 @@ export default function DataMenu({ onNavigate }) {
           />
           <DataItem
             label="GYM"
-            preview={s.bestRM ? `${s.bestRM.rm} kg` : s.gymCount > 0 ? `${s.gymCount}` : null}
-            sub={s.bestRM ? `mejor 1RM · ${s.bestRM.name.toLowerCase()}` : s.gymCount > 0 ? 'ejercicios activos' : null}
+            preview={s.gymPhasePct !== null
+              ? `${s.gymPhasePct > 0 ? '+' : ''}${s.gymPhasePct.toFixed(1)}%`
+              : s.bestRM ? `${s.bestRM.rm} kg` : s.gymCount > 0 ? `${s.gymCount}` : null}
+            sub={s.gymPhasePct !== null ? 'progreso fase activa' : s.bestRM ? `mejor 1RM · ${s.bestRM.name.toLowerCase()}` : s.gymCount > 0 ? 'ejercicios activos' : null}
+            color={s.gymPhasePct !== null ? (s.gymPhasePct > 2 ? '#3a9d4e' : s.gymPhasePct < -2 ? '#d92020' : '#b87400') : '#5f8a00'}
             onClick={() => onNavigate('gymHistory')}
-            color="#5f8a00"
           />
           <DataItem
             label="CALORÍAS"

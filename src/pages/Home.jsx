@@ -555,9 +555,9 @@ export default function Home({ onNavigate, onLogout }) {
       <Separator className="my-5" />
 
       <div className="flex flex-col gap-2 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-        {[['VER DATOS', 'data'], ['NUEVA FASE', 'phase'], ['NUEVO INFORME', 'newReport'], ['NUEVA FOTO', 'photoUpload'], ['DATOS PERSONALES', 'profile']].map(([label, page]) => (
-          <Button key={page} variant="secondary" onClick={() => onNavigate(page)}>{label}</Button>
-        ))}
+        <Button variant="secondary" onClick={() => onNavigate('data')}>VER DATOS</Button>
+        <Button variant="secondary" onClick={() => onNavigate('addMenu')}>AÑADIR</Button>
+        <Button variant="secondary" onClick={() => onNavigate('profile')}>DATOS PERSONALES</Button>
       </div>
 
       <Separator className="my-5" />

@@ -27,6 +27,8 @@ import PhaseComparison from './pages/PhaseComparison'
 import MonthlySummary from './pages/MonthlySummary'
 import Photos from './pages/Photos'
 import PhotoUpload from './pages/PhotoUpload'
+import AddMenu from './pages/AddMenu'
+import NewReportMenu from './pages/NewReportMenu'
 import ParticleBackground from './components/ParticleBackground'
 
 function GlitchTransition({ onMidpoint, onDone, color }) {
@@ -134,6 +136,8 @@ function renderPage(page, pageData, navigate, handleLogout) {
     case 'monthlySummary':      return <MonthlySummary       onNavigate={navigate} />
     case 'photos':              return <Photos               onNavigate={navigate} />
     case 'photoUpload':         return <PhotoUpload          onNavigate={navigate} />
+    case 'addMenu':             return <AddMenu              onNavigate={navigate} />
+    case 'newReportMenu':       return <NewReportMenu        onNavigate={navigate} />
     default:                    return <Home                 onNavigate={navigate} onLogout={handleLogout} />
   }
 }

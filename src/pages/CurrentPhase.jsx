@@ -801,42 +801,10 @@ export default function CurrentPhase({ onNavigate }) {
               </div>
             )}
 
-            {/* ETA */}
-            {eta && (
-              <div className="mt-3 rounded-sm p-3 relative overflow-hidden"
-                style={{
-                  backgroundColor: eta.reached ? '#3a9d4e08' : eta.reachable ? `${phaseColor}06` : '#d9202006',
-                  border: `1px solid ${eta.reached ? '#3a9d4e18' : eta.reachable ? `${phaseColor}14` : '#d9202014'}`,
-                }}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-sans text-[9px] text-[#8a8c94] tracking-[0.15em] uppercase mb-0.5">Llegada estimada</p>
-                    <p className="font-sans text-[9px] text-[#8a8c94]">al ritmo actual</p>
-                  </div>
-                  {eta.reached ? (
-                    <p className="font-mono text-sm font-bold text-[#3a9d4e]">✓ Alcanzado</p>
-                  ) : eta.reachable ? (
-                    <div className="text-right">
-                      <p className="font-mono text-sm font-bold" style={{ color: phaseColor }}>
-                        {eta.date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </p>
-                      {eta.vsGoal && (
-                        <p className="font-sans text-[9px] mt-0.5"
-                          style={{ color: eta.vsGoal.diffDays <= 0 ? '#3a9d4e' : eta.vsGoal.diffDays <= 14 ? '#b87400' : '#d92020' }}>
-                          {eta.vsGoal.diffDays <= 0
-                            ? `${Math.abs(eta.vsGoal.diffWeeks)}sem por delante`
-                            : `${eta.vsGoal.diffWeeks}sem por detrás`}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="font-mono text-sm font-bold text-[#d92020]">∞</p>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         )}
+
+
 
 
         {/* Weekly weight history — last 4 weeks */}

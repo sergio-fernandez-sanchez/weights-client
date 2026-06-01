@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getLastWeight, getActiveGymLogs, getActiveCalories, getBioimpedanceReports, getDexaReports, getBodyMeasurements, getWeeklyReports, getPhotoDates } from '../api/client'
+import { getLastWeight, getGymLogs, getActiveCalories, getBioimpedanceReports, getDexaReports, getBodyMeasurements, getWeeklyReports, getPhotoDates } from '../api/client'
 import { usePhase, PHASE_COLORS } from '../context/PhaseContext'
 import PageWrapper from '../components/PageWrapper'
 import PageHeader from '../components/PageHeader'
@@ -73,7 +73,7 @@ export default function DataMenu({ onNavigate }) {
       try {
         const [weight, gym, cal, bio, dexa, body, weekly, photos] = await Promise.all([
           getLastWeight().catch(() => null),
-          getActiveGymLogs().catch(() => []),
+          getGymLogs().catch(() => []),
           getActiveCalories().catch(() => null),
           getBioimpedanceReports().catch(() => []),
           getDexaReports().catch(() => []),
@@ -99,7 +99,7 @@ export default function DataMenu({ onNavigate }) {
           bioCount: bio?.length || 0,
           dexaCount: dexa?.length || 0,
           bodyCount: body?.length || 0,
-          gymCount: gym?.length || 0,
+          gymCount: new Set(gym?.map(l => l.exercise_type_id) || []).size,
           weeklyCount: weekly?.length || 0,
           photoCount: photos?.reduce((sum, p) => sum + (p.count || 0), 0) || 0,
           photoDates: photos?.length || 0,

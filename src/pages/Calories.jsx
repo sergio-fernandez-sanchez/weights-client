@@ -31,7 +31,7 @@ export default function Calories({ onNavigate, currentCalories }) {
 
   return (
     <PageWrapper>
-      <BackButton onClick={() => onNavigate('home')} />
+      <BackButton />
       <PageHeader title="CALORÍAS" />
 
       {currentCalories && (

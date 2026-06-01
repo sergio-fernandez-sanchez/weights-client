@@ -189,7 +189,7 @@ export default function GymHistory({ onNavigate }) {
   return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
-        <BackButton onClick={() => onNavigate('data')} />
+        <BackButton />
         <PageHeader title="HISTORIAL GYM" sub="evolución 1RM estimado por ejercicio" />
 
         {exercises.length === 0 ? (

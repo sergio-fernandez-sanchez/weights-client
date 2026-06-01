@@ -134,7 +134,7 @@ export default function MonthlySummary({ onNavigate }) {
   if (months.length === 0) return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
-        <BackButton onClick={() => onNavigate('data')} />
+        <BackButton />
         <PageHeader title="RESUMEN MENSUAL" />
         <EmptyState message="SIN DATOS SUFICIENTES" icon="◇" />
       </div>
@@ -151,7 +151,7 @@ export default function MonthlySummary({ onNavigate }) {
   return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
-        <BackButton onClick={() => onNavigate('data')} />
+        <BackButton />
         <PageHeader title="RESUMEN MENSUAL" sub="datos agregados por mes" />
 
         <div className="flex flex-col gap-3 stagger">

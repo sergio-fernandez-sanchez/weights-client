@@ -101,7 +101,7 @@ export default function PhotoUpload({ onNavigate }) {
 
   return (
     <PageWrapper>
-      <BackButton onClick={() => onNavigate('home')} />
+      <BackButton />
       <PageHeader title="NUEVA FOTO" sub="añade fotos de progreso" />
 
       {/* Date */}

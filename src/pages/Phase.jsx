@@ -125,7 +125,7 @@ export default function Phase({ onNavigate }) {
 
   return (
     <PageWrapper>
-      <BackButton onClick={() => onNavigate('home')} />
+      <BackButton />
       <PageHeader title="NUEVA FASE" />
 
       {/* Confirmation overlay */}

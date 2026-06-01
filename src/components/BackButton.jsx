@@ -1,7 +1,11 @@
 export default function BackButton({ onClick }) {
+  function handleBack() {
+    if (onClick) onClick()
+    else window.history.back()
+  }
   return (
     <button
-      onClick={onClick}
+      onClick={handleBack}
       className="group flex items-center gap-2 text-[#71727a] font-sans text-xs hover:text-[#5f8a00] transition-colors duration-200 mb-6 click-press"
     >
       <span className="inline-flex items-center justify-center w-7 h-7 glass-pill group-hover:border-[#c8f500]/30 transition-all duration-200">

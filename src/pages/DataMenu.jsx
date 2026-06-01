@@ -114,7 +114,7 @@ export default function DataMenu({ onNavigate }) {
 
   return (
     <PageWrapper>
-      <BackButton onClick={() => onNavigate('home')} />
+      <BackButton />
       <PageHeader title="DATOS" sub="historial y métricas" />
 
       {loading ? (

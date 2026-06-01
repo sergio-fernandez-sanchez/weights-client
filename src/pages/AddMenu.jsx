@@ -7,7 +7,7 @@ import Separator from '../components/Separator'
 export default function AddMenu({ onNavigate }) {
   return (
     <PageWrapper>
-      <BackButton onClick={() => onNavigate('home')} />
+      <BackButton />
       <PageHeader title="AÑADIR" sub="nuevo registro" />
       <Separator className="my-5" />
       <div className="flex flex-col gap-2">

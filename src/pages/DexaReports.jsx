@@ -81,7 +81,7 @@ export default function DexaReports({ onNavigate }) {
   if (reports.length === 0) return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
-        <BackButton onClick={() => onNavigate('data')} />
+        <BackButton />
         <PageHeader title="DEXA" />
         <EmptyState message="SIN INFORMES DEXA" icon="⬢" />
       </div>
@@ -97,7 +97,7 @@ export default function DexaReports({ onNavigate }) {
   return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
-        <BackButton onClick={() => onNavigate('data')} />
+        <BackButton />
         <PageHeader title="DEXA" />
 
         {/* Report selector */}

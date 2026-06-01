@@ -54,7 +54,7 @@ export default function AiReport({ onNavigate }) {
   return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
-        <BackButton onClick={() => onNavigate('home')} />
+        <BackButton />
         <PageHeader title="INFORME IA" sub="exporta tus datos para análisis con IA" />
 
         {/* ZIP with photos — featured */}

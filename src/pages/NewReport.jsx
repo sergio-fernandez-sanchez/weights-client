@@ -7,7 +7,7 @@ import BackButton from '../components/BackButton'
 export default function NewReport({ onNavigate }) {
   return (
     <PageWrapper>
-      <BackButton onClick={() => onNavigate('home')} />
+      <BackButton />
       <PageHeader title="NUEVO INFORME" sub="selecciona el tipo de informe" />
 
       <div className="flex flex-col gap-2">

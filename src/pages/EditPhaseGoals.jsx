@@ -48,7 +48,7 @@ export default function EditPhaseGoals({ onNavigate, phase }) {
 
   return (
     <PageWrapper>
-      <BackButton onClick={() => onNavigate('currentPhase')} />
+      <BackButton />
       <PageHeader title="EDITAR OBJETIVOS" />
 
       {phase && (

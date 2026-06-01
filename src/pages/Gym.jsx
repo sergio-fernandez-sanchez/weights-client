@@ -207,7 +207,7 @@ export default function Gym({ onNavigate }) {
   if (mode === 'list') return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
-        <BackButton onClick={() => onNavigate('home')} />
+        <BackButton />
         <PageHeader title="GYM" sub="progreso en 1RM estimado (Epley)" />
 
         {/* Radar chart */}

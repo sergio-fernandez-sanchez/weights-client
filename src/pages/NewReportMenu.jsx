@@ -7,7 +7,7 @@ import Separator from '../components/Separator'
 export default function NewReportMenu({ onNavigate }) {
   return (
     <PageWrapper>
-      <BackButton onClick={() => onNavigate('addMenu')} />
+      <BackButton />
       <PageHeader title="NUEVO INFORME" sub="elige el tipo" />
       <Separator className="my-5" />
       <div className="flex flex-col gap-2">

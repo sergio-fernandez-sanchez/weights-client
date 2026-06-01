@@ -57,7 +57,7 @@ export default function NewDexaReport({ onNavigate }) {
   return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
-        <BackButton onClick={() => onNavigate('newReport')} />
+        <BackButton />
         <PageHeader title="DEXA" sub="nuevo informe" />
 
         <div className="mb-5">

@@ -112,7 +112,7 @@ export default function Photos({ onNavigate }) {
   return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
-        <BackButton onClick={() => onNavigate('data')} />
+        <BackButton />
         <PageHeader title="FOTOGRAFÍAS" sub="progreso visual" />
 
         {dates.length === 0 ? (

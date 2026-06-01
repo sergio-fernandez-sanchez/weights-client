@@ -16,17 +16,27 @@ function oneRM(log) {
   return null
 }
 
-// Calcula el % de progreso de un ejercicio en la fase activa:
-// compara el 1RM más antiguo desde el inicio de la fase con el más reciente.
 function calcPhaseProgress(logs, exerciseTypeId, phaseStartDate) {
-  const phaseLogs = logs
-    .filter(l => l.exercise_type_id === exerciseTypeId && parseDate(l.start_date) >= parseDate(phaseStartDate))
+  const phaseStart = parseDate(phaseStartDate)
+  const history = logs
+    .filter(l => l.exercise_type_id === exerciseTypeId && l.weight)
     .sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
-  if (phaseLogs.length < 2) return null
-  const base = oneRM(phaseLogs[0])
-  const curr = oneRM(phaseLogs[phaseLogs.length - 1])
-  if (!base || !curr || base === 0) return null
-  return ((curr - base) / base) * 100
+  if (history.length === 0) return null
+  const phaseHistory = history.filter(l => parseDate(l.start_date) >= phaseStart)
+  const beforePhase  = history.filter(l => parseDate(l.start_date) <  phaseStart)
+  if (phaseHistory.length === 0) return null
+  const current = phaseHistory[phaseHistory.length - 1]
+  let baseLog = null
+  if (phaseHistory.length >= 2) {
+    baseLog = phaseHistory[0]
+  } else if (beforePhase.length > 0) {
+    baseLog = beforePhase[beforePhase.length - 1]
+  }
+  if (!baseLog || baseLog.id === current.id) return null
+  const rmBase = oneRM(baseLog)
+  const rmCurr = oneRM(current)
+  if (!rmBase || !rmCurr) return null
+  return ((rmCurr - rmBase) / rmBase) * 100
 }
 
 function gymPhaseAvg(logs, phaseStartDate) {

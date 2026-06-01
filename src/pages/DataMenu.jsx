@@ -20,8 +20,8 @@ function oneRM(log) {
 // compara el 1RM más antiguo desde el inicio de la fase con el más reciente.
 function calcPhaseProgress(logs, exerciseTypeId, phaseStartDate) {
   const phaseLogs = logs
-    .filter(l => l.exercise_type_id === exerciseTypeId && parseDate(l.date) >= parseDate(phaseStartDate))
-    .sort((a, b) => parseDate(a.date) - parseDate(b.date))
+    .filter(l => l.exercise_type_id === exerciseTypeId && parseDate(l.start_date) >= parseDate(phaseStartDate))
+    .sort((a, b) => parseDate(a.start_date) - parseDate(b.start_date))
   if (phaseLogs.length < 2) return null
   const base = oneRM(phaseLogs[0])
   const curr = oneRM(phaseLogs[phaseLogs.length - 1])
@@ -35,8 +35,8 @@ function gymPhaseAvg(logs, phaseStartDate) {
   const byType = Object.values(
     Object.fromEntries(
       logs
-        .filter(l => parseDate(l.date) >= parseDate(phaseStartDate))
-        .sort((a, b) => parseDate(b.date) - parseDate(a.date))
+        .filter(l => parseDate(l.start_date) >= parseDate(phaseStartDate))
+        .sort((a, b) => parseDate(b.start_date) - parseDate(a.start_date))
         .map(l => [l.exercise_type_id, l])
     )
   )

@@ -328,7 +328,7 @@ export default function CurrentPhase({ onNavigate }) {
   if (!phases.length) return (
     <div className="min-h-screen px-6 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
-        <BackButton onClick={() => onNavigate('data')} />
+        <BackButton />
         <PageHeader title="FASES" />
         <p className="text-[#555555] font-sans text-sm">no hay fases registradas</p>
       </div>
@@ -473,7 +473,7 @@ export default function CurrentPhase({ onNavigate }) {
   return (
     <div className="min-h-screen px-6 md:px-16 pb-10">
       <div className="w-full max-w-sm mx-auto pt-10">
-        <BackButton onClick={() => onNavigate('data')} />
+        <BackButton />
         <PageHeader title="FASES" />
 
         {/* Compare phases button — prominent */}
@@ -683,186 +683,161 @@ export default function CurrentPhase({ onNavigate }) {
           )}
         </div>
 
-        {/* Weekly stats */}
+        {/* Weekly stats — diseño C: comparador visual */}
         {isActive && (
           <div className="glass-card rounded-sm p-4 mb-4">
+            <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-sm"
+              style={{ background: `linear-gradient(90deg, ${phaseColor}, transparent)`, opacity: 0.7 }} />
+
             <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-4">RITMO SEMANAL</p>
 
-            {/* Main grid: actual rate + required rate */}
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              {/* Actual weekly rate */}
-              <div>
-                <p className="text-[#444444] font-sans text-[10px] tracking-widest mb-1">RITMO ACTUAL</p>
-                {weeklyStats ? (
-                  <>
-                    <p className="font-mono text-xl font-bold"
-                      style={{ color: impliedWeeklyGoal ? weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) : '#5f8a00' }}>
-                      {weeklyStats.avgChange > 0 ? '+' : ''}{weeklyStats.avgChange.toFixed(2)} <span className="text-xs font-normal opacity-50">kg</span>
-                    </p>
-                    <p className="text-[#333333] font-sans text-[9px] mt-1">media semanal</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="font-mono text-xl font-bold text-[#2a2a2a]">—</p>
-                    <p className="text-[#333333] font-sans text-[9px] mt-1">datos insuficientes</p>
-                  </>
-                )}
-              </div>
+            {/* Comparador: 3 barras sobre el mismo eje */}
+            <div className="flex flex-col gap-2.5 mb-4">
+              {/* Ritmo actual */}
+              {(() => {
+                const val = weeklyStats?.avgChange
+                const color = val != null
+                  ? (impliedWeeklyGoal ? weeklyRateColor(Math.abs(val), Math.abs(impliedWeeklyGoal)) : '#5f8a00')
+                  : '#94959c'
+                const maxVal = Math.max(
+                  Math.abs(weeklyStats?.avgChange || 0),
+                  Math.abs(impliedWeeklyGoal || 0),
+                  Math.abs(requiredWeeklyRate || 0),
+                  0.1
+                )
+                const pct = val != null ? Math.min(100, (Math.abs(val) / maxVal) * 100) : 0
+                return (
+                  <div className="flex gap-3 items-center">
+                    <span className="font-sans text-[9px] text-[#8a8c94] tracking-[0.08em] w-[72px] text-right flex-shrink-0">ACTUAL</span>
+                    <div className="flex-1 h-3 rounded-full bg-[rgba(70,80,115,0.1)] overflow-hidden relative">
+                      <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${color}66)` }} />
+                    </div>
+                    <span className="font-mono text-sm font-bold w-[48px] flex-shrink-0" style={{ color }}>
+                      {val != null ? `${val > 0 ? '+' : ''}${val.toFixed(2)}` : '—'}
+                    </span>
+                  </div>
+                )
+              })()}
 
-              {/* Required weekly rate from START to reach goal */}
-              <div>
-                <p className="text-[#444444] font-sans text-[10px] tracking-widest mb-1">RITMO NECESARIO</p>
-                {impliedWeeklyGoal ? (
-                  <>
-                    <p className="font-mono text-xl font-bold" style={{ color: phaseColor }}>
-                      {impliedWeeklyGoal > 0 ? '+' : ''}{impliedWeeklyGoal.toFixed(2)} <span className="text-xs font-normal opacity-50">kg</span>
-                    </p>
-                    <p className="text-[#333333] font-sans text-[9px] mt-1">desde inicio a objetivo</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="font-mono text-xl font-bold text-[#2a2a2a]">—</p>
-                    <p className="text-[#333333] font-sans text-[9px] mt-1">{!weightGoal ? 'sin peso objetivo' : !startWeight ? 'sin peso inicial' : !totalWeeks ? 'sin fecha objetivo' : 'datos insuficientes'}</p>
-                  </>
-                )}
-              </div>
+              {/* Ritmo necesario (inicio → objetivo) */}
+              {(() => {
+                const val = impliedWeeklyGoal
+                const color = phaseColor
+                const maxVal = Math.max(
+                  Math.abs(weeklyStats?.avgChange || 0),
+                  Math.abs(impliedWeeklyGoal || 0),
+                  Math.abs(requiredWeeklyRate || 0),
+                  0.1
+                )
+                const pct = val != null ? Math.min(100, (Math.abs(val) / maxVal) * 100) : 0
+                return (
+                  <div className="flex gap-3 items-center">
+                    <span className="font-sans text-[9px] text-[#8a8c94] tracking-[0.08em] w-[72px] text-right flex-shrink-0">NECESARIO</span>
+                    <div className="flex-1 h-3 rounded-full bg-[rgba(70,80,115,0.1)] overflow-hidden relative">
+                      <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${color}66)` }} />
+                    </div>
+                    <span className="font-mono text-sm font-bold w-[48px] flex-shrink-0" style={{ color: val ? phaseColor : '#94959c' }}>
+                      {val != null ? `${val > 0 ? '+' : ''}${val.toFixed(2)}` : '—'}
+                    </span>
+                  </div>
+                )
+              })()}
+
+              {/* Ritmo necesario restante (actual → objetivo) */}
+              {(() => {
+                const val = requiredWeeklyRate
+                const color = '#3a9d4e'
+                const maxVal = Math.max(
+                  Math.abs(weeklyStats?.avgChange || 0),
+                  Math.abs(impliedWeeklyGoal || 0),
+                  Math.abs(requiredWeeklyRate || 0),
+                  0.1
+                )
+                const pct = val != null ? Math.min(100, (Math.abs(val) / maxVal) * 100) : 0
+                return (
+                  <div className="flex gap-3 items-center">
+                    <span className="font-sans text-[9px] text-[#8a8c94] tracking-[0.08em] w-[72px] text-right flex-shrink-0">RESTANTE</span>
+                    <div className="flex-1 h-3 rounded-full bg-[rgba(70,80,115,0.1)] overflow-hidden relative">
+                      <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${color}66)` }} />
+                    </div>
+                    <span className="font-mono text-sm font-bold w-[48px] flex-shrink-0" style={{ color: val ? color : '#94959c' }}>
+                      {val != null ? `${val > 0 ? '+' : ''}${val.toFixed(2)}` : '—'}
+                    </span>
+                  </div>
+                )
+              })()}
             </div>
 
-            {/* Required rate from CURRENT weight (remaining) */}
-            <div className="rounded-sm p-3 mb-3 relative overflow-hidden"
-              style={{ backgroundColor: `${phaseColor}06`, border: `1px solid ${phaseColor}12` }}>
-              <div className="absolute top-0 left-0 right-0 h-[1px]" style={{ backgroundColor: phaseColor, opacity: 0.2 }} />
+            {/* Leyenda kg/sem */}
+            <p className="font-sans text-[8px] text-[#9a9ba2] tracking-[0.1em] text-right mb-3">kg/sem</p>
+
+            <div className="h-px bg-gradient-to-r from-transparent via-[rgba(70,80,115,0.14)] to-transparent mb-3" />
+
+            {/* Consistencia como semáforo */}
+            {weeklyStats && (
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[#444444] font-sans text-[9px] tracking-[0.15em] mb-0.5">RITMO NECESARIO RESTANTE</p>
-                  <p className="text-[#444444] font-sans text-[9px]">desde peso actual al objetivo</p>
-                </div>
-                {requiredWeeklyRate !== null ? (
-                  <p className="font-mono text-lg font-bold" style={{ color: phaseColor }}>
-                    {requiredWeeklyRate > 0 ? '+' : ''}{requiredWeeklyRate.toFixed(2)} <span className="text-[10px] font-normal opacity-50">kg/sem</span>
+                  <p className="font-sans text-[9px] text-[#8a8c94] tracking-[0.15em] uppercase mb-0.5">Consistencia</p>
+                  <p className="font-sans text-[10px]" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
+                    σ {weeklyStats.stdDev.toFixed(2)} kg/sem
                   </p>
-                ) : (
-                  <div className="text-right">
-                    <p className="font-mono text-lg font-bold text-[#2a2a2a]">—</p>
-                    <p className="text-[#333333] font-sans text-[9px]">{!currentWeight ? 'sin peso actual' : !weightGoal ? 'sin objetivo' : 'sin fecha límite'}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full"
+                      style={{ background: consistencyColor(weeklyStats.stdDev) === '#3a9d4e' ? '#3a9d4e' : 'rgba(70,80,115,0.15)', boxShadow: consistencyColor(weeklyStats.stdDev) === '#3a9d4e' ? '0 0 5px #3a9d4e' : 'none' }} />
+                    <div className="w-2.5 h-2.5 rounded-full"
+                      style={{ background: consistencyColor(weeklyStats.stdDev) === '#b87400' ? '#b87400' : 'rgba(70,80,115,0.15)', boxShadow: consistencyColor(weeklyStats.stdDev) === '#b87400' ? '0 0 5px #b87400' : 'none' }} />
+                    <div className="w-2.5 h-2.5 rounded-full"
+                      style={{ background: consistencyColor(weeklyStats.stdDev) === '#d92020' ? '#d92020' : 'rgba(70,80,115,0.15)', boxShadow: consistencyColor(weeklyStats.stdDev) === '#d92020' ? '0 0 5px #d92020' : 'none' }} />
                   </div>
-                )}
+                  <span className="font-mono text-sm font-bold" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
+                    {consistencyLabel(weeklyStats.stdDev).toUpperCase()}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* ETA — estimated arrival */}
-            {isActive && weightGoal && (
-              <div className="rounded-sm p-3 mb-3 relative overflow-hidden"
-                style={{ backgroundColor: '#ffffff03', border: '1px solid #ffffff08' }}>
+            {/* ETA */}
+            {eta && (
+              <div className="mt-3 rounded-sm p-3 relative overflow-hidden"
+                style={{
+                  backgroundColor: eta.reached ? '#3a9d4e08' : eta.reachable ? `${phaseColor}06` : '#d9202006',
+                  border: `1px solid ${eta.reached ? '#3a9d4e18' : eta.reachable ? `${phaseColor}14` : '#d9202014'}`,
+                }}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[#444444] font-sans text-[9px] tracking-[0.15em] mb-0.5">FECHA ESTIMADA DE LLEGADA</p>
-                    <p className="text-[#444444] font-sans text-[9px]">al ritmo actual</p>
+                    <p className="font-sans text-[9px] text-[#8a8c94] tracking-[0.15em] uppercase mb-0.5">Llegada estimada</p>
+                    <p className="font-sans text-[9px] text-[#8a8c94]">al ritmo actual</p>
                   </div>
-                  {etaDate === 'never' ? (
-                    <div className="text-right">
-                      <p className="font-sans text-sm font-bold text-[#ff2d2d]">∞</p>
-                      <p className="text-[#ff2d2d] font-sans text-[9px]">ritmo contrario</p>
-                    </div>
-                  ) : etaDate ? (
+                  {eta.reached ? (
+                    <p className="font-mono text-sm font-bold text-[#3a9d4e]">✓ Alcanzado</p>
+                  ) : eta.reachable ? (
                     <div className="text-right">
                       <p className="font-mono text-sm font-bold" style={{ color: phaseColor }}>
-                        {etaDate.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                        {eta.date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </p>
-                      {etaDiffWeeks !== null && (
-                        <p className="font-sans text-[9px] mt-0.5" style={{
-                          color: Math.abs(etaDiffWeeks) < 1 ? '#3a9d4e' : etaDiffWeeks > 0 ? '#d92020' : '#3a9d4e'
-                        }}>
-                          {Math.abs(etaDiffWeeks) < 1
-                            ? 'en plazo'
-                            : etaDiffWeeks > 0
-                              ? `${Math.abs(etaDiffWeeks)} sem. por detrás`
-                              : `${Math.abs(etaDiffWeeks)} sem. por delante`
-                          }
+                      {eta.vsGoal && (
+                        <p className="font-sans text-[9px] mt-0.5"
+                          style={{ color: eta.vsGoal.diffDays <= 0 ? '#3a9d4e' : eta.vsGoal.diffDays <= 14 ? '#b87400' : '#d92020' }}>
+                          {eta.vsGoal.diffDays <= 0
+                            ? `${Math.abs(eta.vsGoal.diffWeeks)}sem por delante`
+                            : `${eta.vsGoal.diffWeeks}sem por detrás`}
                         </p>
                       )}
                     </div>
                   ) : (
-                    <div className="text-right">
-                      <p className="font-mono text-sm font-bold text-[#2a2a2a]">—</p>
-                      <p className="text-[#333333] font-sans text-[9px]">datos insuficientes</p>
-                    </div>
+                    <p className="font-mono text-sm font-bold text-[#d92020]">∞</p>
                   )}
                 </div>
               </div>
             )}
-
-            {/* Consistency */}
-            {weeklyStats && (
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <p className="text-[#444444] font-sans text-[10px] tracking-widest mb-0.5">CONSISTENCIA</p>
-                  <p className="font-sans text-[10px]" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
-                    {consistencyLabel(weeklyStats.stdDev)}
-                  </p>
-                </div>
-                <p className="font-mono text-lg font-bold" style={{ color: consistencyColor(weeklyStats.stdDev) }}>
-                  σ {weeklyStats.stdDev.toFixed(2)}
-                </p>
-              </div>
-            )}
-
-            {/* Progress bar: actual vs planned rate */}
-            {weeklyStats && impliedWeeklyGoal && (
-              <div>
-                <div className="flex justify-between mb-1.5">
-                  <p className="text-[#444444] font-sans text-[10px] tracking-widest">RITMO VS OBJETIVO</p>
-                  <p className="font-sans text-xs font-bold" style={{ color: weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal)) }}>
-                    {((Math.abs(weeklyStats.avgChange) / Math.abs(impliedWeeklyGoal)) * 100).toFixed(0)}%
-                  </p>
-                </div>
-                <div className="relative h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
-                  <div className="absolute inset-y-0 left-0 rounded-full transition-all"
-                    style={{
-                      width: `${Math.min(100, (Math.abs(weeklyStats.avgChange) / Math.abs(impliedWeeklyGoal)) * 100)}%`,
-                      backgroundColor: weeklyRateColor(Math.abs(weeklyStats.avgChange), Math.abs(impliedWeeklyGoal))
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* ETA — estimated date of arrival to goal */}
-            {eta && (
-              <div className="mt-4 rounded-sm p-3 relative overflow-hidden"
-                style={{
-                  backgroundColor: eta.reached ? '#c8f50008' : eta.reachable ? `${phaseColor}06` : '#ff2d2d06',
-                  border: `1px solid ${eta.reached ? '#c8f50015' : eta.reachable ? `${phaseColor}12` : '#ff2d2d12'}`,
-                }}>
-                <div className="absolute top-0 left-0 right-0 h-[1px]"
-                  style={{ backgroundColor: eta.reached ? '#5f8a00' : eta.reachable ? phaseColor : '#d92020', opacity: 0.2 }} />
-                <p className="text-[#444444] font-sans text-[9px] tracking-[0.15em] mb-2">ESTIMACIÓN DE LLEGADA</p>
-                {eta.reached ? (
-                  <p className="text-[#c8f500] font-sans text-sm font-bold">✓ Objetivo alcanzado</p>
-                ) : eta.reachable ? (
-                  <div>
-                    <p className="font-mono text-lg font-bold" style={{ color: phaseColor }}>
-                      {eta.date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </p>
-                    {eta.vsGoal && (
-                      <p className="font-sans text-[11px] mt-1.5"
-                        style={{ color: eta.vsGoal.diffDays <= 0 ? '#5f8a00' : eta.vsGoal.diffDays <= 14 ? '#b87400' : '#d92020' }}>
-                        {eta.vsGoal.diffDays <= 0
-                          ? `${Math.abs(eta.vsGoal.diffWeeks)} semana${Math.abs(eta.vsGoal.diffWeeks) !== 1 ? 's' : ''} por delante del plan`
-                          : `${eta.vsGoal.diffWeeks} semana${eta.vsGoal.diffWeeks !== 1 ? 's' : ''} por detrás del plan`}
-                      </p>
-                    )}
-                    {!eta.vsGoal && (
-                      <p className="text-[#444444] font-sans text-[10px] mt-1">al ritmo actual de {weeklyStats.avgChange > 0 ? '+' : ''}{weeklyStats.avgChange.toFixed(2)} kg/sem</p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-[#ff2d2d] font-sans text-xs">{eta.reason}</p>
-                )}
-              </div>
-            )}
           </div>
         )}
+
 
         {/* Weekly weight history — last 4 weeks */}
         {(() => {

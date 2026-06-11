@@ -225,8 +225,11 @@ function PhaseChart({ data, phaseColor, weightGoal, weeklyStats }) {
 
 function calcWeeklyStats(phaseWeights) {
   if (phaseWeights.length < 2) return null
+  const sorted = [...phaseWeights].sort((a, b) => parseDate(a.date) - parseDate(b.date))
+
+  // Agrupa por semana (lunes) para calcular medias y la desviación
   const byWeek = {}
-  phaseWeights.forEach(w => {
+  sorted.forEach(w => {
     const d = parseDate(w.date)
     const monday = new Date(d)
     monday.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1))
@@ -236,15 +239,34 @@ function calcWeeklyStats(phaseWeights) {
   })
   const weekKeys = Object.keys(byWeek).sort()
   if (weekKeys.length < 2) return null
+
   const weeklyAvgs = weekKeys.map(k => {
     const vals = byWeek[k]
-    return vals.reduce((a, b) => a + b, 0) / vals.length
+    return { key: k, avg: vals.reduce((a, b) => a + b, 0) / vals.length }
   })
+
+  // Ritmo real = (media última semana - media primera semana) / semanas entre ellas
+  const firstWeekAvg = weeklyAvgs[0].avg
+  const lastWeekAvg  = weeklyAvgs[weeklyAvgs.length - 1].avg
+  const firstDate    = parseDate(weeklyAvgs[0].key)
+  const lastDate     = parseDate(weeklyAvgs[weeklyAvgs.length - 1].key)
+  const weeksBetween = (lastDate - firstDate) / (1000 * 60 * 60 * 24 * 7)
+  const avgChange    = weeksBetween > 0 ? (lastWeekAvg - firstWeekAvg) / weeksBetween : 0
+
+  // Desviación estándar de los cambios semana a semana (para consistencia)
   const weeklyChanges = []
-  for (let i = 1; i < weeklyAvgs.length; i++) weeklyChanges.push(weeklyAvgs[i] - weeklyAvgs[i - 1])
-  const avgChange = weeklyChanges.reduce((a, b) => a + b, 0) / weeklyChanges.length
-  const variance = weeklyChanges.reduce((acc, v) => acc + Math.pow(v - avgChange, 2), 0) / weeklyChanges.length
-  return { avgChange, stdDev: Math.sqrt(variance) }
+  for (let i = 1; i < weeklyAvgs.length; i++) {
+    weeklyChanges.push(weeklyAvgs[i].avg - weeklyAvgs[i - 1].avg)
+  }
+  const variance = weeklyChanges.length > 0
+    ? weeklyChanges.reduce((acc, v) => acc + Math.pow(v - avgChange, 2), 0) / weeklyChanges.length
+    : 0
+
+  return {
+    avgChange,
+    stdDev: Math.sqrt(variance),
+    weeklyAvgs, // para el historial semanal
+  }
 }
 
 function calcProgress(allLogs, exerciseTypeId, phaseStartDate, phaseEndDate) {
@@ -831,60 +853,66 @@ export default function CurrentPhase({ onNavigate }) {
             count: byWeek[k].length,
           }))
 
-          // Calculate deltas between consecutive weeks
-          const deltas = []
-          for (let i = 1; i < weeklyAvgs.length; i++) {
-            const delta = weeklyAvgs[i].avg - weeklyAvgs[i - 1].avg
-            const monday = parseDate(weeklyAvgs[i].key)
+          // Historial completo: media de cada semana + variación respecto a la anterior
+          const allWeeks = weeklyAvgs.map((w, i) => {
+            const monday = parseDate(w.key)
             const sunday = new Date(monday)
             sunday.setDate(monday.getDate() + 6)
-            deltas.push({
-              label: `${monday.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })} – ${sunday.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}`,
-              delta: parseFloat(delta.toFixed(2)),
-              count: weeklyAvgs[i].count,
-            })
-          }
+            const delta = i > 0 ? parseFloat((w.avg - weeklyAvgs[i - 1].avg).toFixed(2)) : null
+            return {
+              label: `${monday.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}`,
+              avg: parseFloat(w.avg.toFixed(2)),
+              delta,
+            }
+          })
 
-          // Take last 4
-          const recent = deltas.slice(-4)
-          if (recent.length === 0) return null
+          if (allWeeks.length === 0) return null
 
-          const maxAbs = Math.max(...recent.map(d => Math.abs(d.delta)), 0.1)
+          const maxAbs = Math.max(...allWeeks.filter(w => w.delta !== null).map(w => Math.abs(w.delta)), 0.1)
 
           function barColor(d) {
-            if (d > 0.2) return '#5f8a00'
-            if (d < -0.2) return '#d92020'
+            if (d > 0.1) return '#3a9d4e'
+            if (d < -0.1) return '#d92020'
             return '#b87400'
           }
 
           return (
             <div className="glass-card rounded-sm p-4 mb-4">
               <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-4">HISTORIAL SEMANAL</p>
-              <div className="flex flex-col gap-3">
-                {recent.map((w, i) => {
-                  const color = barColor(w.delta)
-                  const widthPct = Math.max(4, (Math.abs(w.delta) / maxAbs) * 50)
-                  const isPos = w.delta >= 0
+              <div className="flex flex-col gap-0">
+                {/* Header */}
+                <div className="flex items-center gap-2 pb-2 mb-1 border-b border-[rgba(70,80,115,0.1)]">
+                  <span className="font-sans text-[8px] text-[#9a9ba2] tracking-[0.12em] w-[38px]">SEM</span>
+                  <span className="font-sans text-[8px] text-[#9a9ba2] tracking-[0.12em] flex-1">VARIACIÓN</span>
+                  <span className="font-sans text-[8px] text-[#9a9ba2] tracking-[0.12em] w-[52px] text-right">MEDIA</span>
+                  <span className="font-sans text-[8px] text-[#9a9ba2] tracking-[0.12em] w-[44px] text-right">Δ</span>
+                </div>
+                {allWeeks.map((w, i) => {
+                  const color = w.delta !== null ? barColor(w.delta) : '#8a8c94'
+                  const widthPct = w.delta !== null ? Math.max(4, (Math.abs(w.delta) / maxAbs) * 100) : 0
+                  const isPos = w.delta !== null && w.delta >= 0
                   return (
-                    <div key={i}>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[#555555] font-sans text-[10px]">{w.label}</span>
-                        <span className="font-mono text-xs font-bold" style={{ color }}>
-                          {w.delta > 0 ? '+' : ''}{w.delta.toFixed(2)} kg
-                        </span>
+                    <div key={i} className="flex items-center gap-2 py-2 border-b border-[rgba(70,80,115,0.06)] last:border-0">
+                      <span className="font-mono text-[9px] text-[#8a8c94] w-[38px] flex-shrink-0">{w.label}</span>
+                      <div className="flex-1 relative h-[5px] bg-[rgba(70,80,115,0.1)] rounded-full overflow-hidden">
+                        {w.delta !== null && (
+                          <>
+                            <div className="absolute top-0 bottom-0 left-1/2 w-px bg-[rgba(70,80,115,0.2)]" />
+                            <div className="absolute inset-y-0 rounded-full transition-all duration-500"
+                              style={{
+                                width: `${widthPct / 2}%`,
+                                backgroundColor: color,
+                                ...(isPos ? { left: '50%' } : { right: '50%' }),
+                              }} />
+                          </>
+                        )}
                       </div>
-                      <div className="relative h-1.5 bg-[#141414] rounded-full overflow-hidden">
-                        <div className="absolute top-0 bottom-0 left-1/2 w-px bg-[#222222]" />
-                        <div
-                          className="absolute inset-y-0 rounded-full transition-all duration-500"
-                          style={{
-                            width: `${widthPct}%`,
-                            backgroundColor: color,
-                            boxShadow: `0 0 8px ${color}30`,
-                            ...(isPos ? { left: '50%' } : { right: '50%' }),
-                          }}
-                        />
-                      </div>
+                      <span className="font-mono text-[10px] font-semibold w-[52px] text-right flex-shrink-0" style={{ color: '#41434a' }}>
+                        {w.avg.toFixed(2)} kg
+                      </span>
+                      <span className="font-mono text-[10px] font-bold w-[44px] text-right flex-shrink-0" style={{ color }}>
+                        {w.delta !== null ? `${w.delta > 0 ? '+' : ''}${w.delta.toFixed(2)}` : '—'}
+                      </span>
                     </div>
                   )
                 })}

@@ -305,14 +305,28 @@ export default function Home({ onNavigate, onLogout }) {
     for (let i = 1; i < weeklyAvgs.length; i++) {
       const delta = weeklyAvgs[i].avg - weeklyAvgs[i - 1].avg
       const monday = parseDate(weeklyAvgs[i].key)
-      const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6)
       deltas.push({
         label: `${monday.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}`,
         delta: parseFloat(delta.toFixed(2)),
       })
     }
-    return deltas.slice(-4)
+    return deltas
   })()
+
+  // Media de la semana en curso (lunes → hoy)
+  const currentWeekAvg = (() => {
+    if (!allWeights || allWeights.length === 0) return null
+    const today = new Date(); today.setHours(0, 0, 0, 0)
+    const day = today.getDay()
+    const monday = new Date(today)
+    monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1))
+    const weights = allWeights
+      .filter(w => { const d = parseDate(w.date); return d >= monday && d <= today })
+      .map(w => parseFloat(w.weight))
+    if (weights.length === 0) return null
+    return parseFloat((weights.reduce((a, b) => a + b, 0) / weights.length).toFixed(2))
+  })()
+
   const maxDeltaAbs = weeklyDeltas.length > 0 ? Math.max(...weeklyDeltas.map(d => Math.abs(d.delta)), 0.1) : 1
 
   // Sparkline data
@@ -399,7 +413,7 @@ export default function Home({ onNavigate, onLogout }) {
             </div>
 
             {/* Side stats: sparkline + objetivo */}
-            <div className="flex-1 min-w-0 flex flex-col gap-2.5">
+              <div className="flex-1 min-w-0 flex flex-col gap-2.5">
               {/* Sparkline 14d */}
               {sparkData.length >= 3 ? (() => {
                 const min = Math.min(...sparkData), max = Math.max(...sparkData)
@@ -424,6 +438,14 @@ export default function Home({ onNavigate, onLogout }) {
                 !todayLogged && lastWeight?.date && (
                   <p className="text-[#444444] font-sans text-[10px]">{parseDate(lastWeight.date).toLocaleDateString('es-ES')}</p>
                 )
+              )}
+
+              {/* Media semana en curso */}
+              {currentWeekAvg !== null && (
+                <div>
+                  <p className="text-[#444444] font-sans text-[8px] tracking-[0.15em]">ESTA SEMANA</p>
+                  <p className="font-mono text-sm font-bold" style={{ color: phaseColor }}>{currentWeekAvg.toFixed(2)} <span className="text-[9px] opacity-50">kg</span></p>
+                </div>
               )}
 
               {/* Objetivo / restante */}

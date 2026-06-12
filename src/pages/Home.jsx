@@ -283,14 +283,8 @@ export default function Home({ onNavigate, onLogout }) {
   // Weekly deltas
   const weeklyDeltas = (() => {
     if (!allWeights || allWeights.length < 2) return []
-    // Usar solo pesos desde el inicio de la fase activa (como CurrentPhase)
-    const phaseStart = activePhase ? parseDate(activePhase.start_date) : null
-    const filtered = phaseStart
-      ? allWeights.filter(w => parseDate(w.date) >= phaseStart)
-      : allWeights
-    if (filtered.length < 2) return []
     const byWeek = {}
-    filtered.forEach(w => {
+    allWeights.forEach(w => {
       const d = parseDate(w.date)
       const day = d.getDay()
       const monday = new Date(d)

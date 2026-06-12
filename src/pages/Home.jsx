@@ -310,8 +310,11 @@ export default function Home({ onNavigate, onLogout }) {
     for (let i = 1; i < weeklyAvgs.length; i++) {
       const delta = weeklyAvgs[i].avg - weeklyAvgs[i - 1].avg
       const monday = parseDate(weeklyAvgs[i].key)
+      const sunday = new Date(monday)
+      sunday.setDate(monday.getDate() + 6)
+      const fmt = d => d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })
       deltas.push({
-        label: `${monday.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}`,
+        label: `${fmt(monday)} – ${fmt(sunday)}`,
         delta: parseFloat(delta.toFixed(2)),
       })
     }
@@ -491,7 +494,12 @@ export default function Home({ onNavigate, onLogout }) {
                   )
                 })}
               </div>
-              <p className="text-[#444444] font-sans text-[8px] tracking-[0.15em] text-center mt-1.5">SEMANAS</p>
+              {/* Intervalos debajo de cada barra */}
+              <div className="flex gap-2 mt-1">
+                {weeklyDeltas.map((w, i) => (
+                  <span key={i} className="flex-1 text-center font-sans text-[6px] text-[#9a9ba2] leading-tight">{w.label}</span>
+                ))}
+              </div>
             </div>
           )}
         </div>

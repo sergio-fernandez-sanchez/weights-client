@@ -229,7 +229,11 @@ function getMondayKey(dateStr) {
   const monday = new Date(d)
   monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1))
   monday.setHours(0, 0, 0, 0)
-  return monday.toISOString().split('T')[0]
+  // Usar fecha local (no ISO/UTC) para evitar desfase de zona horaria
+  const y = monday.getFullYear()
+  const m = String(monday.getMonth() + 1).padStart(2, '0')
+  const dd = String(monday.getDate()).padStart(2, '0')
+  return `${y}-${m}-${dd}`
 }
 
 function calcWeeklyStats(phaseWeights) {

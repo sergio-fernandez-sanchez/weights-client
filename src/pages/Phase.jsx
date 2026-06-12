@@ -243,7 +243,7 @@ export default function Phase({ onNavigate }) {
         <button type="submit" disabled={loading}
           className="group relative w-full h-14 rounded-sm overflow-hidden font-sans font-semibold text-sm tracking-wide click-press flex items-center justify-center disabled:opacity-40 disabled:pointer-events-none transition-all"
           style={{
-            color: '#cfd0d5',
+            color: '#1d1d1f',
             background: `linear-gradient(180deg, ${selColor}f0 0%, ${selColor} 50%, ${selColor}cc 100%)`,
             border: `0.5px solid ${selColor}`,
             boxShadow: `0 8px 22px -6px ${selColor}80, inset 0 1px 0 rgba(255,255,255,0.55)`,

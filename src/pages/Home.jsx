@@ -536,7 +536,7 @@ export default function Home({ onNavigate, onLogout }) {
             </span>
             <div className="text-left">
               <p className="text-[#888888] font-sans text-[10px] tracking-[0.15em]">INFORME SEMANAL</p>
-              <p className="text-[#e8e8e8] font-sans text-xs font-bold">{fmtWeekFromISO(lastMondayISO)}</p>
+              <p className="text-[#1d1d1f] font-sans text-xs font-bold">{fmtWeekFromISO(lastMondayISO)}</p>
             </div>
           </div>
           <span className="text-[#333333] group-hover:text-[#c8f500] transition-colors font-sans">›</span>
@@ -558,7 +558,7 @@ export default function Home({ onNavigate, onLogout }) {
               onChange={e => setInput(e.target.value)}
               placeholder="00.00"
               required
-              className="w-full input-frosted rounded-sm h-14 px-4 pr-12 font-mono text-xl font-bold text-[#e8e8e8] outline-none"
+              className="w-full input-frosted rounded-sm h-14 px-4 pr-12 font-mono text-xl font-bold text-[#1d1d1f] outline-none"
               style={{ '--accent-color': phaseColor }}
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#333333] font-mono text-sm">kg</span>

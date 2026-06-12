@@ -278,7 +278,7 @@ export default function WeightHistory({ onNavigate }) {
                       <span className="flex-1 text-[#666666] font-sans text-xs">
                         {parseDate(w.date).toLocaleDateString('es-ES')}
                       </span>
-                      <span className="text-[#e8e8e8] font-sans text-sm font-bold">
+                      <span className="text-[#1d1d1f] font-sans text-sm font-bold">
                         {parseFloat(w.weight).toFixed(2)}
                       </span>
                     </div>

@@ -121,7 +121,7 @@ export default function DexaReports({ onNavigate }) {
         <div className="flex items-center gap-3 mb-4 flex-wrap">
           {bodyWeight && (
             <span className="text-[#555555] font-sans text-[10px] tracking-wide">
-              peso: <span className="text-[#e8e8e8]">{parseFloat(bodyWeight).toFixed(1)} kg</span>
+              peso: <span className="text-[#1d1d1f]">{parseFloat(bodyWeight).toFixed(1)} kg</span>
             </span>
           )}
           {phaseType && (

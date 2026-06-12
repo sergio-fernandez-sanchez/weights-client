@@ -1,10 +1,11 @@
 import { SkeletonPage } from '../components/Skeleton'
 import { useState, useEffect, useRef } from 'react'
-import { getGymLogs, getPhases } from '../api/client'
+import { getGymLogs, getPhases, getProfile, getLastWeight } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 import EmptyState from '../components/EmptyState'
+import StrengthTriangle from '../components/StrengthTriangle'
 
 const PHASE_COLORS = { bulk: '#a4c400', cut: '#e23535', maintenance: '#e88c00', unknown: '#8a8c94' }
 
@@ -157,14 +158,21 @@ function ExerciseChart({ name, logs, phases }) {
 export default function GymHistory({ onNavigate }) {
   const [logs, setLogs] = useState([])
   const [phases, setPhases] = useState([])
+  const [profile, setProfile] = useState(null)
+  const [lastWeight, setLastWeight] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [logData, phaseData] = await Promise.all([getGymLogs(), getPhases()])
+        const [logData, phaseData, profileData, weightData] = await Promise.all([
+          getGymLogs(), getPhases(),
+          getProfile().catch(() => null), getLastWeight().catch(() => null)
+        ])
         setLogs(logData)
         setPhases(phaseData)
+        setProfile(profileData)
+        setLastWeight(weightData)
       } catch {}
       finally { setLoading(false) }
     }
@@ -191,6 +199,12 @@ export default function GymHistory({ onNavigate }) {
       <div className="w-full max-w-sm mx-auto pt-10">
         <BackButton />
         <PageHeader title="HISTORIAL GYM" sub="evolución 1RM estimado por ejercicio" />
+
+        <StrengthTriangle
+          logs={logs}
+          bodyWeight={lastWeight?.weight}
+          sex={profile?.sex === 'female' ? 'female' : 'male'}
+        />
 
         {exercises.length === 0 ? (
           <EmptyState message="SIN DATOS DE EJERCICIOS" icon="◆" />

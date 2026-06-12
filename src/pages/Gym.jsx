@@ -1,12 +1,12 @@
 import { SkeletonPage } from '../components/Skeleton'
 import { useState, useEffect } from 'react'
-import { getActiveGymLogs, getGymLogs, getExerciseTypes, getActivePhase, postGymLog, patchGymLog, deleteGymLog, postExerciseType } from '../api/client'
+import { getActiveGymLogs, getGymLogs, getExerciseTypes, getActivePhase, getProfile, getLastWeight, postGymLog, patchGymLog, deleteGymLog, postExerciseType } from '../api/client'
 import PageHeader from '../components/PageHeader'
 import Separator from '../components/Separator'
 import BackButton from '../components/BackButton'
 import Button from '../components/Button'
 import Input from '../components/Input'
-import RadarChart from '../components/RadarChart'
+import StrengthTriangle from '../components/StrengthTriangle'
 import { haptic } from '../utils/haptic'
 import Toast from '../components/Toast'
 
@@ -80,6 +80,8 @@ export default function Gym({ onNavigate }) {
   const [allLogs, setAllLogs] = useState([])
   const [exerciseTypes, setExerciseTypes] = useState([])
   const [activePhase, setActivePhase] = useState(null)
+  const [profile, setProfile] = useState(null)
+  const [lastWeight, setLastWeight] = useState(null)
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState('list')
   const [editingLog, setEditingLog] = useState(null)
@@ -96,13 +98,16 @@ export default function Gym({ onNavigate }) {
 
   async function fetchData() {
     try {
-      const [logsData, allLogsData, typesData, phaseData] = await Promise.all([
-        getActiveGymLogs(), getGymLogs(), getExerciseTypes(), getActivePhase()
+      const [logsData, allLogsData, typesData, phaseData, profileData, weightData] = await Promise.all([
+        getActiveGymLogs(), getGymLogs(), getExerciseTypes(), getActivePhase(),
+        getProfile().catch(() => null), getLastWeight().catch(() => null)
       ])
       setLogs(logsData)
       setAllLogs(allLogsData)
       setExerciseTypes(typesData)
       setActivePhase(phaseData)
+      setProfile(profileData)
+      setLastWeight(weightData)
     } catch {}
     finally { setLoading(false) }
   }
@@ -210,19 +215,12 @@ export default function Gym({ onNavigate }) {
         <BackButton />
         <PageHeader title="GYM" sub="progreso en 1RM estimado (Epley)" />
 
-        {/* Radar chart */}
-        {logs.filter(l => l.weight).length >= 3 && (
-          <div className="glass-card rounded-sm p-4 mb-5">
-            <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-2">MAPA DE FUERZA</p>
-            <RadarChart
-              data={logs.filter(l => l.weight).map(log => ({
-                label: log.name.length > 8 ? log.name.slice(0, 7) + '…' : log.name,
-                value: oneRM(log) || 0,
-              }))}
-              size={240}
-            />
-          </div>
-        )}
+        {/* Triángulo de fuerza */}
+        <StrengthTriangle
+          logs={allLogs}
+          bodyWeight={lastWeight?.weight}
+          sex={profile?.sex === 'female' ? 'female' : 'male'}
+        />
 
         {logs.length === 0 ? (
           <p className="text-[#555555] font-sans text-sm mb-6">no hay ejercicios añadidos</p>

@@ -1,20 +1,31 @@
 // StrengthTriangle — triángulo de fuerza con zonas de color
-// Muestra pecho (push) / piernas (legs) / espalda (pull)
-// Normaliza por ratio 1RM/peso corporal vs estándares por sexo
+// Solo usa ejercicios por defecto (user_id === null en BD, category !== 'custom')
+// Tres grupos fijos: PECHO (press banca), ESPALDA (remo), PIERNAS (prensa)
+//
+// Ratios 1RM / peso corporal para máquina de palanca / movimientos compuestos
+// Fuente: estándares ajustados para máquinas de palanca pura y prensa vertical
 
-// Ratios de referencia por nivel y grupo (1RM / peso corporal)
-// Fuente: Symmetric Strength / ExRx, ajustado por grupo muscular
 const STANDARDS = {
   male: {
-    push:  { inicio: 0.50, novato: 0.75, medio: 1.00, avanzado: 1.25, elite: 1.50 },
-    pull:  { inicio: 0.75, novato: 1.00, medio: 1.25, avanzado: 1.60, elite: 2.00 },
-    legs:  { inicio: 0.75, novato: 1.00, medio: 1.25, avanzado: 1.50, elite: 2.00 },
+    push: { inicio: 0.60, novato: 0.90, medio: 1.40, avanzado: 1.90, elite: 2.20 },
+    pull: { inicio: 0.60, novato: 0.90, medio: 1.40, avanzado: 1.80, elite: 2.20 },
+    legs: { inicio: 1.50, novato: 2.25, medio: 3.50, avanzado: 4.50, elite: 5.50 },
   },
   female: {
-    push:  { inicio: 0.25, novato: 0.40, medio: 0.60, avanzado: 0.80, elite: 1.00 },
-    pull:  { inicio: 0.40, novato: 0.60, medio: 0.80, avanzado: 1.10, elite: 1.40 },
-    legs:  { inicio: 0.50, novato: 0.70, medio: 0.90, avanzado: 1.15, elite: 1.50 },
+    push: { inicio: 0.35, novato: 0.55, medio: 0.85, avanzado: 1.25, elite: 1.65 },
+    pull: { inicio: 0.40, novato: 0.65, medio: 1.00, avanzado: 1.35, elite: 1.70 },
+    legs: { inicio: 1.00, novato: 1.50, medio: 2.50, avanzado: 3.50, elite: 4.50 },
   },
+}
+
+// Nombres exactos de los ejercicios por defecto que usa el triángulo:
+// Push:  "Press banca" (id 1), "Press banca inclinado" (id 11)
+// Pull:  "Remo" (id 5)
+// Legs:  "Prensa vertical" (id 13), "Prensa horizontal" (id 12)
+const NAME_PATTERNS = {
+  push: /^press banca/i,
+  pull: /^remo$/i,
+  legs: /^prensa (vertical|horizontal)$/i,
 }
 
 const LEVEL_ORDER  = ['inicio', 'novato', 'medio', 'avanzado', 'elite']
@@ -76,12 +87,18 @@ export default function StrengthTriangle({ logs, bodyWeight, sex = 'male' }) {
   const bw = parseFloat(bodyWeight)
   if (!bw || bw <= 0) return null
 
-  // Para cada grupo: máximo 1RM entre todos los ejercicios de esa categoría
-  function bestForGroup(cat) {
-    const catLogs = logs.filter(l => l.category === cat && l.weight)
-    if (catLogs.length === 0) return null
+  // Busca el mejor 1RM entre todos los logs que matcheen el patrón de nombre
+  // Excluye ejercicios custom (category === 'custom')
+  function bestForGroup(group) {
+    const pattern = NAME_PATTERNS[group]
+    const matched = logs.filter(l =>
+      l.category !== 'custom' &&
+      l.weight &&
+      pattern.test(l.name)
+    )
+    if (matched.length === 0) return null
     let best = null
-    catLogs.forEach(l => {
+    matched.forEach(l => {
       const rm = oneRM(l)
       if (rm && (!best || rm > best.rm)) best = { rm, name: l.name }
     })
@@ -186,21 +203,6 @@ export default function StrengthTriangle({ logs, bodyWeight, sex = 'male' }) {
         {/* Puntos */}
         {[pushPt, legsPt, pullPt].map((pt, i) => (
           <circle key={i} cx={pt.x.toFixed(1)} cy={pt.y.toFixed(1)} r="5" fill="#5f8a00" stroke="rgba(255,255,255,.8)" strokeWidth="1.5" />
-        ))}
-
-        {/* Valores de ratio en los puntos */}
-        {[
-          { pt: pushPt, val: pushData.ratio, anchor: 'middle', dy: -10 },
-          { pt: legsPt, val: legsData.ratio, anchor: 'end',    dy: 14 },
-          { pt: pullPt, val: pullData.ratio, anchor: 'start',  dy: 14 },
-        ].map((item, i) => item.val > 0 && (
-          <text key={i}
-            x={item.pt.x.toFixed(1)}
-            y={(item.pt.y + item.dy).toFixed(1)}
-            textAnchor={item.anchor}
-            fill="#5f8a00" fontSize="8" fontFamily="'JetBrains Mono',monospace" fontWeight="700">
-            {item.val}×
-          </text>
         ))}
 
         {/* Labels de vértices */}

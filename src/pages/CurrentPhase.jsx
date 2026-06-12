@@ -223,37 +223,43 @@ function PhaseChart({ data, phaseColor, weightGoal, weeklyStats }) {
   )
 }
 
+function getMondayKey(dateStr) {
+  const d = parseDate(dateStr)
+  const day = d.getDay() // 0=dom, 1=lun ... 6=sab
+  const monday = new Date(d)
+  monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1))
+  monday.setHours(0, 0, 0, 0)
+  return monday.toISOString().split('T')[0]
+}
+
 function calcWeeklyStats(phaseWeights) {
   if (phaseWeights.length < 2) return null
-  const sorted = [...phaseWeights].sort((a, b) => parseDate(a.date) - parseDate(b.date))
 
-  // Agrupa por semana (lunes) para calcular medias y la desviación
+  // Agrupa por semana: suma todos los pesos de lunes a domingo y divide entre registros
   const byWeek = {}
-  sorted.forEach(w => {
-    const d = parseDate(w.date)
-    const monday = new Date(d)
-    monday.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1))
-    const key = monday.toISOString().split('T')[0]
+  phaseWeights.forEach(w => {
+    const key = getMondayKey(w.date)
     if (!byWeek[key]) byWeek[key] = []
     byWeek[key].push(parseFloat(w.weight))
   })
   const weekKeys = Object.keys(byWeek).sort()
   if (weekKeys.length < 2) return null
 
-  const weeklyAvgs = weekKeys.map(k => {
-    const vals = byWeek[k]
-    return { key: k, avg: vals.reduce((a, b) => a + b, 0) / vals.length }
-  })
+  const weeklyAvgs = weekKeys.map(k => ({
+    key: k,
+    avg: byWeek[k].reduce((a, b) => a + b, 0) / byWeek[k].length,
+    count: byWeek[k].length,
+  }))
 
-  // Ritmo real = (media última semana - media primera semana) / semanas entre ellas
-  const firstWeekAvg = weeklyAvgs[0].avg
-  const lastWeekAvg  = weeklyAvgs[weeklyAvgs.length - 1].avg
+  // Ritmo = (media última semana − media primera semana) / semanas transcurridas entre ellas
   const firstDate    = parseDate(weeklyAvgs[0].key)
   const lastDate     = parseDate(weeklyAvgs[weeklyAvgs.length - 1].key)
   const weeksBetween = (lastDate - firstDate) / (1000 * 60 * 60 * 24 * 7)
-  const avgChange    = weeksBetween > 0 ? (lastWeekAvg - firstWeekAvg) / weeksBetween : 0
+  const avgChange    = weeksBetween > 0
+    ? (weeklyAvgs[weeklyAvgs.length - 1].avg - weeklyAvgs[0].avg) / weeksBetween
+    : 0
 
-  // Desviación estándar de los cambios semana a semana (para consistencia)
+  // Desviación estándar de los cambios consecutivos (consistencia)
   const weeklyChanges = []
   for (let i = 1; i < weeklyAvgs.length; i++) {
     weeklyChanges.push(weeklyAvgs[i].avg - weeklyAvgs[i - 1].avg)
@@ -262,11 +268,7 @@ function calcWeeklyStats(phaseWeights) {
     ? weeklyChanges.reduce((acc, v) => acc + Math.pow(v - avgChange, 2), 0) / weeklyChanges.length
     : 0
 
-  return {
-    avgChange,
-    stdDev: Math.sqrt(variance),
-    weeklyAvgs, // para el historial semanal
-  }
+  return { avgChange, stdDev: Math.sqrt(variance), weeklyAvgs }
 }
 
 function calcProgress(allLogs, exerciseTypeId, phaseStartDate, phaseEndDate) {
@@ -829,23 +831,16 @@ export default function CurrentPhase({ onNavigate }) {
 
 
 
-        {/* Weekly weight history — last 4 weeks */}
+        {/* Weekly weight history — all weeks of phase */}
         {(() => {
-          // Build weekly averages from phase weights (Mon-Sun)
           const byWeek = {}
           phaseWeights.forEach(w => {
-            const d = parseDate(w.date)
-            const monday = new Date(d)
-            const day = d.getDay()
-            monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1))
-            monday.setHours(0, 0, 0, 0)
-            const key = monday.toISOString().split('T')[0]
+            const key = getMondayKey(w.date)
             if (!byWeek[key]) byWeek[key] = []
             byWeek[key].push(parseFloat(w.weight))
           })
-
           const weekKeys = Object.keys(byWeek).sort()
-          if (weekKeys.length < 2) return null
+          if (weekKeys.length === 0) return null
 
           const weeklyAvgs = weekKeys.map(k => ({
             key: k,
@@ -853,21 +848,16 @@ export default function CurrentPhase({ onNavigate }) {
             count: byWeek[k].length,
           }))
 
-          // Historial completo: media de cada semana + variación respecto a la anterior
           const allWeeks = weeklyAvgs.map((w, i) => {
             const monday = parseDate(w.key)
             const sunday = new Date(monday)
             sunday.setDate(monday.getDate() + 6)
+            const label = `${monday.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })} – ${sunday.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}`
             const delta = i > 0 ? parseFloat((w.avg - weeklyAvgs[i - 1].avg).toFixed(2)) : null
-            return {
-              label: `${monday.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' })}`,
-              avg: parseFloat(w.avg.toFixed(2)),
-              delta,
-            }
+            return { label, avg: parseFloat(w.avg.toFixed(2)), delta }
           })
 
           if (allWeeks.length === 0) return null
-
           const maxAbs = Math.max(...allWeeks.filter(w => w.delta !== null).map(w => Math.abs(w.delta)), 0.1)
 
           function barColor(d) {

@@ -283,12 +283,11 @@ export default function Home({ onNavigate, onLogout }) {
   // Weekly deltas
   const weeklyDeltas = (() => {
     if (!allWeights || allWeights.length < 2) return []
-    const sorted = [...allWeights].sort((a, b) => parseDate(a.date) - parseDate(b.date))
     const byWeek = {}
-    sorted.forEach(w => {
+    allWeights.forEach(w => {
       const d = parseDate(w.date)
-      const monday = new Date(d)
       const day = d.getDay()
+      const monday = new Date(d)
       monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1))
       monday.setHours(0, 0, 0, 0)
       const key = monday.toISOString().split('T')[0]
@@ -310,7 +309,7 @@ export default function Home({ onNavigate, onLogout }) {
         delta: parseFloat(delta.toFixed(2)),
       })
     }
-    return deltas
+    return deltas.slice(-4)
   })()
 
   // Media de la semana en curso (lunes → hoy)

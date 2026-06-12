@@ -197,7 +197,7 @@ export default function BodyMeasurements({ onNavigate }) {
                     <span className="text-[#888888] font-sans text-xs uppercase">{m.label}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-[#1d1d1f] font-sans text-sm font-bold">{parseFloat(val).toFixed(1)} cm</span>
+                    <span className="text-[#41434a] font-sans text-sm font-bold">{parseFloat(val).toFixed(1)} cm</span>
                     {delta !== null && (
                       <span className="font-sans text-[10px] font-bold" style={{ color: deltaColor(delta) }}>
                         {delta > 0 ? '+' : ''}{delta.toFixed(1)}

@@ -248,7 +248,7 @@ export default function Gym({ onNavigate }) {
                       className={`glass-card rounded-sm p-3 group hover:border-[#333333] transition-all duration-200 cursor-grab active:cursor-grabbing ${dragOverIdx === logs.indexOf(log) ? 'border-[#c8f500]/30 bg-[#c8f500]/3' : ''}`}>
                       <div className="flex items-start justify-between mb-2">
                         <div className="min-w-0">
-                          <p className="text-[#1d1d1f] font-sans text-sm font-bold tracking-wide truncate uppercase">{log.name}</p>
+                          <p className="text-[#41434a] font-sans text-sm font-bold tracking-wide truncate uppercase">{log.name}</p>
                           <p className="text-[#c8f500] font-sans text-xs mt-0.5">
                             {log.weight ? `${log.weight} kg` : '—'}
                             {log.weight && log.reps ? ` × ${log.reps} reps` : ''}
@@ -300,7 +300,7 @@ export default function Gym({ onNavigate }) {
               EJERCICIO
             </label>
             <select value={selectedExerciseId} onChange={e => setSelectedExerciseId(e.target.value)}
-              className="input-frosted text-[#1d1d1f] font-sans text-sm px-4 h-12 outline-none transition-all duration-300 rounded-sm" required>
+              className="input-frosted text-[#41434a] font-sans text-sm px-4 h-12 outline-none transition-all duration-300 rounded-sm" required>
               <option value="">— selecciona —</option>
               {['push', 'pull', 'legs', 'custom'].map(cat => {
                 const opts = availableTypes.filter(t => t.category === cat)
@@ -335,7 +335,7 @@ export default function Gym({ onNavigate }) {
         <PageHeader title="ACTUALIZAR" />
         <div className="glass-card rounded-sm p-4 mb-6" style={{ borderLeft: '3px solid #c8f500' }}>
           <p className="text-[#555555] font-sans text-[10px] tracking-[0.2em] mb-1">EJERCICIO</p>
-          <p className="text-[#1d1d1f] font-mono text-xl font-bold uppercase">{editingLog?.name}</p>
+          <p className="text-[#41434a] font-mono text-xl font-bold uppercase">{editingLog?.name}</p>
           <p className="text-[#555555] font-sans text-xs mt-1.5">
             actual: <span className="text-[#c8f500]">
               {editingLog?.weight ? `${editingLog.weight} kg` : '—'}

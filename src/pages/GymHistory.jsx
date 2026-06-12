@@ -102,7 +102,7 @@ function ExerciseChart({ name, logs, phases }) {
   return (
     <div className="glass-card rounded-sm p-3 mb-3 relative overflow-hidden">
       <div className="flex items-start justify-between mb-2">
-        <p className="text-[#1d1d1f] font-sans text-xs font-bold tracking-wide uppercase">{name}</p>
+        <p className="text-[#41434a] font-sans text-xs font-bold tracking-wide uppercase">{name}</p>
         {points.length >= 2 && (
           <span className="font-sans text-[11px] font-bold" style={{ color: change > 0 ? '#3a9d4e' : change < 0 ? '#d92020' : '#71727a' }}>
             {change > 0 ? '+' : ''}{changePct.toFixed(1)}%

@@ -103,7 +103,7 @@ export default function AiReport({ onNavigate }) {
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#555555] to-transparent opacity-30" />
           <div className="flex items-center gap-2.5 mb-3">
             <span className="w-[3px] h-3.5 rounded-full bg-[#555555]" />
-            <span className="text-[#1d1d1f] font-sans text-sm font-bold tracking-wide">DATOS EN BRUTO</span>
+            <span className="text-[#41434a] font-sans text-sm font-bold tracking-wide">DATOS EN BRUTO</span>
           </div>
           <p className="text-[#555555] font-sans text-[10px] tracking-[0.15em] leading-relaxed mb-4">
             Todos los registros sin procesar, separados por secciones.
